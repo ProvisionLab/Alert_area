@@ -3,12 +3,11 @@
 from pymongo import MongoClient
 from bson.objectid import ObjectId 
 
-mongoDB_connectStr = "mongodb://localhost/"
-
+import bvc_config
 
 # connect to database
 
-client = MongoClient(mongoDB_connectStr)
+client = MongoClient(bvc_config.mongoDB_connectStr)
 db = client.bvcstorage
 
 

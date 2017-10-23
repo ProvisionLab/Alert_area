@@ -5,6 +5,7 @@ from flask_jwt import JWT, jwt_required, current_identity
 import json
 import bvc_db
 from datetime import timedelta
+import bvc_config
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'super-secret'
@@ -153,4 +154,4 @@ def api_alerts():
   return flask.jsonify({})
 
 if __name__ == '__main__':
-  app.run()
+  app.run(host=bvc_config.api_host, port=bvc_config.api_port)
