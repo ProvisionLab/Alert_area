@@ -1,0 +1,11 @@
+
+# python files
+
+__pycache__/
+
+# Qt files
+
+build-*-Debug/
+build-*-Release/
+*.pro.user
+
