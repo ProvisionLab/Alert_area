@@ -22,11 +22,11 @@ void QCameraItem::set_alerts(QJsonArray const & json)
 {
     m_alerts.clear();
 
-    for (auto & x : json)
+    for (auto && x : json)
     {
        if (x.isObject())
        {
-            auto & j_alert = x.toObject();
+            auto && j_alert = x.toObject();
 
             m_alerts.push_back(j_alert);
        }

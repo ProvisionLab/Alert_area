@@ -122,11 +122,11 @@ void MainWindow::on_get_cameras(QJsonArray const & json)
     ui->m_cameraListView->clear();
     ui->m_bnAddAlert->hide();
 
-    for (auto & x : json)
+    for (auto && x : json)
     {
        if (x.isObject())
        {
-           auto & j_camera = x.toObject();
+           auto && j_camera = x.toObject();
            ui->m_cameraListView->addItem(new QCameraItem(j_camera));
        }
     }

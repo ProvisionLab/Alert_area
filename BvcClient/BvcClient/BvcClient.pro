@@ -8,7 +8,7 @@ QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = LvfClient
+TARGET = BvcClient
 TEMPLATE = app
 
 # The following define makes your compiler emit warnings if you use
@@ -61,3 +61,9 @@ win32 {
     LIBS += -L$$(OPENCV_DIR)\x64\vc14\bin
 
 }
+else {
+
+    INCLUDEPATH += /usr/local/include/opencv
+    LIBS += -L/usr/local/lib -lopencv_core -lopencv_videoio -lopencv_imgproc
+}
+
