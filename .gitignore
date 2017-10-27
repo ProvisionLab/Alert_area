@@ -9,3 +9,4 @@ build-*-Debug/
 build-*-Release/
 *.pro.user
 
+/cameras.csv

@@ -22,7 +22,7 @@ BvcClient/BvcClient/BvcClient.pro
 ```
 run
 ```
-./path_to__build/LvfClient
+./path_to__build/BvcClient
 ```
 
 #### Server's part
