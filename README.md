@@ -13,6 +13,14 @@ Deploy on Ubuntu 16.04
 * OpenCV3.x
 
 ### Build
+#### OpenCV3.3
+
+Download [Opencv3.3](https://github.com/opencv/opencv/archive/3.3.0.tar.gz)
+And install in /usr/local via [tutorial](https://docs.opencv.org/3.0-beta/doc/tutorials/introduction/linux_install/linux_install.html)
+
+#### MongoDB
+
+Install mongoDB via [tutorial](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/)
 
 #### Client's part
 
