@@ -6,6 +6,8 @@
 
 QT       += core gui network
 
+CONFIG -= debug_and_release
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = BvcClient
@@ -75,11 +77,14 @@ unix {
     PKGCONFIG += opencv
 
     # use this if custom opencv build is installed ( download & cmake & make install )
-#    INCLUDEPATH += /usr/local/include/opencv
+#    INCLUDEPATH += /usr/local/include
 #    LIBS += -L/usr/local/lib -lopencv_core -lopencv_videoio -lopencv_imgproc
 
 }
 
 mac {
 
+    # make sure PATH contains pkg-config & PKG_CONFIG_PATH is defined
+    CONFIG += link_pkgconfig
+    PKGCONFIG += opencv
 }

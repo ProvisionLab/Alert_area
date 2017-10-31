@@ -73,3 +73,43 @@ python3 backend_server/bvc_server.py
 
 Now you can connect to testing database with test users.
 
+
+Deploy on MacOS
+
+### Build
+
+#### Client's part
+
+1. install Xcode
+
+2. install Xcode commandline tools
+```
+sudo xcode-select --install
+```
+
+3. install homebrew
+```
+http://brew.sh/
+```
+
+4. install Qt 5.8+
+
+5. install opencv  (3.2+)
+
+```
+brew install pkg-config
+brew install opencv3
+```
+
+```
+https://www.learnopencv.com/configuring-qt-for-opencv-on-osx/
+```
+
+build solution 
+```
+BvcClient/BvcClient/BvcClient.pro
+```
+run
+```
+./path_to__build/BvcClient
+```
