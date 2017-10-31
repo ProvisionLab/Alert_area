@@ -48,22 +48,38 @@ FORMS    += mainwindow.ui \
     newalertdialog.ui \
     qauthdialog.ui
 
-win32 {
+win32-msvc* {
 
-    INCLUDEPATH += $$(OPENCV_DIR)\include
+    MSVC_VER = $$(VisualStudioVersion)
 
-    LIBS += -L$$(OPENCV_DIR)\x64\vc14\lib
+    equals(MSVC_VER, 14.0) {
 
-    contains(DEBUG,1):  LIBS += -lopencv_world320d
-    else:               LIBS += -lopencv_world320
+        # linking with opencv 3.2
 
-    # dll paths to run from qt-creator
-    LIBS += -L$$(OPENCV_DIR)\x64\vc14\bin
+        INCLUDEPATH += $$(OPENCV_DIR)\include
+
+        LIBS += -L$$(OPENCV_DIR)\x64\vc14\lib
+
+        contains(DEBUG,1):  LIBS += -lopencv_world320d
+        else:               LIBS += -lopencv_world320
+
+        # dll paths to run from qt-creator
+        LIBS += -L$$(OPENCV_DIR)\x64\vc14\bin
+    }
+}
+
+unix {
+
+    # (recomended) use this if ubuntu opencv-dev package is installed ( apt-get install libopencv-dev )
+    CONFIG += link_pkgconfig
+    PKGCONFIG += opencv
+
+    # use this if custom opencv build is installed ( download & cmake & make install )
+#    INCLUDEPATH += /usr/local/include/opencv
+#    LIBS += -L/usr/local/lib -lopencv_core -lopencv_videoio -lopencv_imgproc
 
 }
-else {
 
-    INCLUDEPATH += /usr/local/include/opencv
-    LIBS += -L/usr/local/lib -lopencv_core -lopencv_videoio -lopencv_imgproc
+mac {
+
 }
-

@@ -16,6 +16,10 @@ Deploy on Ubuntu 16.04
 
 #### Client's part
 
+#install Qt 5.8+
+#install opencv  (3.2+)
+sudo apt-get install pkgconfig libopencv-dev
+
 build solution 
 ```
 BvcClient/BvcClient/BvcClient.pro
