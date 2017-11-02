@@ -3,6 +3,7 @@
 import threading
 import traceback
 import cv2
+import reco_config
 from tracker_emu import TrackerEmu
 from trk_analyzer import TrackAnalyzer
 from trk_object import TrackObject
@@ -47,7 +48,7 @@ class RecoThread(threading.Thread):
 
     def run(self):
 
-        print('start reco: {0}'.format(self.camera['url']))
+        print('start reco: \'{0}\', {1}'.format(self.camera['name'], self.camera['url']))
 
         # open stream by url
         camera_url = self.camera['url']
@@ -55,7 +56,8 @@ class RecoThread(threading.Thread):
 
         self.tracker = TrackerEmu()
 
-        self.dbg = DebugWindow(self.camera, self.tracker, self.connection)
+        if reco_config.DEBUG:
+            self.dbg = DebugWindow(self.camera, self.tracker, self.connection)
 
         try:
             cap = cv2.VideoCapture(camera_url)
@@ -63,8 +65,8 @@ class RecoThread(threading.Thread):
             if cap.isOpened():
 
                 # setup analyzer
-                alerts = self.connection.get_camera_alerts(camera_id)
-                analyzer = TrackAnalyzer(alerts)
+                alert_areas = self.connection.get_camera_alerts(camera_id)
+                analyzer = TrackAnalyzer(alert_areas)
                 analyzer.on_alert = lambda alert_id, obj: self.on_alert(camera_id, alert_id, obj)
 
                 # process stream
@@ -80,9 +82,12 @@ class RecoThread(threading.Thread):
 
                         h, w = frame.shape[:2]
 
-                        analyzer.process_objects(w, h, list(self.tracker.objects.values()))
+                        #objects = list(self.tracker.objects.values())
+                        objects = self.tracker.objects.values()
 
-                        if self.dbg and self.dbg.draw_frame(frame, list(self.tracker.objects.values())):
+                        analyzer.process_objects(w, h, objects)
+
+                        if self.dbg and self.dbg.draw_frame(frame, objects):
                             break
 
                     pass #while
@@ -95,7 +100,8 @@ class RecoThread(threading.Thread):
 
         RecoThread.thread_count -= 1
 
-        del self.dbg
+        if self.dbg:
+            del self.dbg
 
         print('end: {0}, threads: {1}'.format(camera_id, RecoThread.thread_count))
         pass

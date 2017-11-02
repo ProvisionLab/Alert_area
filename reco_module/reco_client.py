@@ -5,6 +5,7 @@ import signal
 #import json
 import requests
 from reco_thread import RecoThread
+import reco_config
 
 class RecoClient(object):
     
@@ -31,12 +32,12 @@ class RecoClient(object):
 
             threads = []
 
-#            for camera in cameras:
-#                threads.append(reco_reco.RecoThread(self, camera))
+            if reco_config.cameras:
+                cameras = [c for c in cameras if c['name'] in reco_config.cameras]
 
-            threads.append(RecoThread(self, cameras[1])) # stadion
-            threads.append(RecoThread(self, cameras[4])) # restorant
-            
+            for camera in cameras:
+                threads.append(RecoThread(self, camera))
+
             for t in threads:
                 t.start()
 

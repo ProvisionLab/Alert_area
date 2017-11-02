@@ -3,6 +3,7 @@ import numpy as np
 import math
 import cv2
 import time
+import reco_config
 
 # alert: 
 #{ 
@@ -12,8 +13,6 @@ import time
 #   'duration' : int,                        # seconds, for type="LD"
 #   'direction' : 'B'|'L'|'R',               # for type="VW", both/to_left/to_right
 #}
-
-DEBUG = True
 
 class AnalyzerState(object):
     """
@@ -47,7 +46,7 @@ class TrackAnalyzer(object):
     """
 
     access_token = None
-    alerts = None
+    alert_areas = None
 
     frame_w = None
     frame_h = None
@@ -56,17 +55,17 @@ class TrackAnalyzer(object):
 
     state = {}
 
-    def __init__(self, alerts):
+    def __init__(self, alert_areas):
 
-        self.alerts = alerts
+        self.alert_areas = alert_areas
 
-        if DEBUG:
-            for alert in self.alerts:
-                if alert['type'] == 'LD':
-                    alert['duration'] = 5
+        if reco_config.DEBUG:
+            for alert_area in self.alert_areas:
+                if alert_area['type'] == 'LD':
+                    alert_area['duration'] = 5
         pass
 
-    def process_objects(self, w:int, h:int, objects):
+    def process_objects(self, w: int, h: int, objects):
 
         # prepare cash
         for s in self.state.values():
@@ -93,12 +92,12 @@ class TrackAnalyzer(object):
         self.frame_w = w
         self.frame_h = h
 
-    def check_alert_VW(self, alert, obj: TrackObject, objs: AnalyzerState):
+    def check_alert_VW(self, area, obj: TrackObject, objs: AnalyzerState):
         
         if objs.curr_pos is None or objs.prev_pos is None:
             return
 
-        points = [ (self.frame_w*x[0], self.frame_h*x[1]) for x in alert['points']]
+        points = [ (self.frame_w*x[0], self.frame_h*x[1]) for x in area['points']]
         p1 = np.array(points[0])
         p2 = np.array(points[1])
 
@@ -137,19 +136,19 @@ class TrackAnalyzer(object):
         cross_L = cy > 0 and py < 0
         cross_R = cy < 0 and py > 0
 
-        direction = alert['direction']
+        direction = area['direction']
 
         if direction == 'B' or (cross_L and direction == 'L') or (cross_R and direction == 'R'):
-            self.on_alert(alert['id'], obj)      
+            self.on_alert(area['id'], obj)      
         pass
 
-    def check_alert_RA(self, alert, obj: TrackObject, objs: AnalyzerState):
-        if self.check_area_enter(alert, objs) == 1: # enter
-            self.on_alert(alert['id'], obj)
+    def check_alert_RA(self, area, obj: TrackObject, objs: AnalyzerState):
+        if self.check_area_enter(area, objs) == 1: # enter
+            self.on_alert(area['id'], obj)
 
-    def check_alert_LD(self, alert, obj: TrackObject, objs: AnalyzerState):
+    def check_alert_LD(self, area, obj: TrackObject, objs: AnalyzerState):
         
-        res = self.check_area_enter(alert, objs)
+        res = self.check_area_enter(area, objs)
         if res == 1:
             # enter area
             objs.duration = time.time()
@@ -159,9 +158,9 @@ class TrackAnalyzer(object):
         elif objs.duration is not None:
             # inside area
             delta = time.time() - objs.duration
-            if delta >= alert['duration']:
+            if delta >= area['duration']:
                 objs.duration = None
-                self.on_alert(alert['id'], obj)
+                self.on_alert(area['id'], obj)
         pass
 
     def process_object(self, obj: TrackObject, objs: AnalyzerState):
@@ -169,7 +168,7 @@ class TrackAnalyzer(object):
         analyze object from current frame
         """
 
-        for alert in self.alerts:
+        for alert in self.alert_areas:
 
             if alert['type'] == 'VW':
                 self.check_alert_VW(alert, obj, objs)
@@ -180,14 +179,14 @@ class TrackAnalyzer(object):
 
         pass
 
-    def check_area_enter(self, alert: dict, objs: AnalyzerState):
+    def check_area_enter(self, area: dict, objs: AnalyzerState):
         """
         @return 0 - no event, 1 - enter, 2 - leave
         """
         if objs.curr_pos is None:
             return 0
 
-        points = np.array([ (self.frame_w*x[0], self.frame_h*x[1]) for x in alert['points']], np.int32)
+        points = np.array([ (self.frame_w*x[0], self.frame_h*x[1]) for x in area['points']], np.int32)
         res = cv2.pointPolygonTest(points, objs.curr_pos, False)
 
         res_prev = cv2.pointPolygonTest(points, objs.prev_pos, False) if objs.prev_pos is not None else None
