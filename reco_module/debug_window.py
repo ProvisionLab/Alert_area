@@ -1,5 +1,4 @@
 import cv2
-from reco_client import get_camera_alerts
 import numpy as np
 from tracker_emu import TrackerEmu
 
@@ -14,13 +13,18 @@ class DebugWindow:
 
     tracker = None
 
-    def __init__(self, access_token, camera, tracker):
+    connection = None
+
+    def __init__(self, camera, tracker, connection):
+        
+        self.connection = connection
+
         self.wname = 'video'
         cv2.namedWindow(self.wname, cv2.WINDOW_NORMAL)
         cv2.setMouseCallback(self.wname, self.on_mouse)
 
         camera_id = camera['id']
-        self.zones = get_camera_alerts(access_token, camera_id)
+        self.zones = connection.get_camera_alerts(camera_id)
 
         self.tracker = tracker
 

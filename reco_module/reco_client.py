@@ -1,75 +1,127 @@
-import requests
-import json
-import reco_reco
+"""
+"""
 import time
 import signal
+#import json
+import requests
+from reco_thread import RecoThread
 
-api_url = 'http://localhost:5000/'
-
-access_token = None
-
-def do_auth(username, password):
-    r = requests.post(
-        api_url+'api/auth',
-        json={'username':username, 'password':password})
-
-    if r.status_code != 200:
-        return False
-
-    global access_token
-    access_token = r.json()['access_token']
-    return True
-
-def do_get_cameras():
-
-    r = requests.get('{0}api/cameras/all/'.format(api_url),
-                     headers={'Authorization': 'JWT {0}'.format(access_token)})
-
-    if r.status_code != 200:
-        return None
+class RecoClient(object):
     
-    return r.json()['cameras']
+    api_url = 'http://localhost:5000/'
+    access_token = None
 
-def get_camera_alerts(access_token: str, camera_id: str):
+    alerts = []
 
-    r = requests.get('{0}api/cameras/{1}/alerts/'.format(api_url, camera_id),
-                     headers={'Authorization': 'JWT {0}'.format(access_token)})
+    bStop = False
 
-    if r.status_code != 200:
-        return None
+    def __init__(self):
+        signal.signal(signal.SIGINT, self.stop_execution)
+        pass
 
-    return r.json()['alerts']
+    def stop_execution(self, signum, taskfrm):
+        print('Ctrl+C was pressed')
+        self.bStop = True
+        RecoThread.stop_recognition()
 
-def post_reco_alert(access_token: str, camera_id: str, alert_id: str):
+    def run(self):
+        
+        if self.do_auth('reco1', 'reco1passwd'):
+            cameras = self.do_get_cameras()
 
-    r = requests.post('{0}api/alerts/'.format(api_url),
-                      headers={'Authorization': 'JWT {0}'.format(access_token)},
-                      json={'camera_id' : camera_id, 'alert_id' : alert_id})
+            threads = []
 
-    if r.status_code == 200:
+#            for camera in cameras:
+#                threads.append(reco_reco.RecoThread(self, camera))
+
+            threads.append(RecoThread(self, cameras[1])) # stadion
+#            threads.append(reco_reco.RecoThread(self, cameras[4])) # restorant
+            
+            for t in threads:
+                t.start()
+
+            print("press Ctrl+C to quit")
+
+            while not self.bStop and RecoThread.exist_any_recognition():
+                if self.alerts:
+                    self.post_all_alerts()
+                else:
+                    time.sleep(0.1)
+
+            print('stoping...')
+
+            for t in threads:
+                t.join()
+
+            print('Quit')
+
+        pass
+
+
+    def do_auth(self, username, password):
+        r = requests.post(
+            self.api_url+'api/auth',
+            json={'username':username, 'password':password})
+
+        if r.status_code != 200:
+            return False
+
+        self.access_token = r.json()['access_token']
+        return True
+
+    def do_get_cameras(self):
+
+        r = requests.get('{0}api/cameras/all/'.format(self.api_url),
+                            headers={'Authorization': 'JWT {0}'.format(self.access_token)})
+
+        if r.status_code != 200:
+            return None
+        
+        return r.json()['cameras']
+
+    def get_camera_alerts(self, camera_id: str):
+
+        r = requests.get('{0}api/cameras/{1}/alerts/'.format(self.api_url, camera_id),
+                        headers={'Authorization': 'JWT {0}'.format(self.access_token)})
+
+        if r.status_code != 200:
+            return None
+
+        return r.json()['alerts']
+
+    def post_reco_alert(self, camera_id: str, alert_id: str):
+        
         print('reco alert {0}/{1}'.format(camera_id, alert_id))
-    else:
-        print('failed to post alert')
+        self.alerts.append({'camera_id':camera_id, 'alert_id':alert_id, 'time' : time.time()})
+        return
 
-    pass
+        r = requests.post('{0}api/alerts/'.format(self.api_url),
+                        headers={'Authorization': 'JWT {0}'.format(self.access_token)},
+                        json={'camera_id' : camera_id, 'alert_id' : alert_id})
 
-def stop_execution(signum, taskfrm):
-    print('You pressed Ctrl+C!')
-    reco_reco.stop_recognition()
+        if r.status_code == 200:
+            print('reco alert {0}/{1}'.format(camera_id, alert_id))
+        else:
+            print('failed to post alert')
+
+        pass
+
+    def post_all_alerts(self):
+        
+        while self.alerts:
+            a = self.alerts.pop(0)
+
+            r = requests.post('{0}api/alerts/'.format(self.api_url),
+                            headers={'Authorization': 'JWT {0}'.format(self.access_token)},
+                            json=a)
+
+            if r.status_code == 200:
+                print('post alert {0}/{1}'.format(a['camera_id'], a['alert_id']))
+            else:
+                print('failed to post alert')
+            
 
 if __name__ == '__main__':
-
-    signal.signal(signal.SIGINT, stop_execution)
-
-    if do_auth('reco1', 'reco1passwd'):
-        cameras = do_get_cameras()
-
-#        for camera in cameras:
-#            reco_reco.start_recognition(access_token, camera)
-        reco_reco.start_recognition(access_token, cameras[1]) #stadion
-#        reco_reco.start_recognition(access_token, cameras[4])
-
-        #reco_reco.wait_threads()
-        print('Quit')
- 
-  
+    
+    app = RecoClient()
+    app.run()

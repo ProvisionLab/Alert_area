@@ -89,11 +89,6 @@ class TrackerEmu(object):
 
         pass
 
-    def process_analyzer(self):
-        self.analyzer.set_frame_size(self.frame_w, self.frame_h)
-        for obj in list(self.objects.values()):
-            self.analyzer.process_object(obj)
-
     def process_frame(self, frame):
 
         self.frame_h, self.frame_w = frame.shape[:2]
