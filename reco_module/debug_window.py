@@ -1,20 +1,66 @@
 import cv2
 from reco_client import get_camera_alerts
 import numpy as np
+from tracker_emu import TrackerEmu
 
 class DebugWindow:
 
     bbox_color = (0, 255, 0)
 
-    alerts = None
+    zones = None
 
-    def __init__(self, access_token, camera):
+    max_alert_r = 5 # % of w
+    alerts = []
+
+    tracker = None
+
+    def __init__(self, access_token, camera, tracker):
         self.wname = 'video'
         cv2.namedWindow(self.wname, cv2.WINDOW_NORMAL)
+        cv2.setMouseCallback(self.wname, self.on_mouse)
 
         camera_id = camera['id']
-        self.alerts = get_camera_alerts(access_token, camera_id)
+        self.zones = get_camera_alerts(access_token, camera_id)
 
+        self.tracker = tracker
+
+        pass
+
+    def add_alert(self, obj):
+        
+        self.alerts.append({'pos':obj.get_pos(), 'r':0})
+
+        pass
+
+    def draw_frame(self, frame, objects):
+        """
+        @return  True for break
+        """
+
+        # draw configered alerts
+        self.draw_zones(frame)
+
+        # draw tacker state
+        for obj in objects.values():
+            self.draw_object(frame, obj)
+
+        self.draw_alerts(frame)            
+
+        cv2.imshow(self.wname, frame)
+        return cv2.waitKey(20) == 27 # ESC
+
+    # private methods        
+
+    def draw_alerts(self, frame):
+        
+        for alert in self.alerts:
+            cv2.circle(frame, alert['pos'], alert['r'], (255,0,255), 2)
+            alert['r'] += 1
+            pass
+
+        w = frame.shape[1]
+        max_r = w * self.max_alert_r / 100
+        self.alerts = [a for a in self.alerts if a['r'] < max_r]
         pass
 
     def draw_object(self, frame, obj):
@@ -50,7 +96,7 @@ class DebugWindow:
 
         h, w = frame.shape[:2]
 
-        for alert in self.alerts:
+        for alert in self.zones:
 
             points = alert['points']
             points = tuple( (int(w*x[0]), int(h*x[1])) for x in points )
@@ -63,17 +109,25 @@ class DebugWindow:
             if alert['type'] == 'RA':
                 self.draw_zone_RA(frame, points)
       
-    def draw_frame(self, frame, objects):
-        """
-        @return  True for break
-        """
+    def on_mouse(self, event, x, y, flags, param):
 
-        # draw configered alerts
-        self.draw_zones(frame)
+        if not isinstance(self.tracker, TrackerEmu):
+            return
 
-        # draw tacker state
-        for obj in objects.values():
-            self.draw_object(frame, obj)
+        #print("on_mouse")
 
-        cv2.imshow(self.wname, frame)
-        return cv2.waitKey(20) == 27 # ESC
+        if event == cv2.EVENT_LBUTTONDOWN:
+            print("EVENT_LBUTTONDOWN: {0} {1}".format(x,y))
+            self.tracker.create_dbg_object(x,y)
+
+        elif event == cv2.EVENT_LBUTTONUP :
+            print("EVENT_LBUTTONUP: {0} {1}".format(x,y))
+            self.tracker.remove_dbg_object()
+
+        elif event == cv2.EVENT_MOUSEMOVE:
+            if flags & cv2.EVENT_FLAG_LBUTTON == 0:
+                self.tracker.remove_dbg_object()
+            else:
+                self.tracker.move_dbg_object(x,y)
+
+        pass

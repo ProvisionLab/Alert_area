@@ -2,8 +2,11 @@ import threading
 import time
 import cv2
 from tracker_emu import TrackerEmu
+from trk_analyzer import TrackAnalyzer
+from trk_object import TrackObject
 from debug_window import DebugWindow
 import traceback
+from reco_client import post_reco_alert, get_camera_alerts
 
 # camera: { 'id' : str, 'url' : str }
 
@@ -34,26 +37,34 @@ class RecoThread(threading.Thread):
         self.camera = camera
         threading.Thread.__init__(self)
 
+    def on_alert(self, camera_id: str, alert_id: str, obj: TrackObject):
+        print("alert: {0} {1}".format(camera_id,alert_id))
+        if self.dbg: self.dbg.add_alert(obj)
+        #post_reco_alert(self.access_token, camera_id, alert_id)        
+
     def run(self):
 
         print('start reco: {0}'.format(self.camera['url']))
-
-        self.dbg = DebugWindow(self.access_token, self.camera)
 
         # open stream by url
         camera_url = self.camera['url']
         camera_id = self.camera['id']
 
-        self.tracker = TrackerEmu(self.access_token, self.camera)
+        self.tracker = TrackerEmu()
+
+        self.dbg = DebugWindow(self.access_token, self.camera, self.tracker)
 
         try:
             cap = cv2.VideoCapture(camera_url)
-      
+
             if cap.isOpened():
 
-#                dbg = DebugWindow()
-#                cv2.namedWindow('video', cv2.WINDOW_NORMAL)
+                # setup analyzer
+                alerts = get_camera_alerts(self.access_token, camera_id)
+                analyzer = TrackAnalyzer(alerts)
+                analyzer.on_alert = lambda alert_id, obj: self.on_alert(camera_id, alert_id, obj)
 
+                # process stream
                 while not bStop and cap.isOpened():
 
                     res, frame = cap.read()
@@ -63,6 +74,10 @@ class RecoThread(threading.Thread):
 
                     if res:
                         self.tracker.process_frame(frame)
+
+                        h, w = frame.shape[:2]
+
+                        analyzer.process_objects(w, h, list(self.tracker.objects.values()))
 
                         if self.dbg and self.dbg.draw_frame(frame, self.tracker.objects):
                             break
