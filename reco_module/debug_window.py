@@ -117,11 +117,11 @@ class DebugWindow:
         #print("on_mouse")
 
         if event == cv2.EVENT_LBUTTONDOWN:
-            print("EVENT_LBUTTONDOWN: {0} {1}".format(x,y))
+            #print("EVENT_LBUTTONDOWN: {0} {1}".format(x,y))
             self.tracker.create_dbg_object(x,y)
 
         elif event == cv2.EVENT_LBUTTONUP :
-            print("EVENT_LBUTTONUP: {0} {1}".format(x,y))
+            #print("EVENT_LBUTTONUP: {0} {1}".format(x,y))
             self.tracker.remove_dbg_object()
 
         elif event == cv2.EVENT_MOUSEMOVE:
