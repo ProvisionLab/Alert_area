@@ -82,7 +82,7 @@ class RecoThread(threading.Thread):
 
                         analyzer.process_objects(w, h, list(self.tracker.objects.values()))
 
-                        if self.dbg and self.dbg.draw_frame(frame, self.tracker.objects):
+                        if self.dbg and self.dbg.draw_frame(frame, list(self.tracker.objects.values())):
                             break
 
                     pass #while

@@ -35,7 +35,7 @@ class RecoClient(object):
 #                threads.append(reco_reco.RecoThread(self, camera))
 
             threads.append(RecoThread(self, cameras[1])) # stadion
-#            threads.append(reco_reco.RecoThread(self, cameras[4])) # restorant
+            threads.append(RecoThread(self, cameras[4])) # restorant
             
             for t in threads:
                 t.start()

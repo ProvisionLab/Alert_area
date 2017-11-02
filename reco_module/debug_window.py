@@ -19,11 +19,12 @@ class DebugWindow:
         
         self.connection = connection
 
-        self.wname = 'video'
+        camera_id = camera['id']
+
+        self.wname = camera_id
         cv2.namedWindow(self.wname, cv2.WINDOW_NORMAL)
         cv2.setMouseCallback(self.wname, self.on_mouse)
 
-        camera_id = camera['id']
         self.zones = connection.get_camera_alerts(camera_id)
 
         self.tracker = tracker
@@ -44,8 +45,8 @@ class DebugWindow:
         # draw configered alerts
         self.draw_zones(frame)
 
-        # draw tacker state
-        for obj in objects.values():
+        # draw tracker state
+        for obj in objects:
             self.draw_object(frame, obj)
 
         self.draw_alerts(frame)            
