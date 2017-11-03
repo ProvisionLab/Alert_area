@@ -40,7 +40,8 @@ class RecoThread(threading.Thread):
 
         threading.Thread.__init__(self)
 
-    def on_alert(self, camera_id: str, alert_id: str, obj: TrackObject):
+    def on_alert(self, alert_id: str, obj: TrackObject):
+        camera_id = self.camera['id']
         if self.dbg: self.dbg.add_alert(obj)
         self.connection.post_reco_alert(camera_id, alert_id)        
 
@@ -65,7 +66,7 @@ class RecoThread(threading.Thread):
                 # setup analyzer
                 alert_areas = self.connection.get_camera_alerts(camera_id)
                 analyzer = TrackAnalyzer(alert_areas)
-                analyzer.on_alert = lambda alert_id, obj: self.on_alert(camera_id, alert_id, obj)
+                analyzer.on_alert = self.on_alert
 
                 # process stream
                 while not RecoThread.bStop and cap.isOpened():
