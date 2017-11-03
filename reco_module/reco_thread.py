@@ -17,8 +17,6 @@ class RecoThread(threading.Thread):
 
     camera = None
 
-    tracker = None
-
     dbg = None
 
     connection = None
@@ -54,10 +52,10 @@ class RecoThread(threading.Thread):
         camera_url = self.camera['url']
         camera_id = self.camera['id']
 
-        self.tracker = TrackerEmu()
+        tracker = TrackerEmu()
 
         if reco_config.DEBUG:
-            self.dbg = DebugWindow(self.camera, self.tracker, self.connection)
+            self.dbg = DebugWindow(self.camera, tracker, self.connection)
 
         try:
             cap = cv2.VideoCapture(camera_url)
@@ -78,12 +76,11 @@ class RecoThread(threading.Thread):
                     #    break
 
                     if res:
-                        self.tracker.process_frame(frame)
+                        tracker.process_frame(frame)
 
                         h, w = frame.shape[:2]
 
-                        #objects = list(self.tracker.objects.values())
-                        objects = self.tracker.objects.values()
+                        objects = list(tracker.objects.values())
 
                         analyzer.process_objects(w, h, objects)
 

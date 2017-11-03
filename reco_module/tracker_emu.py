@@ -9,7 +9,7 @@ class TrackerEmu(object):
 
     frame_w = 1
     frame_h = 1
-    objects = {}
+    objects = None
 
     rect_size = 3   # % of frame size
     max_speed = 0.08 # part of rect_size
@@ -17,6 +17,7 @@ class TrackerEmu(object):
 
     def __init__(self):
 
+        self.objects = {}
         self.next_id = 0
         pass
 

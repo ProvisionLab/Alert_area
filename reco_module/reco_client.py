@@ -12,11 +12,12 @@ class RecoClient(object):
     api_url = 'http://localhost:5000/'
     access_token = None
 
-    alerts = []
+    alerts = None
 
     bStop = False
 
     def __init__(self):
+        self.alerts = []
         signal.signal(signal.SIGINT, self.stop_execution)
         pass
 

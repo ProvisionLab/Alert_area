@@ -21,7 +21,7 @@ class DebugWindow:
 
         camera_id = camera['id']
 
-        self.wname = camera_id
+        self.wname = camera['name']
         cv2.namedWindow(self.wname, cv2.WINDOW_AUTOSIZE) #cv2.WINDOW_NORMAL)
         cv2.setMouseCallback(self.wname, self.on_mouse)
 
