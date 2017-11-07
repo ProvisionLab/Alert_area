@@ -67,10 +67,10 @@ class TrackAnalyzer2(object):
 
         self.alert_areas = [AreaState(a) for a in alert_areas]
 
-        if reco_config.DEBUG:
-            for alert_area in self.alert_areas:
-                if alert_area.type == 'LD':
-                    alert_area.duration = 5
+        #if reco_config.DEBUG:
+        #    for alert_area in self.alert_areas:
+        #        if alert_area.type == 'LD':
+        #            alert_area.duration = 5
         pass
 
     def process_objects(self, w: int, h: int, objects):
@@ -168,8 +168,6 @@ class TrackAnalyzer2(object):
                 delta = time.time() - area.timer2
                 if delta < leave_timer_duration:
                     is_enter = False
-
-            print("LD enter: ", is_enter)
 
             if is_enter:
                 area.timer1 = time.time()
