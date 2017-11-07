@@ -204,7 +204,7 @@ class TrackAnalyzer2(object):
             delta = time.time() - area.timer2
             if delta >= leave_timer_duration:
                 area.timer2 = None
-                self.on_area_leave(area)
+                #self.on_area_leave(area)
 
         pass
 
