@@ -31,6 +31,10 @@ class RecoClient(object):
         if self.do_auth('reco1', 'reco1passwd'):
             cameras = self.do_get_cameras()
 
+            if cameras is None:
+                print("server cameras request failed")
+                return
+
             threads = []
 
             if reco_config.cameras:

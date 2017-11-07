@@ -51,7 +51,7 @@ class TrackAnalyzer(object):
     frame_w = None
     frame_h = None
 
-    on_alert = lambda alert_id, obj: None
+    on_alert = lambda alert_id, is_enter, pos: None
 
     state = {}
 
@@ -144,7 +144,7 @@ class TrackAnalyzer(object):
 
     def check_alert_RA(self, area, obj: TrackObject, objs: AnalyzerState):
         if self.check_area_enter(area, objs) == 1: # enter
-            self.on_alert(area['id'], obj)
+            self.on_alert(area['id'], True, obj.get_pos())
 
     def check_alert_LD(self, area, obj: TrackObject, objs: AnalyzerState):
         

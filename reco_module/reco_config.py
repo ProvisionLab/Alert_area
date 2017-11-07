@@ -9,6 +9,6 @@ cameras = [
     'Ice Rink',
 #    'Warehouse',
 #    'Office',
-    'Restaurant',
+#    'Restaurant',
 #    'Kiev'
 ]

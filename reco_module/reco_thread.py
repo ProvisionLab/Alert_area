@@ -5,7 +5,7 @@ import traceback
 import cv2
 import reco_config
 from tracker_emu import TrackerEmu
-from trk_analyzer import TrackAnalyzer
+from trk_analyzer2 import TrackAnalyzer2
 from trk_object import TrackObject
 from debug_window import DebugWindow
 
@@ -40,9 +40,9 @@ class RecoThread(threading.Thread):
 
         threading.Thread.__init__(self)
 
-    def on_alert(self, alert_id: str, obj: TrackObject):
+    def on_alert(self, alert_id: str, is_enter: bool, pos):
         camera_id = self.camera['id']
-        if self.dbg: self.dbg.add_alert(obj)
+        if self.dbg: self.dbg.add_alert(pos, is_enter)
         self.connection.post_reco_alert(camera_id, alert_id)        
 
     def run(self):
@@ -65,7 +65,7 @@ class RecoThread(threading.Thread):
 
                 # setup analyzer
                 alert_areas = self.connection.get_camera_alerts(camera_id)
-                analyzer = TrackAnalyzer(alert_areas)
+                analyzer = TrackAnalyzer2(alert_areas)
                 analyzer.on_alert = self.on_alert
 
                 # process stream

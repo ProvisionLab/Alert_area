@@ -31,10 +31,9 @@ class DebugWindow:
 
         pass
 
-    def add_alert(self, obj):
+    def add_alert(self, pos, is_enter: bool = True):
         
-        self.alerts.append({'pos':obj.get_pos(), 'r':0})
-
+        self.alerts.append({'pos':pos, 'is_enter' : is_enter, 'r':0})
         pass
 
     def draw_frame(self, frame, objects):
@@ -58,14 +57,28 @@ class DebugWindow:
 
     def draw_alerts(self, frame):
         
+        w = frame.shape[1]
+
+        max_r = w * self.max_alert_r / 100
+        max_r2 = max_r / 2
+
         for alert in self.alerts:
-            cv2.circle(frame, alert['pos'], alert['r'], (255,0,255), 2)
+            r = alert['r']
             alert['r'] += 1
+            if alert['is_enter']:
+                cv2.circle(frame, alert['pos'], r, (255,0,255), 2)
+                if r >= max_r:
+                    alert['done'] = True
+            else:
+                r =  int(max_r2 - r)
+                if r > 0:
+                    cv2.circle(frame, alert['pos'], r, (255,255,0), 2)
+
+                if r <= 0:
+                    alert['done'] = True
             pass
 
-        w = frame.shape[1]
-        max_r = w * self.max_alert_r / 100
-        self.alerts = [a for a in self.alerts if a['r'] < max_r]
+        self.alerts = [a for a in self.alerts if not a.get('done', False)]
         pass
 
     def draw_object(self, frame, obj):

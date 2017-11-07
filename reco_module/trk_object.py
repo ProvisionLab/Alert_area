@@ -26,6 +26,10 @@ class TrackObject(object):
     def get_pos(self):
         return int(self.pos_x), int(self.pos_y)
 
+    def get_pos_rect(self):
+        y1 = self.y2 - (self.y2-self.y1) * 0.3
+        return ((int(self.x1), int(y1)), (int(self.x2), int(self.y2)))
+
     def set_pos(self, x, y):
 
         w = self.x2 - self.x1

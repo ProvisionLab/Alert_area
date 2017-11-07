@@ -96,8 +96,8 @@ class TrackerEmu(object):
 
         n1 = int(random.uniform(0, 50))
 
-        if (n1 == 1 and len(self.objects) < 1) or (n1 == 2 and len(self.objects) < 4):
-            self.create_object()
+        #if (n1 == 1 and len(self.objects) < 1) or (n1 == 2 and len(self.objects) < 4):
+        #    self.create_object()
 
         if n1 == 9 and len(self.objects) > 4:
             self.delete_some_object()
