@@ -29,6 +29,7 @@ class AreaState(object):
 
     timer1 = None     # time of "enter" event
     timer2 = None     # time of "leave" event
+    timer3 = None     # remembered timer1 after leave
     
     def __init__(self, params: dict):
         self.id = params['id']    
@@ -118,13 +119,26 @@ class TrackAnalyzer2(object):
 
         if (area.timer1 is None) and not area_empty:
             # enter event
-            area.timer1 = time.time()
+
+            is_enter = True
+            if area.timer2 is not None:
+                delta = time.time() - area.timer2
+                if delta < leave_timer_duration:
+                    is_enter = False
+
+            if is_enter:
+                self.on_area_enter(area)
+                area.timer1 = time.time()
+            else:
+                area.timer1 = area.timer3
+
             area.timer2 = None
-            self.on_area_enter(area)
+            area.timer3 = None
             pass
 
         elif (area.timer1 is not None) and area_empty:
             # leave event
+            area.timer3 = area.timer1
             area.timer1 = None
             area.timer2 = time.time()
             pass
@@ -133,6 +147,7 @@ class TrackAnalyzer2(object):
             delta = time.time() - area.timer2
             if delta >= leave_timer_duration:
                 area.timer2 = None
+                area.timer3 = None
                 self.on_area_leave(area)
 
         pass
@@ -147,19 +162,30 @@ class TrackAnalyzer2(object):
 
         if (area.timer1 is None) and not area_empty:
             # enter event
-            area.timer1 = time.time()
+
+            is_enter = True
+            if area.timer2 is not None:
+                delta = time.time() - area.timer2
+                if delta < leave_timer_duration:
+                    is_enter = False
+
+            print("LD enter: ", is_enter)
+
+            if is_enter:
+                area.timer1 = time.time()
+                area.LD_enter = False
+            else:
+                area.timer1 = area.timer3
+
             area.timer2 = None
-            area.LD_enter = False
+            area.timer3 = None
             pass
 
         elif (area.timer1 is not None) and area_empty:
             # leave event
+            area.timer3 = area.timer1
             area.timer1 = None
-            if area.LD_enter:
-                area.timer2 = time.time()
-            else:
-                area.timer2 = None
-            pass
+            area.timer2 = time.time()
 
         if (area.timer1 is not None) and not area.LD_enter:
             delta = time.time() - area.timer1
@@ -167,7 +193,7 @@ class TrackAnalyzer2(object):
                 area.LD_enter = True
                 self.on_area_enter(area)
 
-        if (area.timer1 is None) and (area.timer2 is not None):
+        if (area.timer1 is None) and (area.timer2 is not None) and area.LD_enter:
             delta = time.time() - area.timer2
             if delta >= leave_timer_duration:
                 area.timer2 = None
