@@ -76,7 +76,7 @@ python3 backend_server/bvc_server.py
 ```
 3. Run
 ```
-./path_to_build/LvfClient
+./path_to_build/BvcClient
 ```
 
 Now you can connect to testing database with test users.
