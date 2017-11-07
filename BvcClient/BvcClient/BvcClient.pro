@@ -54,7 +54,7 @@ win32-msvc* {
 
     MSVC_VER = $$(VisualStudioVersion)
 
-    equals(MSVC_VER, 14.0) {
+    #equals(MSVC_VER, 14.0) {
 
         # linking with opencv 3.2
 
@@ -67,7 +67,7 @@ win32-msvc* {
 
         # dll paths to run from qt-creator
         LIBS += -L$$(OPENCV_DIR)\x64\vc14\bin
-    }
+    #}
 }
 
 unix {

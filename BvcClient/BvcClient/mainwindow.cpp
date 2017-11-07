@@ -11,6 +11,15 @@
 #include "QAuthDialog.h"
 #include <QTimer>
 
+#include <cmath>
+
+
+// duration = k * [ exp(b * value / m) - 1 ]
+constexpr int LD_max_value = 24*60*60; // 24 hours
+constexpr double LD_b = 5.0;
+static const double LD_k = LD_max_value / (std::exp(LD_b)-1);
+
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -34,7 +43,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect( ui->m_editor, SIGNAL(require_confirm()), this, SLOT(on_require_confirm()));
 
     ui->m_durationSlider->setRange(0, 24*60*60);
-    QObject::connect( ui->m_durationSlider, SIGNAL(valueChanged(int)), this, SLOT(on_alert_perion_changed(int)));
+    QObject::connect( ui->m_durationSlider, SIGNAL(valueChanged(int)), this, SLOT(on_LD_duration_changed(int)));
 
     ui->m_cameraListView->clear();
     ui->m_alertsListView->clear();
@@ -184,12 +193,8 @@ void MainWindow::on_alert_select()
 
         if (ui->m_editor->m_new_alert.m_type == BVC::AlertType::LoiteringDetection)
         {
-            ui->m_durationSlider->setRange(0, 24*60*60);
             int duration = ui->m_editor->m_new_alert.m_duration;
-            ui->m_durationSlider->setValue(duration);
-            ui->m_duration_text->setText(QString("%1.%2")
-                    .arg(duration / 3600)
-                    .arg((duration / 60) % 60, 2, 10, QChar('0')));
+            set_LD_duration(duration);
 
             ui->m_duration_panel->show();
         }
@@ -250,8 +255,7 @@ void MainWindow::on_add_new_alert()
 
     if (dlg.m_alertType == BVC::AlertType::LoiteringDetection)
     {
-        ui->m_durationSlider->setRange(0, 24*60*60);
-        ui->m_durationSlider->setValue(0);
+        set_LD_duration(0);
         ui->m_duration_text->setText(QString("0.00"));
         ui->m_duration_panel->show();
     }
@@ -370,23 +374,39 @@ void MainWindow::on_alert_save()
 //    ui->m_editor->confirm_new_alert();
 }
 
-void MainWindow::on_alert_perion_changed(int value)
-{
-    qDebug() << __FUNCTION__;
-
-    ui->m_duration_text->setText(QString("%1.%2")
-            .arg(value / 3600)
-            .arg((value / 60) % 60, 2, 10, QChar('0')));
-
-    if (ui->m_editor->m_new_alert.m_type == BVC::AlertType::LoiteringDetection)
-    {
-        ui->m_editor->m_new_alert.m_duration = value;
-        emit on_require_confirm();
-    }
-}
-
 void MainWindow::on_require_confirm()
 {
     qDebug() << __FUNCTION__;
     ui->m_bnSaveAlert->show();
+}
+
+void MainWindow::set_LD_duration(unsigned long duration)
+{
+    int value = (int)(std::log((double)duration / LD_k + 1) * (LD_max_value/LD_b));
+
+    qDebug() << __FUNCTION__ << ", duration: " << duration << " value: " << value << ", k: " << LD_k;
+
+    ui->m_durationSlider->setRange(0, LD_max_value);
+    ui->m_durationSlider->setValue(value);
+
+    ui->m_duration_text->setText(QString("%1.%2")
+            .arg(duration / 3600u)
+            .arg((duration / 60u) % 60u, 2, 10, QChar('0')));
+}
+
+void MainWindow::on_LD_duration_changed(int value)
+{
+    unsigned long duration = (unsigned long)(LD_k * (std::exp(value * LD_b / LD_max_value)-1));
+
+    qDebug() << __FUNCTION__ << " value: " << value << ", duration: " << duration;
+
+    ui->m_duration_text->setText(QString("%1.%2")
+            .arg(duration / 3600u)
+            .arg((duration / 60u) % 60u, 2, 10, QChar('0')));
+
+    if (ui->m_editor->m_new_alert.m_type == BVC::AlertType::LoiteringDetection)
+    {
+        ui->m_editor->m_new_alert.m_duration = duration;
+        emit on_require_confirm();
+    }
 }

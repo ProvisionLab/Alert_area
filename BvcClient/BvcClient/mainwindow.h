@@ -27,6 +27,9 @@ protected:
 
     void showEvent(QShowEvent *);
 
+    // LD duration time in seconds
+    void set_LD_duration(unsigned long duration);
+
 private slots:
 
     void auth();
@@ -49,7 +52,7 @@ private slots:
     void on_alert_delete();
     void on_alert_save();
 
-    void on_alert_perion_changed(int value);
+    void on_LD_duration_changed(int value);
 
     void on_require_confirm();
 
