@@ -141,15 +141,14 @@ def api_alerts():
   data = request.get_json()
 
   camera_id = data.get('camera_id')
-  alert_id = data.get('alert_id')
-
   if camera_id is None:
     return error_response(400, "invalid arguments")
 
-  if alert_id is None:
+  alert_type = data.get('alert_type_id')
+  if alert_type is None:
     return error_response(400, "invalid arguments")
 
-  print("alert: {0} / {1}".format(camera_id, alert_id))
+  print("alert: {0} / {1}".format(camera_id, alert_type))
 
   return flask.jsonify({})
 

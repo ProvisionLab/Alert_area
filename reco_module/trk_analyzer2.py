@@ -3,6 +3,7 @@ import numpy as np
 import math
 import cv2
 import time
+from alert_object import AlertObject
 import reco_config
 
 # alert: 
@@ -61,7 +62,7 @@ class TrackAnalyzer2(object):
     frame_w = None
     frame_h = None
 
-    on_alert = lambda alert_id, obj: None
+    on_alert = lambda alert, is_enter, obj: None
 
     def __init__(self, alert_areas):
 
@@ -100,13 +101,13 @@ class TrackAnalyzer2(object):
     def on_area_enter(self, area):
         pos = area.get_pos()
         pos = (int(pos[0] * self.frame_w), int(pos[1] * self.frame_h))
-        self.on_alert(area.id, True, pos)
+        self.on_alert(AlertObject(area.type), True, pos)
         pass
 
     def on_area_leave(self, area):
         pos = area.get_pos()
         pos = (int(pos[0] * self.frame_w), int(pos[1] * self.frame_h))
-        self.on_alert(area.id, False, pos)
+        self.on_alert(AlertObject(area.type), False, pos)
         pass
 
     def check_area_RA(self, area, objects):

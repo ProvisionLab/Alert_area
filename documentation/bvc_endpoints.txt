@@ -1,0 +1,35 @@
+API root URL: https://morning-lake-10802.herokuapp.com
+
+#######################
+Login endpoint:
+POST /api/v2/sessions with data {session: {email: <user_email>, password: <user_password>}}
+Returns JWT to be used in cameras endpoint
+
+Example:
+curl -X POST -H "Content-Type: application/json" https://morning-lake-10802.herokuapp.com/api/v2/sessions --data '{"session": {"email": "nabus@test.com", "password": "password123"}}'
+
+>> {"user":{"lastName":"Account","id":22,"firstName":"Nabus","email":"nabus@test.com"},"jwt":"eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJVc2VyOjIyIiwiZXhwIjoxNTEyNjkyODM5LCJpYXQiOjE1MTAxMDA4MzksImlzcyI6IkdtYWlsLnByb2QiLCJqdGkiOiIyN2E2NjBmNC1mNjdiLTQ3YzUtODQ3YS1mMzc2NjBhZjE0ZGYiLCJwZW0iOnt9LCJzdWIiOiJVc2VyOjIyIiwidHlwIjoidG9rZW4ifQ.7SjcmFsTGGAPaL3NeY5WxzHFIScgssxvlsIWibduvDsJkX-Uop5PKV-mifHF79ygqEbMnoC4-VF19bFgOrl3VA"}
+
+#######################
+
+Cameras endpoint:
+GET /api/v2/me/cameras
+Requires JWT in header
+
+Example:
+
+curl -X GET -H "Content-Type: application/json" -H "Authorization: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJVc2VyOjIyIiwiZXhwIjoxNTEyNjkyODM5LCJpYXQiOjE1MTAxMDA4MzksImlzcyI6IkdtYWlsLnByb2QiLCJqdGkiOiIyN2E2NjBmNC1mNjdiLTQ3YzUtODQ3YS1mMzc2NjBhZjE0ZGYiLCJwZW0iOnt9LCJzdWIiOiJVc2VyOjIyIiwidHlwIjoidG9rZW4ifQ.7SjcmFsTGGAPaL3NeY5WxzHFIScgssxvlsIWibduvDsJkX-Uop5PKV-mifHF79ygqEbMnoC4-VF19bFgOrl3VA" https://morning-lake-10802.herokuapp.com/api/v2/me/cameras
+
+>> {"data":[{"rtspUrl":"rtsp://0.0.0.0:554","name":"SAMSUNG SM-G930V","id":368},{"rtspUrl":"rtsp://98.112.92.120:554","name":"Beach","id":362},{"rtspUrl":"rtsp://12.110.253.194:554","name":"Ice Rink","id":363},{"rtspUrl":"rtsp://140.237.176.132:554","name":"Warehouse","id":364},{"rtspUrl":"rtsp://221.205.18.188:554","name":"Office","id":365},{"rtspUrl":"rtsp://5.43.115.237:554","name":"Restaurant","id":366},{"rtspUrl":"rtsp://91.233.111.24:554","name":"Kiev","id":367}]}
+
+
+#######################
+
+Alert endpoint:
+POST /api/v2/bvc_alert with data {camera_id: <int camera id>, alert_type_id: <int alert type id>, timestamp: <ISO Extended Z timestamp>, image: <see note below>}
+
+We can support two ways of receiving an alert image from you:
+1. You can add a configurable SFTP URL, username, and password and send the image via SFTP, then only include the image filename in the above POST request OR
+2. You can send the image directly in the POST request
+
+We prefer #1. Let me know if you guys can do this.

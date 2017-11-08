@@ -7,6 +7,7 @@ import reco_config
 from tracker_emu import TrackerEmu
 from trk_analyzer2 import TrackAnalyzer2
 from trk_object import TrackObject
+from alert_object import AlertObject
 from debug_window import DebugWindow
 
 # camera: { 'id' : str, 'url' : str }
@@ -24,6 +25,8 @@ class RecoThread(threading.Thread):
     thread_count = 0
     bStop = False
 
+    current_frame = None
+
     @classmethod
     def stop_recognition(cls):
         cls.bStop = True
@@ -40,10 +43,20 @@ class RecoThread(threading.Thread):
 
         threading.Thread.__init__(self)
 
-    def on_alert(self, alert_id: str, is_enter: bool, pos):
+    def on_alert(self, alert: AlertObject, is_enter: bool, pos):
         camera_id = self.camera['id']
         if self.dbg: self.dbg.add_alert(pos, is_enter)
-        self.connection.post_reco_alert(camera_id, alert_id)        
+
+        #self.connection.post_reco_alert(camera_id, alert_id)  
+        alert.camera_id = camera_id
+
+        if self.current_frame is not None:
+            alert.set_image(self.current_frame)
+
+        if reco_config.send_alerts_to_upstream:
+            self.connection.usapi.post_alert(alert)        
+        else:
+            self.connection.post_reco_alert(alert)        
 
     def run(self):
 
@@ -83,6 +96,7 @@ class RecoThread(threading.Thread):
 
                         objects = list(tracker.objects.values())
 
+                        self.current_frame = frame
                         analyzer.process_objects(w, h, objects)
 
                         if self.dbg and self.dbg.draw_frame(frame, objects):

@@ -2,14 +2,17 @@
 """
 import time
 import signal
-#import json
 import requests
 from reco_thread import RecoThread
+from upstream_client import UpstreamClient
+from alert_object import AlertObject
 import reco_config
+
 
 class RecoClient(object):
     
-    api_url = 'http://localhost:5000/'
+    api_url = reco_config.api_url
+
     access_token = None
 
     alerts = None
@@ -19,6 +22,8 @@ class RecoClient(object):
     def __init__(self):
         self.alerts = []
         signal.signal(signal.SIGINT, self.stop_execution)
+
+        self.usapi = UpstreamClient()
         pass
 
     def stop_execution(self, signum, taskfrm):
@@ -95,22 +100,10 @@ class RecoClient(object):
 
         return r.json()['alerts']
 
-    def post_reco_alert(self, camera_id: str, alert_id: str):
+    def post_reco_alert(self, alert: AlertObject):
         
-        print('reco alert {0}/{1}'.format(camera_id, alert_id))
-        self.alerts.append({'camera_id':camera_id, 'alert_id':alert_id, 'time' : time.time()})
-        return
+        self.alerts.append(alert)
 
-        r = requests.post('{0}api/alerts/'.format(self.api_url),
-                        headers={'Authorization': 'JWT {0}'.format(self.access_token)},
-                        json={'camera_id' : camera_id, 'alert_id' : alert_id})
-
-        if r.status_code == 200:
-            print('reco alert {0}/{1}'.format(camera_id, alert_id))
-        else:
-            print('failed to post alert')
-
-        pass
 
     def post_all_alerts(self):
         
@@ -119,10 +112,10 @@ class RecoClient(object):
 
             r = requests.post('{0}api/alerts/'.format(self.api_url),
                             headers={'Authorization': 'JWT {0}'.format(self.access_token)},
-                            json=a)
+                            json=a.as_dict())
 
             if r.status_code == 200:
-                print('post alert {0}/{1}'.format(a['camera_id'], a['alert_id']))
+                print('post alert {0}/{1}'.format(a.camera_id, a.alert_type))
             else:
                 print('failed to post alert')
             

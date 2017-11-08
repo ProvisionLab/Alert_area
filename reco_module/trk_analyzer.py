@@ -3,6 +3,7 @@ import numpy as np
 import math
 import cv2
 import time
+from alert_object import AlertObject
 import reco_config
 
 # alert: 
@@ -51,7 +52,7 @@ class TrackAnalyzer(object):
     frame_w = None
     frame_h = None
 
-    on_alert = lambda alert_id, is_enter, pos: None
+    on_alert = lambda alert, is_enter, pos: None
 
     state = {}
 
@@ -139,12 +140,12 @@ class TrackAnalyzer(object):
         direction = area['direction']
 
         if direction == 'B' or (cross_L and direction == 'L') or (cross_R and direction == 'R'):
-            self.on_alert(area['id'], obj)      
+            self.on_alert(AlertObject(area['type']), True, obj.get_pos())      
         pass
 
     def check_alert_RA(self, area, obj: TrackObject, objs: AnalyzerState):
         if self.check_area_enter(area, objs) == 1: # enter
-            self.on_alert(area['id'], True, obj.get_pos())
+            self.on_alert(AlertObject(area['type']), True, obj.get_pos())      
 
     def check_alert_LD(self, area, obj: TrackObject, objs: AnalyzerState):
         
@@ -160,7 +161,7 @@ class TrackAnalyzer(object):
             delta = time.time() - objs.duration
             if delta >= area['duration']:
                 objs.duration = None
-                self.on_alert(area['id'], obj)
+                self.on_alert(AlertObject(area['type']), True, obj.get_pos())      
         pass
 
     def process_object(self, obj: TrackObject, objs: AnalyzerState):
