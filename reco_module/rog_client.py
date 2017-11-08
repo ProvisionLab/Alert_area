@@ -68,7 +68,7 @@ class UpstreamClient(object):
                             headers={'Authorization': '{0}'.format(self.access_token)},
                             json=alert.as_dict())
 
-        if r.status_code != 200:
+        if not self.is_request_succeeded(r.status_code):
             print("do_post failed: ", r.status_code, r.json())
         
         return r.status_code
