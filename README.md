@@ -11,6 +11,10 @@ Deploy on Ubuntu 16.04
 * MongoDB
 * Python3
 * OpenCV3.x
+* tensorflow-gpu
+
+Download and untar to object_detection folder of
+reco_module http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_11_06_2017.tar.gz
 
 ### Build
 #### OpenCV3.3
