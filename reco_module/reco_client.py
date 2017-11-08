@@ -4,7 +4,7 @@ import time
 import signal
 import requests
 from reco_thread import RecoThread
-from upstream_client import UpstreamClient
+from rog_client import UpstreamClient
 from alert_object import AlertObject
 import reco_config
 

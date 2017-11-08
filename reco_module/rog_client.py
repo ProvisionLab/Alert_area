@@ -11,6 +11,9 @@ class UpstreamClient(object):
 
     def post_alert(self, alert: AlertObject):
         
+        if reco_config.DEBUG:
+            print(alert.as_dict())
+
         res = self.do_post(alert)
 
         if not self.is_request_succeeded(res):
@@ -31,6 +34,7 @@ class UpstreamClient(object):
                 return False
     
         print("post alert: camera: {0} alert: {1}".format(alert.camera_id, alert.alert_type))
+        
         return True
 
     ###################################

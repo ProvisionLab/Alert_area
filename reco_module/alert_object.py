@@ -1,6 +1,20 @@
 import datetime
+import uuid
 import cv2
 import base64
+import rog_sftp
+import reco_config
+
+
+def encode_image(image):
+    
+    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+    result, encimg = cv2.imencode('.jpg', image, encode_param)
+
+    if result:
+        return encimg
+    else:
+        return None
 
 class AlertObject(object):
     
@@ -17,19 +31,26 @@ class AlertObject(object):
         self.image = None
         pass
        
-
     def set_image(self, image):
         
-        img = cv2.resize(image, (320,200), interpolation=cv2.INTER_AREA)
-        
-        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
-        result, encimg = cv2.imencode('.jpg', img, encode_param)
+        if reco_config.send_image_to_sftp:
+            
+            data = encode_image(image)
+            fname = reco_config.sftp_path + str(uuid.uuid4()) + '.jpg'
+            
+            if rog_sftp.sftp_upload(fname, data):
+                self.image = fname
 
-        if result:
-            self.image = str(base64.b64encode(encimg))
         else:
-            self.image = None
-        pass
+
+            image = cv2.resize(image, (320,200), interpolation=cv2.INTER_AREA)
+            data = encode_image(image)
+
+            if data:
+                self.image = str(base64.b64encode(data))
+            else:
+                self.image = None
+            pass
 
 
     def as_dict(self):

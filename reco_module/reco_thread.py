@@ -13,6 +13,8 @@ import reco_config
 
 # camera: { 'id' : str, 'url' : str }
 
+
+
 class RecoThread(threading.Thread):
     """
     """
@@ -55,7 +57,7 @@ class RecoThread(threading.Thread):
         if self.current_frame is not None:
             alert.set_image(self.current_frame)
 
-        if reco_config.send_alerts_to_upstream:
+        if reco_config.send_alerts_to_rog:
             self.connection.usapi.post_alert(alert)        
         else:
             self.connection.post_reco_alert(alert)      
