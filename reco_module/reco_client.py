@@ -112,21 +112,29 @@ class RecoClient(object):
         
         self.alerts.append(alert)
 
+    def post_alert_internal(self, alert):
+        
+        r = requests.post('{0}api/alerts/'.format(self.api_url),
+                        headers={'Authorization': 'JWT {0}'.format(self.access_token)},
+                        json=alert.as_dict())
+
+        if r.status_code == 200:
+            print('post alert {0}/{1}'.format(alert.camera_id, alert.alert_type))
+        else:
+            print('failed to post alert')
 
     def post_all_alerts(self):
         
         while self.alerts:
-            a = self.alerts.pop(0)
+            alert = self.alerts.pop(0)
 
-            r = requests.post('{0}api/alerts/'.format(self.api_url),
-                            headers={'Authorization': 'JWT {0}'.format(self.access_token)},
-                            json=a.as_dict())
+            alert.encode_image()
 
-            if r.status_code == 200:
-                print('post alert {0}/{1}'.format(a.camera_id, a.alert_type))
+            if reco_config.send_alerts_to_rog:
+                self.usapi.post_alert(alert)        
             else:
-                print('failed to post alert')
-
+                self.post_alert_internal(alert)      
+           
     def update_areas(self):
         for t in self.threads:
             areas = self.get_camera_alerts(t.camera['id'])

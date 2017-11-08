@@ -17,7 +17,6 @@ api_url = 'http://localhost:5000/'
 
 update_areas_interval = 60  # seconds
 
-
 send_alerts_to_rog = True
 send_image_to_sftp = True
 

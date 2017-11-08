@@ -54,13 +54,9 @@ class RecoThread(threading.Thread):
         #self.connection.post_reco_alert(camera_id, alert_id)  
         alert.camera_id = camera_id
 
-        if self.current_frame is not None:
-            alert.set_image(self.current_frame)
+        alert.set_image(self.current_frame)
 
-        if reco_config.send_alerts_to_rog:
-            self.connection.usapi.post_alert(alert)        
-        else:
-            self.connection.post_reco_alert(alert)      
+        self.connection.post_reco_alert(alert)      
 
     def update_areas(self, areas):
 

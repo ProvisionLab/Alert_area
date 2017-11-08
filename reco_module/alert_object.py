@@ -6,7 +6,7 @@ import rog_sftp
 import reco_config
 
 
-def encode_image(image):
+def encode_cvimage(image):
     
     encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
     result, encimg = cv2.imencode('.jpg', image, encode_param)
@@ -20,6 +20,8 @@ class AlertObject(object):
     
     camera_id = None
 
+    cvimage = None
+
     def __init__(self, alert_type: str):
         self.camera_id = None
         self.alert_type = alert_type
@@ -30,12 +32,18 @@ class AlertObject(object):
         self.timestamp = ts
         self.image = None
         pass
-       
-    def set_image(self, image):
-        
+
+    def encode_image(self):
+
+        image = self.cvimage
+
+        if image is None:
+            self.image = 'nofile'
+            return
+
         if reco_config.send_image_to_sftp:
             
-            data = encode_image(image)
+            data = encode_cvimage(image)
             fname = str(uuid.uuid4()) + '.jpg'
             
             if rog_sftp.sftp_upload(reco_config.sftp_path + fname, data):
@@ -44,13 +52,18 @@ class AlertObject(object):
         else:
 
             image = cv2.resize(image, (320,200), interpolation=cv2.INTER_AREA)
-            data = encode_image(image)
+            data = encode_cvimage(image)
 
             if data:
                 self.image = str(base64.b64encode(data))
             else:
                 self.image = None
             pass
+       
+    def set_image(self, image):
+        
+        self.cvimage = image
+        
 
 
     def as_dict(self):
