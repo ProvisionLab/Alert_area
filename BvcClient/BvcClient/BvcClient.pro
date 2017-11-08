@@ -72,19 +72,28 @@ win32-msvc* {
 
 unix {
 
-    # (recomended) use this if ubuntu opencv-dev package is installed ( apt-get install libopencv-dev )
-    CONFIG += link_pkgconfig
-    PKGCONFIG += opencv
+    mac {
 
-    # use this if custom opencv build is installed ( download & cmake & make install )
-#    INCLUDEPATH += /usr/local/include
-#    LIBS += -L/usr/local/lib -lopencv_core -lopencv_videoio -lopencv_imgproc
+        # make sure PATH contains pkg-config & PKG_CONFIG_PATH is defined
+#        CONFIG += link_pkgconfig
+#        PKGCONFIG += opencv
 
-}
+        # use this if there are problems with pkgconfig
+        LIBS += -L/usr/local/Cellar/opencv/3.3.1_1/lib \
+            -lopencv_core.3.3.1 \
+            -lopencv_videoio.3.3.1 \
+            -lopencv_imgproc.3.3.1
 
-mac {
+    } 
+    else {
 
-    # make sure PATH contains pkg-config & PKG_CONFIG_PATH is defined
-    CONFIG += link_pkgconfig
-    PKGCONFIG += opencv
+        # (recomended) use this if ubuntu opencv-dev package is installed ( apt-get install libopencv-dev )
+        CONFIG += link_pkgconfig
+        PKGCONFIG += opencv
+
+        # use this if custom opencv build is installed ( download & cmake & make install )
+#       INCLUDEPATH += /usr/local/include
+#       LIBS += -L/usr/local/lib -lopencv_core -lopencv_videoio -lopencv_imgproc
+
+    }
 }
