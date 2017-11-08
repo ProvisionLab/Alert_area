@@ -2,13 +2,14 @@
 """
 import threading
 import traceback
+import time
 import cv2
-import reco_config
 from tracker_emu import TrackerEmu
 from trk_analyzer2 import TrackAnalyzer2
 from trk_object import TrackObject
 from alert_object import AlertObject
 from debug_window import DebugWindow
+import reco_config
 
 # camera: { 'id' : str, 'url' : str }
 
@@ -26,6 +27,7 @@ class RecoThread(threading.Thread):
     bStop = False
 
     current_frame = None
+    analyzer = None
 
     @classmethod
     def stop_recognition(cls):
@@ -56,7 +58,18 @@ class RecoThread(threading.Thread):
         if reco_config.send_alerts_to_upstream:
             self.connection.usapi.post_alert(alert)        
         else:
-            self.connection.post_reco_alert(alert)        
+            self.connection.post_reco_alert(alert)      
+
+    def update_areas(self, areas):
+
+        #print('############## update_areas #################')
+
+        if self.analyzer:
+            self.analyzer.update_areas(areas)
+
+        if self.dbg:
+            self.dbg.update_areas(areas)
+        pass
 
     def run(self):
 
@@ -75,11 +88,11 @@ class RecoThread(threading.Thread):
             cap = cv2.VideoCapture(camera_url)
 
             if cap.isOpened():
-
+                
                 # setup analyzer
                 alert_areas = self.connection.get_camera_alerts(camera_id)
-                analyzer = TrackAnalyzer2(alert_areas)
-                analyzer.on_alert = self.on_alert
+                self.analyzer = TrackAnalyzer2(alert_areas)
+                self.analyzer.on_alert = self.on_alert
 
                 # process stream
                 while not RecoThread.bStop and cap.isOpened():
@@ -97,7 +110,7 @@ class RecoThread(threading.Thread):
                         objects = list(tracker.objects.values())
 
                         self.current_frame = frame
-                        analyzer.process_objects(w, h, objects)
+                        self.analyzer.process_objects(w, h, objects)
 
                         if self.dbg and self.dbg.draw_frame(frame, objects):
                             break

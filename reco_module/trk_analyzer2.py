@@ -28,9 +28,11 @@ class AreaState(object):
     duration = None
     direction = None
 
+    # area state
     timer1 = None     # time of "enter" event
     timer2 = None     # time of "leave" event
     timer3 = None     # remembered timer1 after leave
+    LD_enter = None
     
     def __init__(self, params: dict):
         self.id = params['id']    
@@ -50,6 +52,12 @@ class AreaState(object):
 
         return x/n, y/n
 
+    def copy_state_from(self, a):
+        self.timer1 = a.timer1
+        self.timer2 = a.timer2
+        self.timer3 = a.timer3
+        self.LD_enter = a.LD_enter
+        pass
 
 class TrackAnalyzer2(object):
     """
@@ -80,6 +88,20 @@ class TrackAnalyzer2(object):
 
         for area in self.alert_areas:
             self.process_area(area, objects)
+
+    def update_areas(self, areas):
+        
+        new_areas = [AreaState(a) for a in areas]
+
+        # copy state from old
+        for old_a in self.alert_areas:
+            for new_a in new_areas:
+                if old_a.id == new_a.id:
+                    new_a.copy_state_from(old_a)
+
+        self.alert_areas = new_areas
+
+        pass
 
     #############################################################################
 

@@ -34,24 +34,27 @@ class RecoClient(object):
     def run(self):
         
         if self.do_auth('reco1', 'reco1passwd'):
+            
             cameras = self.do_get_cameras()
 
             if cameras is None:
                 print("server cameras request failed")
                 return
 
-            threads = []
+            self.threads = []
 
             if reco_config.cameras:
-                cameras = [c for c in cameras if c['name'] in reco_config.cameras]
+                self.cameras = [c for c in cameras if c['name'] in reco_config.cameras]
 
-            for camera in cameras:
-                threads.append(RecoThread(self, camera))
+            for camera in self.cameras:
+                self.threads.append(RecoThread(self, camera))
 
-            for t in threads:
+            for t in self.threads:
                 t.start()
 
             print("press Ctrl+C to quit")
+
+            self.updatate_timer = time.time()
 
             while not self.bStop and RecoThread.exist_any_recognition():
                 if self.alerts:
@@ -59,9 +62,14 @@ class RecoClient(object):
                 else:
                     time.sleep(0.1)
 
+                update_delta = time.time() - self.updatate_timer
+                if update_delta >= reco_config.update_areas_interval:
+                    self.update_areas()
+                    self.updatate_timer = time.time()
+
             print('stoping...')
 
-            for t in threads:
+            for t in self.threads:
                 t.join()
 
             print('Quit')
@@ -118,7 +126,11 @@ class RecoClient(object):
                 print('post alert {0}/{1}'.format(a.camera_id, a.alert_type))
             else:
                 print('failed to post alert')
-            
+
+    def update_areas(self):
+        for t in self.threads:
+            areas = self.get_camera_alerts(t.camera['id'])
+            t.update_areas(areas)
 
 if __name__ == '__main__':
     

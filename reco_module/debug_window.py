@@ -53,6 +53,10 @@ class DebugWindow:
         cv2.imshow(self.wname, frame)
         return cv2.waitKey(20) == 27 # ESC
 
+    def update_areas(self, areas):
+        self.zones = areas
+        pass
+
     # private methods        
 
     def draw_alerts(self, frame):

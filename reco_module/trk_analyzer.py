@@ -87,6 +87,11 @@ class TrackAnalyzer(object):
         # remove outdated cash
         self.state = { k:s for k,s in self.state.items() if not s.is_outdated() }
 
+    def update_areas(self, areas):
+        
+        self.alert_areas = areas
+        pass
+
     #############################################################################
 
     def set_frame_size(self, w:int, h: int):
