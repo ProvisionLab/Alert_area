@@ -79,6 +79,7 @@ unix {
 #        PKGCONFIG += opencv
 
         # use this if there are problems with pkgconfig
+        INCLUDEPATH += -I/usr/local/Cellar/opencv/3.3.1_1/include
         LIBS += -L/usr/local/Cellar/opencv/3.3.1_1/lib \
             -lopencv_core.3.3.1 \
             -lopencv_videoio.3.3.1 \
