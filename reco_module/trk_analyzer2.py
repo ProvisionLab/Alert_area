@@ -16,7 +16,7 @@ import reco_config
 #}
 
 
-leave_timer_duration = 2 # second
+leave_timer_duration = 5 # second
 
 class AreaState(object):
     """

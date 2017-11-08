@@ -6,14 +6,25 @@ import time
 import cv2
 from tracker_emu import TrackerEmu
 from trk_analyzer2 import TrackAnalyzer2
+from PeopleDetector import PeopleDetector
 from trk_object import TrackObject
 from alert_object import AlertObject
 from debug_window import DebugWindow
 import reco_config
+import tensorflow as tf
 
 # camera: { 'id' : str, 'url' : str }
 
 
+def inc(id):
+    id += 1
+    return id
+
+def boxes_to_track_objects(boxes):
+    id = 0
+    objects = dict([(TrackObject(id, (b[1] + b[3]) / 2, b[2], b[3] - b[1], b[2] - b[0]), inc(id)) for b in boxes])
+    return objects
+        
 
 class RecoThread(threading.Thread):
     """
@@ -94,6 +105,7 @@ class RecoThread(threading.Thread):
         camera_url = self.get_camera_url(self.camera)
         camera_id = self.camera['id']
 
+        detector = PeopleDetector()
         tracker = TrackerEmu()
 
         if reco_config.DEBUG:
@@ -101,6 +113,8 @@ class RecoThread(threading.Thread):
 
         try:
             cap = cv2.VideoCapture(camera_url)
+            #fourcc = cv2.VideoWriter_fourcc(*'XVID')
+            #print(cap.get(7))
 
             if cap.isOpened():
                 
@@ -108,29 +122,31 @@ class RecoThread(threading.Thread):
                 alert_areas = self.connection.get_camera_alerts(camera_id)
                 self.analyzer = TrackAnalyzer2(alert_areas)
                 self.analyzer.on_alert = self.on_alert
+                id = 0
+                with detector.detection_graph.as_default():
+                    with tf.Session(graph=detector.detection_graph) as sess:
+                        # process stream
+                        while not RecoThread.bStop and cap.isOpened():
 
-                # process stream
-                while not RecoThread.bStop and cap.isOpened():
+                            res, frame = cap.read()
 
-                    res, frame = cap.read()
+                            if not res:
+                                continue
 
-                    #if not res:
-                    #    break
+                            if res and id % 4 == 0:
+                                boxes = detector.process_frame(frame, sess)
 
-                    if res:
-                        tracker.process_frame(frame)
+                                h, w = frame.shape[:2]
+                        
+                                tracker.objects = boxes_to_track_objects(boxes)
+                                objects = list(tracker.objects)
+                                self.current_frame = frame
+                                self.analyzer.process_objects(w, h, objects)
 
-                        h, w = frame.shape[:2]
-
-                        objects = list(tracker.objects.values())
-
-                        self.current_frame = frame
-                        self.analyzer.process_objects(w, h, objects)
-
-                        if self.dbg and self.dbg.draw_frame(frame, objects):
-                            break
-
-                    pass #while
+                            if self.dbg and self.dbg.draw_frame(frame, objects):
+                                       break
+                            id += 1
+                            pass #while
 
             cap.release()
 
