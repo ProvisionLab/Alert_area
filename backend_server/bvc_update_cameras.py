@@ -42,19 +42,30 @@ def update_cameras():
         print('cameras updating failed')
         return
         
-    bvc_db.update_cameras([{'id': c['id'], 'name': c['name'], 'url': c['rtspUrl']} for c in cameras]) 
+    cameras = [
+        {
+            'id': c['id'], 
+            'name': c['name'], 
+            'url': c['rtspUrl'], 
+            'username': c.get('username'),
+            'password': c.get('password'),
+        } for c in cameras]
+
+    bvc_db.update_cameras(cameras) 
   
 
 if __name__ == '__main__':
 
     bvc_db.delete_empty_cameras()
 
-    #for c in bvc_db.get_cameras():
-    #    print(c)
+    print("was:")
+    for c in bvc_db.get_cameras():
+        print(c)
 
     update_cameras();    
 
-    #for c in bvc_db.get_cameras():
-    #    print(c)
+    print("now:")
+    for c in bvc_db.get_cameras():
+        print(c)
 
     pass

@@ -71,12 +71,29 @@ class RecoThread(threading.Thread):
             self.dbg.update_areas(areas)
         pass
 
+    def get_camera_url(self, camera):
+        
+        camera_url = camera['url']
+
+        username = camera.get('username')
+        password = camera.get('password')
+        if username is None or password is None:
+            return camera_url
+
+        if camera_url[:7] != 'rtsp://':
+            return camera_url
+
+        camera_url = 'rtsp://{0}:{1}@{2}'.format(username, password, camera_url[7:])
+
+        return camera_url
+
+
     def run(self):
 
         print('start reco: \'{0}\', {1}'.format(self.camera['name'], self.camera['url']))
 
         # open stream by url
-        camera_url = self.camera['url']
+        camera_url = self.get_camera_url(self.camera)
         camera_id = self.camera['id']
 
         tracker = TrackerEmu()
