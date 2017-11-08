@@ -36,9 +36,9 @@ class AlertObject(object):
         if reco_config.send_image_to_sftp:
             
             data = encode_image(image)
-            fname = reco_config.sftp_path + str(uuid.uuid4()) + '.jpg'
+            fname = str(uuid.uuid4()) + '.jpg'
             
-            if rog_sftp.sftp_upload(fname, data):
+            if rog_sftp.sftp_upload(reco_config.sftp_path + fname, data):
                 self.image = fname
 
         else:
