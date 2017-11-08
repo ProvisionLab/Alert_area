@@ -18,7 +18,7 @@ api_url = 'http://localhost:5000/'
 update_areas_interval = 60  # seconds
 
 
-send_alerts_to_upstream = False
+send_alerts_to_upstream = True
 
 # upstream settings
 

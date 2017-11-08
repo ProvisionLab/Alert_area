@@ -10,6 +10,7 @@ class AlertObject(object):
         self.camera_id = None
         self.alert_type = alert_type
 
+        # <ISO Extended Z timestamp>
         ts = datetime.datetime.utcnow().isoformat()+'Z'
 
         self.timestamp = ts
@@ -36,9 +37,11 @@ class AlertObject(object):
         payload = { 
             'camera_id': self.camera_id, 
             'alert_type_id': self.alert_type, 
-            'timestamp': self.timestamp, # <ISO Extended Z timestamp>
-            'image': self.image # 
+            'timestamp': self.timestamp, 
         }
+
+        if self.image:
+            payload['image'] = self.image
 
         return payload
 
