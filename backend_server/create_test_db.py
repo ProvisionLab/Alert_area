@@ -1,36 +1,42 @@
 import bvc_db
 
 cameras = [
- { 
-   'name' : 'Beach',
-   'url' : 'rtsp://98.112.92.120:554',
- },
- { 
-   'name' : 'Ice Rink', 
-   'url' : 'rtsp://12.110.253.194:554'
- },
- { 
-   'name' : 'Warehouse',
-   'username' : 'admin',
-   'password' : '12345',
-   'url' : 'rtsp://140.237.176.132:554'
- },
- { 
-   'name' : 'Office',
-   'username' : 'admin',
-   'password' : '12345',
-   'url' : 'rtsp://221.205.18.188:554'
- },
- { 
-   'name' : 'Restaurant',
-   'username' : 'admin',
-   'password' : '12345',
-   'url' : 'rtsp://5.43.115.237:554'
- },
- { 
-   'name' : 'Kiev',
-   'url' : 'rtsp://91.233.111.24:554'
- },
+    { 
+      'id' : 1,
+      'name' : 'Beach',
+      'url' : 'rtsp://98.112.92.120:554',
+    },
+    { 
+      'id' : 2,
+      'name' : 'Ice Rink', 
+      'url' : 'rtsp://12.110.253.194:554'
+    },
+    { 
+      'id' : 3,
+      'name' : 'Warehouse',
+      'username' : 'admin',
+      'password' : '12345',
+      'url' : 'rtsp://140.237.176.132:554'
+    },
+    { 
+      'id' : 3,
+      'name' : 'Office',
+      'username' : 'admin',
+      'password' : '12345',
+      'url' : 'rtsp://221.205.18.188:554'
+    },
+    { 
+      'id' : 5,
+      'name' : 'Restaurant',
+      'username' : 'admin',
+      'password' : '12345',
+      'url' : 'rtsp://5.43.115.237:554'
+    },
+    { 
+      'id' : 6,
+      'name' : 'Kiev',
+      'url' : 'rtsp://91.233.111.24:554'
+    },
 ]
 
 

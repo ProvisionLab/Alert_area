@@ -8,7 +8,7 @@ QCameraItem::QCameraItem(QString const & name)
 
 QCameraItem::QCameraItem(QJsonObject const & json)
     : QListWidgetItem(json["name"].toString())
-    , m_Id(json["id"].toString())
+    , m_Id(json["id"].toInt())
     , m_Url(json["url"].toString())
 {
     if (json.contains("username"))

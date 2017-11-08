@@ -70,7 +70,7 @@ def api_cameras_all_get():
   cameras = bvc_db.get_cameras()
   return flask.jsonify({'cameras':cameras})
 
-@app.route('/api/cameras/<string:camera_id>/', methods=["GET"])
+@app.route('/api/cameras/<int:camera_id>/', methods=["GET"])
 @jwt_required()
 def api_camera_get(camera_id:str):
 
@@ -81,7 +81,7 @@ def api_camera_get(camera_id:str):
   else:
     return error_response(404, err)#"camera {0} not found".format(camera_id))
 
-@app.route('/api/cameras/<string:camera_id>/alerts/', methods=["GET", "POST"])
+@app.route('/api/cameras/<int:camera_id>/alerts/', methods=["GET", "POST"])
 @jwt_required()
 def api_camera_alerts(camera_id:str):
 
@@ -103,7 +103,7 @@ def api_camera_alerts(camera_id:str):
 
     return flask.jsonify({ 'alert' : { 'id' : alert_id } })
 
-@app.route('/api/cameras/<string:camera_id>/alerts/<string:alert_id>/', methods=["DELETE", "PUT", "GET"])
+@app.route('/api/cameras/<int:camera_id>/alerts/<string:alert_id>/', methods=["DELETE", "PUT", "GET"])
 @jwt_required()
 def api_camera_alert_(camera_id:str, alert_id:str):
 

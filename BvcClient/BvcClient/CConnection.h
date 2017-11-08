@@ -19,12 +19,12 @@ public:
     void auth(QString url, QString username, QString password, std::function<void(bool succeeded)> callback);
 
     void get_cameras(std::function<void(QJsonObject const&)> callback);
-    void get_camera_alerts(QString camera_id, std::function<void(QJsonObject const&)> callback);
+    void get_camera_alerts(int camera_id, std::function<void(QJsonObject const&)> callback);
 
-    void post_camera_alert(QString camera_id, QJsonObject const & j_alert, std::function<void(QJsonObject const&)> callback);
+    void post_camera_alert(int camera_id, QJsonObject const & j_alert, std::function<void(QJsonObject const&)> callback);
 
-    void delete_camera_alert(QString camera_id, QString alert_id, std::function<void(QJsonObject const&)> callback);
-    void update_camera_alert(QString camera_id, QString alert_id, QJsonObject const & j_alert, std::function<void(QJsonObject const&)> callback);
+    void delete_camera_alert(int camera_id, QString alert_id, std::function<void(QJsonObject const&)> callback);
+    void update_camera_alert(int camera_id, QString alert_id, QJsonObject const & j_alert, std::function<void(QJsonObject const&)> callback);
 
 protected:
 

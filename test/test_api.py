@@ -30,8 +30,9 @@ def check_camera(self,camera):
 
     camera_id = camera.get('id')
     self.assertTrue(camera_id is not None)
-    self.assertTrue(type(camera_id) is str)
-    self.assertTrue(len(camera_id) > 0)
+    self.assertTrue(type(camera_id) is int)
+    #self.assertTrue(type(camera_id) is str)
+    #self.assertTrue(len(camera_id) > 0)
 
 def check_response_camera(self,camera):
 

@@ -42,7 +42,7 @@ public:
 
 public:
 
-    QString m_Id;
+    int m_Id;
     QString m_Url;
     QString m_username;
     QString m_password;
