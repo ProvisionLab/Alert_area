@@ -44,14 +44,12 @@ class PeopleDetector:
             self.num_detections = self.detection_graph.get_tensor_by_name('num_detections:0')
 
     def process_frame(self, frame, sess):
-        #with self.detection_graph.as_default():
-            #self.sess = tf.Session(graph=self.detection_graph)
-            # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
         
-        frame_scaled = cv2.resize(frame, (480, 270))
+        frame_scaled = cv2.resize(frame, (640, 480))
+        # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
         image_np_expanded = np.expand_dims(frame_scaled, axis=0)
 
-            # Actual detection.
+        # Actual detection.
         (boxes, scores, classes, num_detections) = sess.run(
            [self.boxes, self.scores, self.classes, self.num_detections],
            feed_dict={self.image_tensor: image_np_expanded})
