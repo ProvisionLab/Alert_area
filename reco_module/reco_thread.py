@@ -7,6 +7,7 @@ import cv2
 from tracker_emu import TrackerEmu
 from trk_analyzer2 import TrackAnalyzer2
 from PeopleDetector import PeopleDetector
+from MotionDetector import MotionDetector
 from trk_object import TrackObject
 from alert_object import AlertObject
 from debug_window import DebugWindow
@@ -115,6 +116,7 @@ class RecoThread(threading.Thread):
             cap = cv2.VideoCapture(camera_url)
             #fourcc = cv2.VideoWriter_fourcc(*'XVID')
             #print(cap.get(7))
+            objects = None
 
             if cap.isOpened():
                 
@@ -122,9 +124,14 @@ class RecoThread(threading.Thread):
                 alert_areas = self.connection.get_camera_alerts(camera_id)
                 self.analyzer = TrackAnalyzer2(alert_areas)
                 self.analyzer.on_alert = self.on_alert
-                id = 0
+
+                motion_detector = MotionDetector(int(cap.get(3) * cap.get(4) / 600))
+                frame_id = 0
+                config = tf.ConfigProto()
+                config.gpu_options.per_process_gpu_memory_fraction = 0.7
+                # session = tf.Session(config=config, ...)
                 with detector.detection_graph.as_default():
-                    with tf.Session(graph=detector.detection_graph) as sess:
+                    with tf.Session(graph=detector.detection_graph, config=config) as sess:
                         # process stream
                         while not RecoThread.bStop and cap.isOpened():
 
@@ -133,7 +140,7 @@ class RecoThread(threading.Thread):
                             if not res:
                                 continue
 
-                            if res and id % 4 == 0:
+                            if res and frame_id % 2 == 0 and motion_detector.isMotion(frame):
                                 boxes = detector.process_frame(frame, sess)
 
                                 h, w = frame.shape[:2]
@@ -145,7 +152,7 @@ class RecoThread(threading.Thread):
 
                             if self.dbg and self.dbg.draw_frame(frame, objects):
                                        break
-                            id += 1
+                            frame_id += 1
                             pass #while
 
             cap.release()
