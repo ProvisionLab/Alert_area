@@ -33,49 +33,47 @@ class RecoClient(object):
 
     def run(self):
         
-        if self.do_auth('reco1', 'reco1passwd'):
+        if not self.do_auth(reco_config.api_username, reco_config.api_password):
+            return
             
-            cameras = self.do_get_cameras()
+        cameras = self.do_get_cameras()
 
-            if cameras is None:
-                print("server cameras request failed")
-                return
+        if cameras is None:
+            print("server cameras request failed")
+            return
 
-            self.threads = []
+        self.threads = []
 
-            if reco_config.cameras:
-                self.cameras = [c for c in cameras if c['name'] in reco_config.cameras]
+        if reco_config.cameras:
+            self.cameras = [c for c in cameras if c['name'] in reco_config.cameras]
 
-            for camera in self.cameras:
-                self.threads.append(RecoThread(self, camera))
+        for camera in self.cameras:
+            self.threads.append(RecoThread(self, camera))
 
-            for t in self.threads:
-                t.start()
+        for t in self.threads:
+            t.start()
 
-            print("press Ctrl+C to quit")
+        print("press Ctrl+C to quit")
 
-            self.updatate_timer = time.time()
+        self.updatate_timer = time.time()
 
-            while not self.bStop and RecoThread.exist_any_recognition():
-                if self.alerts:
-                    self.post_all_alerts()
-                else:
-                    time.sleep(0.1)
+        while not self.bStop and RecoThread.exist_any_recognition():
+            if self.alerts:
+                self.post_all_alerts()
+            else:
+                time.sleep(0.1)
 
-                update_delta = time.time() - self.updatate_timer
-                if update_delta >= reco_config.update_areas_interval:
-                    self.update_areas()
-                    self.updatate_timer = time.time()
+            update_delta = time.time() - self.updatate_timer
+            if update_delta >= reco_config.update_areas_interval:
+                self.update_areas()
+                self.updatate_timer = time.time()
 
-            print('stoping...')
+        print('stoping...')
 
-            for t in self.threads:
-                t.join()
+        for t in self.threads:
+            t.join()
 
-            print('Quit')
-
-        pass
-
+        print('Quit')
 
     def do_auth(self, username, password):
         r = requests.post(

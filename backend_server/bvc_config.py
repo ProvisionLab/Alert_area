@@ -5,6 +5,7 @@ api_host = '0.0.0.0'
 #api_host = 'localhost'
 api_port = 5000
 
+bvcclient_password = 'qwerty1'
 
 # upstream settings
 

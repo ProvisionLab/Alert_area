@@ -42,7 +42,7 @@ protected:
 
 private:
 
-    QString          m_strUrl;
+    QString    m_strUrl;
     cv::VideoCapture m_cap;
     volatile bool m_bStop;
 

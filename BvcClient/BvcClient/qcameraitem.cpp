@@ -11,11 +11,6 @@ QCameraItem::QCameraItem(QJsonObject const & json)
     , m_Id(json["id"].toInt())
     , m_Url(json["url"].toString())
 {
-    if (json.contains("username"))
-        m_username = json["username"].toString();
-
-    if (json.contains("password"))
-        m_password = json["password"].toString();
 }
 
 void QCameraItem::set_alerts(QJsonArray const & json)

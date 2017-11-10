@@ -71,7 +71,14 @@ void MainWindow::auth()
         return;
     }
 
-    m_conn.auth(dlg.m_api_url, dlg.m_username, dlg.m_password, [this](bool succeeded)
+    m_cap_username = dlg.m_username;
+    m_cap_password = dlg.m_password;
+
+#ifdef _DEBUG
+    m_conn.m_apiUrl = dlg.m_api_url;
+#endif
+
+    m_conn.auth([this](bool succeeded)
     {
         if (succeeded)
             emit on_auth_succeeded();
@@ -156,7 +163,7 @@ void MainWindow::on_camera_select()
     {
         ui->m_editor->setModeConnect();
 
-        auto url = camera->get_url();
+        auto url = camera->get_url(m_cap_username, m_cap_password);
         if (!url.isEmpty())
         {
             m_capture.start(url, nullptr);

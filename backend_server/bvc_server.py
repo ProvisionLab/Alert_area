@@ -5,6 +5,7 @@ from flask_jwt import JWT, jwt_required, current_identity
 import json
 import bvc_db
 from datetime import timedelta
+import bvc_users
 import bvc_config
 
 app = Flask(__name__)
@@ -15,33 +16,18 @@ app.config['JWT_EXPIRATION_DELTA'] = timedelta(seconds=360*24*3600)   # 2do: cha
 #####################################################
 ## JWT implementation
 
-class User(object):
-    def __init__(self, id, username, password):
-        self.id = id
-        self.username = username
-        self.password = password
-
-    def __str__(self):
-        return "User(id='%s')" % self.id
-
-users = [
-    User(1, 'reco1', 'reco1passwd'),
-    User(2, 'user1', 'qwerty1'),
-    User(3, 'user2', 'qwerty2'),
-]
-
-username_table = {u.username: u for u in users}
-userid_table = {u.id: u for u in users}
+username_table = {u.username: u for u in bvc_users.users}
+userid_table = {u.id: u for u in bvc_users.users}
 
 def authenticate(username, password):
-  user = username_table.get(username, None)
-  if user and user.password.encode('utf-8') == password.encode('utf-8'):
-    return user
-  return None
+    user = username_table.get(username, None)
+    if user and user.password.encode('utf-8') == password.encode('utf-8'):
+        return user
+    return None
 
 def identity(payload):
-  user_id = payload['identity']
-  return userid_table.get(user_id, None)
+    user_id = payload['identity']
+    return userid_table.get(user_id, None)
 
 jwt = JWT(app, authenticate, identity)
 

@@ -44,7 +44,8 @@ HEADERS  += mainwindow.h \
     newalertdialog.h \
     QCvVideoCapure.h \
     QAuthDialog.h \
-    CAlertData.hpp
+    CAlertData.hpp \
+    auth_config.h
 
 FORMS    += mainwindow.ui \
     newalertdialog.ui \

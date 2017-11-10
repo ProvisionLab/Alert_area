@@ -61,6 +61,9 @@ private:
     Ui::MainWindow *ui;
 
     BVC::CConnection    m_conn;
+
+    QString             m_cap_username;
+    QString             m_cap_password;
     QCvVideoCapure      m_capture;
 };
 

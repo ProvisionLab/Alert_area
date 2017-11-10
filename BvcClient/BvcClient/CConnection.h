@@ -16,7 +16,7 @@ public:
     void Open();
 
 
-    void auth(QString url, QString username, QString password, std::function<void(bool succeeded)> callback);
+    void auth(std::function<void(bool succeeded)> callback);
 
     void get_cameras(std::function<void(QJsonObject const&)> callback);
     void get_camera_alerts(int camera_id, std::function<void(QJsonObject const&)> callback);

@@ -18,9 +18,9 @@ public:
     void del_alert(QString alert_id);
     void update_alert(BVC::CAlertData const & alert);
 
-    QString get_url() const
+    QString get_url(QString username, QString password) const
     {
-        if (m_username.isEmpty())
+        if (username.isEmpty() || password.isEmpty())
             return m_Url;
 
         QString protoName = "rtsp://";
@@ -32,8 +32,8 @@ public:
         {
             return QString("%1%2:%3@%4")
                     .arg(protoName)
-                    .arg(m_username)
-                    .arg(m_password)
+                    .arg(username)
+                    .arg(password)
                     .arg(m_Url.right(m_Url.size()- protoName.size()));
         }
 
@@ -44,8 +44,6 @@ public:
 
     int m_Id;
     QString m_Url;
-    QString m_username;
-    QString m_password;
 
     std::vector<BVC::CAlertData>    m_alerts;
 };

@@ -14,6 +14,8 @@ cameras = [
 ]
 
 api_url = 'http://localhost:5000/'
+api_username = 'reco1'
+api_password = 'reco1passwd'
 
 update_areas_interval = 60  # seconds
 

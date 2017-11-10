@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QDebug>
+#include "auth_config.h"
 
 namespace BVC {
 
@@ -49,7 +50,9 @@ public:
 
 CConnection::CConnection()
 {
-    m_apiUrl = "http://localhost:5000/";
+    m_apiUrl = BVCAPI_URL;
+    m_username = BVCAPI_USERNAME;
+    m_password = BVCAPI_PASSWORD;
 }
 
 void CConnection::Open()
@@ -57,20 +60,15 @@ void CConnection::Open()
 
 }
 
-void CConnection::auth(QString url, QString username, QString password, std::function<void(bool succeeded)> callback)
+void CConnection::auth(std::function<void(bool succeeded)> callback)
 {
-    m_apiUrl = url;
-
     QNetworkRequest request(QString("%1api/auth").arg(m_apiUrl));
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
     QJsonObject j_auth;
 
-    m_username = username;
-    m_password = password;
-
-    j_auth["username"] = username;
-    j_auth["password"] = password;
+    j_auth["username"] = m_username;
+    j_auth["password"] = m_password;
 
     QJsonDocument j_doc(j_auth);
 
