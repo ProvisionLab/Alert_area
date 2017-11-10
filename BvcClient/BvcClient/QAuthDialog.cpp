@@ -22,14 +22,20 @@ QAuthDialog::QAuthDialog(QWidget *parent) :
     ui->m_api_url->setText("http://localhost:5000/");
 
 #ifdef _DEBUG
+    ui->m_api_url->show();
+    ui->m_url_label->show();
+#else
+    ui->m_api_url->hide();
+    ui->m_url_label->hide();
+#endif
+
+#ifdef _DEBUG
     ui->m_username->setText("user1");
     ui->m_password->setText("qwerty1");
 #endif
-
 }
 
 QAuthDialog::~QAuthDialog()
 {
     delete ui;
 }
-

@@ -389,9 +389,10 @@ void MainWindow::set_LD_duration(unsigned long duration)
     ui->m_durationSlider->setRange(0, LD_max_value);
     ui->m_durationSlider->setValue(value);
 
-    ui->m_duration_text->setText(QString("%1.%2")
+    ui->m_duration_text->setText(QString("%1.%2.%3")
             .arg(duration / 3600u)
-            .arg((duration / 60u) % 60u, 2, 10, QChar('0')));
+            .arg((duration / 60u) % 60u, 2, 10, QChar('0'))
+            .arg((duration) % 60u, 2, 10, QChar('0')));
 }
 
 void MainWindow::on_LD_duration_changed(int value)
@@ -400,9 +401,10 @@ void MainWindow::on_LD_duration_changed(int value)
 
     qDebug() << __FUNCTION__ << " value: " << value << ", duration: " << duration;
 
-    ui->m_duration_text->setText(QString("%1.%2")
+    ui->m_duration_text->setText(QString("%1.%2.%3")
             .arg(duration / 3600u)
-            .arg((duration / 60u) % 60u, 2, 10, QChar('0')));
+            .arg((duration / 60u) % 60u, 2, 10, QChar('0'))
+            .arg((duration) % 60u, 2, 10, QChar('0')));
 
     if (ui->m_editor->m_new_alert.m_type == BVC::AlertType::LoiteringDetection)
     {
