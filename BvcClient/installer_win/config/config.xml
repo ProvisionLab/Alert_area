@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Installer>
+    <Name>BvcClient</Name>
+    <Version>1.0.0</Version>
+    <Title>BvcClient Installer</Title>
+    <Publisher>BVC</Publisher>
+    <StartMenuDir>BVC Client</StartMenuDir>
+    <TargetDir>@ApplicationsDirX64@/bvc</TargetDir>
+</Installer>

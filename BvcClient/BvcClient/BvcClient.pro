@@ -100,3 +100,8 @@ macx {
         -lopencv_videoio \
         -lopencv_imgproc
 }
+
+DISTFILES +=
+
+RESOURCES += \
+    bvcclient.qrc
