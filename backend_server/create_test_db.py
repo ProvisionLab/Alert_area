@@ -14,22 +14,16 @@ cameras = [
     { 
       'id' : 3,
       'name' : 'Warehouse',
-      'username' : 'admin',
-      'password' : '12345',
       'url' : 'rtsp://140.237.176.132:554'
     },
     { 
       'id' : 3,
       'name' : 'Office',
-      'username' : 'admin',
-      'password' : '12345',
       'url' : 'rtsp://221.205.18.188:554'
     },
     { 
       'id' : 5,
       'name' : 'Restaurant',
-      'username' : 'admin',
-      'password' : '12345',
       'url' : 'rtsp://5.43.115.237:554'
     },
     { 
@@ -38,7 +32,6 @@ cameras = [
       'url' : 'rtsp://91.233.111.24:554'
     },
 ]
-
 
 bvc_db.drop()
 

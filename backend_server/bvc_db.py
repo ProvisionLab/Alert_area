@@ -37,23 +37,28 @@ def get_cameras():
 
 def update_cameras(cameras : list):
 
-    old_cameras = get_cameras()
+    try:
+        old_cameras = get_cameras()
 
-    new_ids = [c['id'] for c in cameras]
-    del_ids = [c['id'] for c in old_cameras if not c.get('id') is None and c.get('id') not in new_ids]
+        new_ids = [c['id'] for c in cameras]
+        del_ids = [c['id'] for c in old_cameras if not c.get('id') is None and c.get('id') not in new_ids]
 
-    for c in cameras:
-        set_camera(c)
+        for c in cameras:
+            set_camera(c)
 
-    delete_cameras(del_ids)
-    pass
+        delete_cameras(del_ids)
+
+    except:
+        return False
+    
+    return True
 
 def delete_cameras(ids : list):
 
     if len(ids) == 0:
         return
 
-    #print('delete cameras: ', ids)
+    print('delete cameras: ', ids)
 
     result = db.cameras.remove({'id': {'$in': ids }})
     pass

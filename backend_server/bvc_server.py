@@ -52,20 +52,36 @@ def internal_error(e):
 
 @app.route('/api/cameras/all/', methods=["GET"])
 @jwt_required()
-def api_cameras_all_get():
+def api_cameras_get_all():
   cameras = bvc_db.get_cameras()
   return flask.jsonify({'cameras':cameras})
+
+@app.route('/api/cameras/', methods=["POST"])
+@jwt_required()
+def api_camera_set_all():
+
+  if request.method == 'POST':
+
+      cameras = request.get_json()
+
+      print("set cameras: ", cameras)
+
+      if not bvc_db.update_cameras(cameras):
+          return error_response(404, "failed")
+
+      return flask.jsonify({})
+
 
 @app.route('/api/cameras/<int:camera_id>/', methods=["GET"])
 @jwt_required()
 def api_camera_get(camera_id:str):
 
-  camera, err = bvc_db.get_camera(camera_id)
+    camera, err = bvc_db.get_camera(camera_id)
 
-  if camera is not None:
-    return flask.jsonify({'camera' : camera })
-  else:
-    return error_response(404, err)#"camera {0} not found".format(camera_id))
+    if camera is not None:
+        return flask.jsonify({'camera' : camera })
+    else:
+        return error_response(404, err)#"camera {0} not found".format(camera_id))
 
 @app.route('/api/cameras/<int:camera_id>/alerts/', methods=["GET", "POST"])
 @jwt_required()
