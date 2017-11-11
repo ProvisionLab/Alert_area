@@ -8,9 +8,12 @@ QCameraItem::QCameraItem(QString const & name)
 
 QCameraItem::QCameraItem(QJsonObject const & json)
     : QListWidgetItem(json["name"].toString())
-    , m_Id(json["id"].toInt())
-    , m_Url(json["url"].toString())
 {
+    m_Id = json["id"].toInt();
+    if (json.contains("rtspUrl"))
+        m_Url = json["rtspUrl"].toString();
+    else
+        m_Url = json["url"].toString();
 }
 
 void QCameraItem::set_alerts(QJsonArray const & json)

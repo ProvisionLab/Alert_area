@@ -23,7 +23,10 @@ public:
 
 protected:
 
-    void on_get_cameras(QJsonArray const & json);
+    void on_rog_get_cameras(QJsonArray const & cameras);
+    void on_get_cameras(QJsonArray const & cameras);
+
+    void post_cameras();
 
     void showEvent(QShowEvent *);
 
@@ -34,9 +37,7 @@ private slots:
 
     void auth();
 
-    void on_auth_succeeded();
     void on_auth_failed();
-
 
     void on_camera_select();
     void on_alert_select();

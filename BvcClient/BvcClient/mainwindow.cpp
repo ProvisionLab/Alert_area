@@ -74,26 +74,25 @@ void MainWindow::auth()
     m_cap_username = dlg.m_username;
     m_cap_password = dlg.m_password;
 
+    m_conn.rog_auth(dlg.m_username, dlg.m_password, [this](QString const & rog_token)
+    {
+        if (!rog_token.isEmpty())
+        {
+            m_conn.rog_get_cameras(rog_token, [this](QJsonObject const & json)
+            {
+                qDebug() << "rog get_cameras: " << json;
+                on_rog_get_cameras(json["data"].toArray());
+            });
+        }
+        else
+        {
+            emit on_auth_failed();
+        }
+    });
+
 #ifdef _DEBUG
     m_conn.m_apiUrl = dlg.m_api_url;
 #endif
-
-    m_conn.auth([this](bool succeeded)
-    {
-        if (succeeded)
-            emit on_auth_succeeded();
-        else
-            emit on_auth_failed();
-    });
-}
-
-void MainWindow::on_auth_succeeded()
-{
-    m_conn.get_cameras([this](QJsonObject const & json)
-    {
-        qDebug() << "get_cameras: " << json;
-        on_get_cameras(json["cameras"].toArray());
-    });
 }
 
 void MainWindow::on_auth_failed()
@@ -131,14 +130,68 @@ void MainWindow::on_camera_frame()
     }
 }
 
-void MainWindow::on_get_cameras(QJsonArray const & json)
+void MainWindow::post_cameras()
+{
+    QJsonArray j_cameras;
+
+    for (int i = 0; i < ui->m_cameraListView->count(); ++i)
+    {
+        auto * camera = static_cast<QCameraItem*>(ui->m_cameraListView->item(i));
+        QJsonObject j_camera;
+        j_camera["id"] = camera->m_Id;
+        j_camera["name"] = camera->text();
+        j_camera["url"] = camera->m_Url;
+        j_cameras.append(j_camera);
+    }
+
+    m_conn.set_cameras(j_cameras, [this](bool succeeded)
+    {
+        qDebug() << "set_cameras: " << succeeded;
+    });
+}
+
+void MainWindow::on_rog_get_cameras(QJsonArray const & cameras)
 {
     qDebug() << __FUNCTION__;
 
     ui->m_cameraListView->clear();
     ui->m_bnAddAlert->hide();
 
-    for (auto && x : json)
+    on_get_cameras(cameras);
+
+    m_conn.auth([this](bool succeeded)
+    {
+        if (succeeded)
+        {
+            if (ui->m_cameraListView->count() == 0)
+            {
+                m_conn.get_cameras([this](QJsonObject const & json)
+                {
+                    qDebug() << "get_cameras: " << json;
+                    on_get_cameras(json["cameras"].toArray());
+
+                    //post_cameras();
+                });
+            }
+
+            else
+            {
+                // update backend cameras list
+                post_cameras();
+            }
+        }
+        else
+        {
+            emit on_auth_failed();
+        }
+    });
+}
+
+void MainWindow::on_get_cameras(QJsonArray const & cameras)
+{
+    qDebug() << __FUNCTION__;
+
+    for (auto && x : cameras)
     {
        if (x.isObject())
        {

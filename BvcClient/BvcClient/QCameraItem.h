@@ -4,6 +4,7 @@
 #include <QListWidgetItem>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QUrl>
 #include "CAlertData.hpp"
 #include <vector>
 
@@ -23,21 +24,12 @@ public:
         if (username.isEmpty() || password.isEmpty())
             return m_Url;
 
-        QString protoName = "rtsp://";
+        QUrl url(m_Url);
 
-        if (m_Url.size() < protoName.size())
-            return {};
+        url.setUserName(username);
+        url.setPassword(password);
 
-        if ( m_Url.left(protoName.size()) == protoName )
-        {
-            return QString("%1%2:%3@%4")
-                    .arg(protoName)
-                    .arg(username)
-                    .arg(password)
-                    .arg(m_Url.right(m_Url.size()- protoName.size()));
-        }
-
-        return {};
+        return url.toString();
     }
 
 public:

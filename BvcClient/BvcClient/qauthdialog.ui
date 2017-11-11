@@ -44,6 +44,12 @@
      <height>13</height>
     </rect>
    </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="text">
     <string>username</string>
    </property>
@@ -53,9 +59,15 @@
     <rect>
      <x>20</x>
      <y>80</y>
-     <width>47</width>
+     <width>46</width>
      <height>13</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="text">
     <string>password</string>
@@ -89,9 +101,15 @@
     <rect>
      <x>20</x>
      <y>20</y>
-     <width>21</width>
-     <height>16</height>
+     <width>12</width>
+     <height>13</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
    <property name="text">
     <string>url</string>

@@ -25,6 +25,8 @@ QAuthDialog::QAuthDialog(QWidget *parent) :
 #ifdef _DEBUG
     ui->m_api_url->show();
     ui->m_url_label->show();
+    ui->m_username->setText(ROGAPI_USERNAME);
+    ui->m_password->setText(ROGAPI_PASSWORD);
 #else
     ui->m_api_url->hide();
     ui->m_url_label->hide();
