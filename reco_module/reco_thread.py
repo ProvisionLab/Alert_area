@@ -13,6 +13,7 @@ from alert_object import AlertObject
 from debug_window import DebugWindow
 import reco_config
 import tensorflow as tf
+from urllib.parse import quote
 
 # camera: { 'id' : str, 'url' : str }
 
@@ -93,7 +94,7 @@ class RecoThread(threading.Thread):
         if camera_url[:7] != 'rtsp://':
             return camera_url
 
-        camera_url = 'rtsp://{0}:{1}@{2}'.format(username, password, camera_url[7:])
+        camera_url = 'rtsp://{0}:{1}@{2}'.format(quote(username), quote(password), camera_url[7:])
 
         return camera_url
 
