@@ -1,1 +1,1 @@
-python bvc_server.py
+start python bvc_server.py

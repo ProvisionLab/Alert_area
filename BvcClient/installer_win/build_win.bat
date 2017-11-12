@@ -6,25 +6,26 @@ set BUILD_DIR=..\build-BvcClient-Desktop_Qt_5_9_2_MSVC2017_64bit_Fixed-Release
 rem set OPENCV_DIR=d:\dev\OpenCV320\opencv\build
 set OPENCV_BIN=%OPENCV_DIR%\x64\vc14\bin
 
-set PACKAGEDIR=.\packages\com.bvc.client\data
-set APPNAME=BvcClient.exe
+set PACKAGEDIR=.\packages\com.rog.tool\data
+set APPNAME=RogTool.exe
 
 rem prepare files
 
 del /Q /S "%PACKAGEDIR%\*"
 
-call "%VS140COMNTOOLS%vsvars32.bat"
+rem call "%VS150COMNTOOLS%vsvars32.bat"
+set VCINSTALLDIR=%VS150COMNTOOLS%..\..\VC\
+rem set > aaa
 
 "%QTDIR%\%QTKIT%\bin\windeployqt" -dir "%PACKAGEDIR%" ^
     --compiler-runtime --no-system-d3d-compiler --no-translations --no-opengl-sw --release ^
-    "%BUILD_DIR%\%APPNAME%"
+    "%BUILD_DIR%\ROG.exe"
 
-copy "%BUILD_DIR%\%APPNAME%" "%PACKAGEDIR%\%APPNAME%"
+copy "%BUILD_DIR%\ROG.exe" "%PACKAGEDIR%\%APPNAME%"
 copy "%OPENCV_BIN%\opencv_ffmpeg320_64.dll" "%PACKAGEDIR%\opencv_ffmpeg320_64.dll"
 copy "%OPENCV_BIN%\opencv_world320.dll" "%PACKAGEDIR%\opencv_world320.dll"
-copy "..\BvcClient\bvc.png" "%PACKAGEDIR%\bvc.png"
-copy "..\BvcClient\bvc.ico" "%PACKAGEDIR%\bvc.ico"
+copy "..\BvcClient\rog.ico" "%PACKAGEDIR%\rog.ico"
 
 rem build installer
 
-"%QTDIR%\Tools\QtInstallerFramework\3.0\bin\binarycreator.exe" --offline-only -c config\config.xml -p packages BvcClientInstaller64.exe
+"%QTDIR%\Tools\QtInstallerFramework\3.0\bin\binarycreator.exe" --offline-only -c config\config.xml -p packages RogToolInstaller64.exe

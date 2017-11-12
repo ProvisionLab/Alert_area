@@ -176,6 +176,10 @@ void CConnection::auth(std::function<void(bool succeeded)> callback)
                 callback(false);
             }
         }
+        else
+        {
+            callback(false);
+        }
 
         ctx->m_reply->deleteLater();
     });

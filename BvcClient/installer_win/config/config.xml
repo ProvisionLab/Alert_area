@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Installer>
-    <Name>BvcClient</Name>
+    <Name>ROG Tool</Name>
     <Version>1.0.0</Version>
-    <Title>BvcClient Installer</Title>
-    <Publisher>BVC</Publisher>
-    <StartMenuDir>BVC Client</StartMenuDir>
-    <TargetDir>@ApplicationsDirX64@/bvc</TargetDir>
+    <Title>ROG Tool</Title>
+    <Publisher>ROG</Publisher>
+    <StartMenuDir>ROG</StartMenuDir>
+    <TargetDir>@ApplicationsDirX64@/rog</TargetDir>
 </Installer>

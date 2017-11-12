@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package>
-    <DisplayName>BvcClient</DisplayName>
-    <Description>BvcClient: editor of alert areas</Description>
+    <DisplayName>ROG Tool</DisplayName>
+    <Description>ROG Tool</Description>
     <Version>1.0.0-1</Version>
-    <ReleaseDate>2017-11-10</ReleaseDate>
+    <ReleaseDate>2017-11-12</ReleaseDate>
     <Default>true</Default>
     <!--RequiresAdminRights>true</RequiresAdminRights-->
     <Script>installscript.qs</Script>
