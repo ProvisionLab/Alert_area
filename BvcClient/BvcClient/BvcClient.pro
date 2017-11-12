@@ -53,6 +53,8 @@ FORMS    += mainwindow.ui \
 
 win32-msvc* {
 
+    ICON=rog_256.ico
+
     MSVC_VER = $$(VisualStudioVersion)
 
     #equals(MSVC_VER, 14.0) {

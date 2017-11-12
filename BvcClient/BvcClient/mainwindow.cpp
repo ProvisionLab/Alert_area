@@ -97,7 +97,8 @@ void MainWindow::auth()
 
 void MainWindow::on_auth_failed()
 {
-    QMessageBox::about(this, "Auth", "Authorization failed!");
+    qDebug() << __FUNCTION__;
+    QMessageBox::critical(this, "Auth", "Authorization failed!");
     close();
 }
 
@@ -182,7 +183,8 @@ void MainWindow::on_rog_get_cameras(QJsonArray const & cameras)
         }
         else
         {
-            emit on_auth_failed();
+            QMessageBox::critical(this, "", "Connection failed!");
+            close();
         }
     });
 }
