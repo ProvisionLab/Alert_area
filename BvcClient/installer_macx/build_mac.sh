@@ -17,4 +17,6 @@ install_name_tool -change /usr/local/Cellar/ilmbase/2.2.0/lib/libIex-2_2.12.dyli
 install_name_tool -change /usr/local/Cellar/ilmbase/2.2.0/lib/libIex-2_2.12.dylib @executable_path/../Frameworks/libIex-2_2.12.dylib "$BUNDLE_PATH/Contents/Frameworks/libIexMath-2_2.12.dylib"
 install_name_tool -change /usr/local/Cellar/ilmbase/2.2.0/lib/libIex-2_2.12.dylib @executable_path/../Frameworks/libIex-2_2.12.dylib "$BUNDLE_PATH/Contents/Frameworks/libIlmThread-2_2.12.dylib"
 
+$QTDIR/macdeployqt $BUNDLE_PATH -dmg
+
 mv $BUILD_DIR/BvcClient.dmg .
