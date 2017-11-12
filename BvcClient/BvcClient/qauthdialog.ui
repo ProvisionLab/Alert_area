@@ -40,15 +40,9 @@
     <rect>
      <x>20</x>
      <y>50</y>
-     <width>47</width>
-     <height>13</height>
+     <width>101</width>
+     <height>21</height>
     </rect>
-   </property>
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
    </property>
    <property name="text">
     <string>username</string>
@@ -59,15 +53,9 @@
     <rect>
      <x>20</x>
      <y>80</y>
-     <width>46</width>
-     <height>13</height>
+     <width>101</width>
+     <height>21</height>
     </rect>
-   </property>
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
    </property>
    <property name="text">
     <string>password</string>
@@ -101,8 +89,8 @@
     <rect>
      <x>20</x>
      <y>20</y>
-     <width>12</width>
-     <height>13</height>
+     <width>31</width>
+     <height>21</height>
     </rect>
    </property>
    <property name="sizePolicy">

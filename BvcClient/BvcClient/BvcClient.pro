@@ -87,19 +87,16 @@ unix:!macx {
 macx {
 
     # make sure PATH contains pkg-config & PKG_CONFIG_PATH is defined
+#   QT_CONFIG -= no-pkg-config
 #   CONFIG += link_pkgconfig
 #   PKGCONFIG += opencv
-    PKG_CONFIG = /usr/local/bin/pkg-config
-
 
     # use this if there are problems with pkgconfig
-    INCLUDEPATH += /usr/local/Cellar/opencv/3.3.1_1/include
-    LIBS += -L/usr/local/Cellar/opencv/3.3.1_1/lib
+    INCLUDEPATH += /usr/local/opt/opencv/include
+    LIBS += -L/usr/local/opt/opencv/lib
+    #LIBS += `pkg-config --libs-only-L opencv`
 
-    LIBS += \
-        -lopencv_core \
-        -lopencv_videoio \
-        -lopencv_imgproc
+    LIBS += -lopencv_core -lopencv_videoio -lopencv_imgproc
 }
 
 DISTFILES +=

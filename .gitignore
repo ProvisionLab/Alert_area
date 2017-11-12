@@ -1,3 +1,7 @@
+#macx files
+
+.DS_Store
+*.app/
 
 # python files
 
