@@ -24,7 +24,7 @@ rem set > aaa
 copy "%BUILD_DIR%\ROG.exe" "%PACKAGEDIR%\%APPNAME%"
 copy "%OPENCV_BIN%\opencv_ffmpeg320_64.dll" "%PACKAGEDIR%\opencv_ffmpeg320_64.dll"
 copy "%OPENCV_BIN%\opencv_world320.dll" "%PACKAGEDIR%\opencv_world320.dll"
-copy "..\BvcClient\rog.ico" "%PACKAGEDIR%\rog.ico"
+copy "..\BvcClient\rog_256.ico" "%PACKAGEDIR%\rog.ico"
 
 rem build installer
 

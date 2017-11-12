@@ -8,7 +8,7 @@ QTDIR=~/Qt/5.8/clang_64/bin
 BUILD_DIR=../build-BvcClient-Desktop_Qt_5_8_0_clang_64bit-Release
 #BUILD_DIR=../BvcClient
 
-APPNAME=BvcClient
+APPNAME=ROG
 BUNDLE_PATH=$BUILD_DIR/$APPNAME.app
 
 $QTDIR/macdeployqt $BUNDLE_PATH

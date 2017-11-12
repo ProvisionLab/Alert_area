@@ -1,5 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>rog.ico</file>
+        <file>rog_256.ico</file>
     </qresource>
 </RCC>

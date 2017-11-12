@@ -4,7 +4,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    a.setWindowIcon(QIcon(":/rog.ico"));
+    a.setWindowIcon(QIcon(":/rog_256.ico"));
     MainWindow w;
     w.show();
 

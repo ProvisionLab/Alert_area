@@ -86,6 +86,13 @@ unix:!macx {
 
 macx {
 
+    ICON=macx/rog_256.icns
+
+    QMAKE_INFO_PLIST = macx/Info.plist
+
+    OTHER_FILES += macx/Info.plist
+    DISTFILES += macx/Info.plist
+
     # make sure PATH contains pkg-config & PKG_CONFIG_PATH is defined
 #   QT_CONFIG -= no-pkg-config
 #   CONFIG += link_pkgconfig
@@ -98,8 +105,6 @@ macx {
 
     LIBS += -lopencv_core -lopencv_videoio -lopencv_imgproc
 }
-
-DISTFILES +=
 
 RESOURCES += \
     bvcclient.qrc
