@@ -96,7 +96,16 @@ class RecoClient(object):
             t.update_areas(areas)
 
     def set_cameras(self, cameras):
+        
+        # remove stoped threads
+        del_threads = [t for t in self.threads if t.bExit]        
+        self.threads = [t for t in self.threads if not t.bExit]        
+        
+        for t in del_threads:
+            t.join()
 
+        #
+        
         old_cameras = [t.camera for t in self.threads]
 
         old_ids = [c['id'] for c in old_cameras]
