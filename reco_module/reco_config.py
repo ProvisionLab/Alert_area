@@ -11,13 +11,14 @@ cameras = [
 #    'Office',
 #    'Restaurant',
 #    'Kiev'
+    'Kiev 2'
 ]
 
-api_url = 'http://localhost:5000/'
+api_url = 'http://localhost:5000'
 api_username = 'reco1'
 api_password = 'reco1passwd'
 
-update_areas_interval = 60  # seconds
+update_interval = 60  # seconds
 
 send_alerts_to_rog = True
 send_image_to_sftp = True

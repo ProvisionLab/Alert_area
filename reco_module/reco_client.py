@@ -29,44 +29,31 @@ class RecoClient(object):
     def stop_execution(self, signum, taskfrm):
         print('Ctrl+C was pressed')
         self.bStop = True
-        RecoThread.stop_recognition()
-
-    def run(self):
-        
-        if not self.do_auth(reco_config.api_username, reco_config.api_password):
-            return
-            
-        cameras = self.do_get_cameras()
-
-        if cameras is None:
-            print("server cameras request failed")
-            return
-
-        self.threads = []
-
-        if reco_config.cameras:
-            self.cameras = [c for c in cameras if c['name'] in reco_config.cameras]
-
-        for camera in self.cameras:
-            self.threads.append(RecoThread(self, camera))
 
         for t in self.threads:
-            t.start()
+            t.stop()
+        
+    def run(self):
+        
+        self.threads = []
 
         print("press Ctrl+C to quit")
 
-        self.updatate_timer = time.time()
+        self.updatate_timer = 0 #time.time()
 
-        while not self.bStop and RecoThread.exist_any_recognition():
+        while not self.bStop:
+            
+            update_delta = time.time() - self.updatate_timer
+            if update_delta >= reco_config.update_interval:
+                if not self.update():
+                    break
+                self.updatate_timer = time.time()
+
             if self.alerts:
                 self.post_all_alerts()
             else:
                 time.sleep(0.1)
 
-            update_delta = time.time() - self.updatate_timer
-            if update_delta >= reco_config.update_areas_interval:
-                self.update_areas()
-                self.updatate_timer = time.time()
 
         print('stoping...')
 
@@ -75,9 +62,76 @@ class RecoClient(object):
 
         print('Quit')
 
+    def update(self):
+
+        if not self.update_cameras():
+            return False
+
+        self.update_areas()
+
+        return True
+
+    def update_cameras(self):
+        
+        if not self.do_auth(reco_config.api_username, reco_config.api_password):
+            print("backend auth request failed")
+            return False
+
+        cameras = self.do_get_cameras()
+
+        if cameras is None:
+            print("backend cameras request failed")
+            return False
+
+        if reco_config.cameras:
+            cameras = [c for c in cameras if c['name'] in reco_config.cameras]
+
+        self.set_cameras(cameras)
+
+        return True
+
+    def update_areas(self):
+        for t in self.threads:
+            areas = self.get_camera_alerts(t.camera['id'])
+            t.update_areas(areas)
+
+    def set_cameras(self, cameras):
+
+        old_cameras = [t.camera for t in self.threads]
+
+        old_ids = [c['id'] for c in old_cameras]
+        new_ids = [c['id'] for c in cameras]
+        del_ids = [c['id'] for c in old_cameras if c.get('id') not in new_ids]
+
+        # delete cameras
+
+        del_threads = [t for t in self.threads if t.camera['id'] in del_ids]
+        new_threads = [t for t in self.threads if t.camera['id'] not in del_ids]
+
+        for t in del_threads:
+            print("stop recognition of camera: ", t.camera['name'])
+            t.stop()
+
+        self.threads = new_threads
+
+        add_cameras = [c for c in cameras if c['id'] not in del_ids and c['id'] not in old_ids]
+
+        for c in add_cameras:
+            print("start recognition of camera: ", c['name'])
+            t = RecoThread(self, c)
+            self.threads.append(t)
+            t.start()
+            
+        self.cameras = cameras
+
+        #for t in del_threads:
+        #    t.join()
+
+        pass
+
     def do_auth(self, username, password):
         r = requests.post(
-            self.api_url+'api/auth',
+            self.api_url+'/api/auth',
             json={'username':username, 'password':password})
 
         if r.status_code != 200:
@@ -88,7 +142,7 @@ class RecoClient(object):
 
     def do_get_cameras(self):
 
-        r = requests.get('{0}api/cameras/all/'.format(self.api_url),
+        r = requests.get('{0}/api/cameras/all/'.format(self.api_url),
                             headers={'Authorization': 'JWT {0}'.format(self.access_token)})
 
         if r.status_code != 200:
@@ -98,7 +152,7 @@ class RecoClient(object):
 
     def get_camera_alerts(self, camera_id: str):
 
-        r = requests.get('{0}api/cameras/{1}/alerts/'.format(self.api_url, camera_id),
+        r = requests.get('{0}/api/cameras/{1}/alerts/'.format(self.api_url, camera_id),
                         headers={'Authorization': 'JWT {0}'.format(self.access_token)})
 
         if r.status_code != 200:
@@ -112,7 +166,7 @@ class RecoClient(object):
 
     def post_alert_internal(self, alert):
         
-        r = requests.post('{0}api/alerts/'.format(self.api_url),
+        r = requests.post('{0}/api/alerts/'.format(self.api_url),
                         headers={'Authorization': 'JWT {0}'.format(self.access_token)},
                         json=alert.as_dict())
 
@@ -133,11 +187,6 @@ class RecoClient(object):
             else:
                 self.post_alert_internal(alert)      
            
-    def update_areas(self):
-        for t in self.threads:
-            areas = self.get_camera_alerts(t.camera['id'])
-            t.update_areas(areas)
-
 if __name__ == '__main__':
     
     app = RecoClient()

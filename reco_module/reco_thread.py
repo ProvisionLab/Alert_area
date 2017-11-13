@@ -39,14 +39,11 @@ class RecoThread(threading.Thread):
     connection = None
 
     thread_count = 0
-    bStop = False
+    bStop = False   # True, if thread gone to exit
+    bExit = False   # True, if thread exited
 
     current_frame = None
     analyzer = None
-
-    @classmethod
-    def stop_recognition(cls):
-        cls.bStop = True
 
     @classmethod
     def exist_any_recognition(cls):
@@ -59,6 +56,9 @@ class RecoThread(threading.Thread):
         RecoThread.thread_count += 1
 
         threading.Thread.__init__(self)
+
+    def stop(self):
+        self.bStop = True
 
     def on_alert(self, alert: AlertObject, is_enter: bool, pos):
         camera_id = self.camera['id']
@@ -134,7 +134,7 @@ class RecoThread(threading.Thread):
                 with detector.detection_graph.as_default():
                     with tf.Session(graph=detector.detection_graph, config=config) as sess:
                         # process stream
-                        while not RecoThread.bStop and cap.isOpened():
+                        while not self.bStop and cap.isOpened():
 
                             res, frame = cap.read()
 
@@ -156,6 +156,8 @@ class RecoThread(threading.Thread):
                             frame_id += 1
                             pass #while
 
+                del self.analyzer
+
             cap.release()
 
         except:
@@ -165,7 +167,10 @@ class RecoThread(threading.Thread):
         RecoThread.thread_count -= 1
 
         if self.dbg:
+            self.dbg.close()
             del self.dbg
 
         print('end: {0}, threads: {1}'.format(camera_id, RecoThread.thread_count))
+
+        self.bExit = True
         pass

@@ -31,6 +31,9 @@ class DebugWindow:
 
         pass
 
+    def close(self):
+        cv2.destroyWindow(self.wname)
+
     def add_alert(self, pos, is_enter: bool = True):
         
         self.alerts.append({'pos':pos, 'is_enter' : is_enter, 'r':0})
