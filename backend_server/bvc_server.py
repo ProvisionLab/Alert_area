@@ -9,9 +9,9 @@ import bvc_users
 import bvc_config
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'super-secret'
+app.config['SECRET_KEY'] = 'bvc-secret'
 app.config['JWT_AUTH_URL_RULE'] = '/api/auth'
-app.config['JWT_EXPIRATION_DELTA'] = timedelta(seconds=360*24*3600)   # 2do: change in future
+app.config['JWT_EXPIRATION_DELTA'] = timedelta(seconds=24*3600)   # 2do: change in future
 
 #####################################################
 ## JWT implementation
@@ -44,7 +44,7 @@ def error_response(status:int, message:str):
 
 @app.errorhandler(404)
 def page_not_found(e):
-  return error_response(404, "resource not found")
+   return error_response(404, "resource not found")
 
 @app.errorhandler(500)
 def internal_error(e):
@@ -140,19 +140,20 @@ def api_camera_alert_(camera_id:str, alert_id:str):
 @jwt_required()
 def api_alerts():
 
-  data = request.get_json()
+    data = request.get_json()
 
-  camera_id = data.get('camera_id')
-  if camera_id is None:
-    return error_response(400, "invalid arguments")
+    camera_id = data.get('camera_id')
+    if camera_id is None:
+        return error_response(400, "invalid arguments")
 
-  alert_type = data.get('alert_type_id')
-  if alert_type is None:
-    return error_response(400, "invalid arguments")
+    alert_type = data.get('alert_type_id')
+    if alert_type is None:
+        return error_response(400, "invalid arguments")
 
-  print("alert: {0} / {1}".format(camera_id, alert_type))
+    print("alert: {0} / {1}".format(camera_id, alert_type))
 
-  return flask.jsonify({})
+    return flask.jsonify({})
 
 if __name__ == '__main__':
-  app.run(host=bvc_config.api_host, port=bvc_config.api_port)
+    #app.run(host="127.0.0.1", port=5000)
+    app.run(host="0.0.0.0", port=5000)

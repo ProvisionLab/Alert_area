@@ -12,9 +12,13 @@ Deploy on Ubuntu 16.04
 * Python3
 * OpenCV3.x
 * tensorflow-gpu
+* gunicorn
 
 Download and untar to object_detection folder of
 reco_module http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_11_06_2017.tar.gz
+
+Install Gunicorn:
+sudo apt-get install gunicorn3
 
 ### Build
 #### OpenCV3.3
@@ -25,6 +29,7 @@ And install in /usr/local via [tutorial](https://docs.opencv.org/3.0-beta/doc/tu
 #### MongoDB
 
 Install mongoDB via [tutorial](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/)
+
 
 #### Client's part
 

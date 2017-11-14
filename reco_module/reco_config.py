@@ -15,7 +15,7 @@ cameras = [
     'Reolink'
 ]
 
-api_url = 'http://localhost:5000'
+api_url = 'http://192.168.88.247:5000'
 api_username = 'reco1'
 api_password = 'reco1passwd'
 

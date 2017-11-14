@@ -126,6 +126,8 @@ void CConnection::rog_get_cameras(QString const & rog_token, std::function<void(
     {
         QJsonObject result;
 
+        qDebug() << "rog get cameras status: " << ctx->m_reply->error();
+
         if (ctx->m_reply->error() == QNetworkReply::NoError)
         {
             QJsonDocument doc = QJsonDocument::fromJson(ctx->data);
