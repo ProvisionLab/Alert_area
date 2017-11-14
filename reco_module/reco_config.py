@@ -6,12 +6,13 @@ DEBUG = True
 # to capture all cameras use empty list
 cameras = [
 #    'Beach',
-    'Ice Rink',
+#    'Ice Rink',
 #    'Warehouse',
 #    'Office',
 #    'Restaurant',
 #    'Kiev'
-    'Kiev 2'
+#    'Kiev 2'
+    'Reolink'
 ]
 
 api_url = 'http://localhost:5000'

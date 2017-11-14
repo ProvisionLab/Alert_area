@@ -35,5 +35,5 @@ cameras = [
 
 bvc_db.drop()
 
-for camera in cameras:
-  bvc_db.append_camera(camera)
+#for camera in cameras:
+#  bvc_db.append_camera(camera)

@@ -1,9 +1,31 @@
 #include "QCameraItem.h"
+#include <QDebug>
 
 QCameraItem::QCameraItem(QString const & name)
     : QListWidgetItem(name)
 {
 
+}
+
+QString QCameraItem::get_url(QString username, QString password) const
+{
+    return m_Url;
+/*
+    if (username.isEmpty() || password.isEmpty())
+        return m_Url;
+
+    QUrl url(m_Url);
+
+    qDebug() << "camera username: " << url.userName() << ", password: " << url.password();
+
+    if (!url.userName().isEmpty())
+        return m_Url;
+
+    url.setUserName(username);
+    url.setPassword(password);
+
+    return url.toString();
+*/
 }
 
 QCameraItem::QCameraItem(QJsonObject const & json)

@@ -252,11 +252,15 @@ void CConnection::get_camera_alerts(int camera_id, std::function<void(QJsonObjec
 
 void CConnection::post_camera_alert(int camera_id, QJsonObject const & j_alert, std::function<void(QJsonObject const&)> callback)
 {
+    qDebug() << __FUNCTION__;
+
     QNetworkRequest request(QString("%1/api/cameras/%2/alerts/").arg(m_apiUrl).arg(camera_id));
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
 
     QJsonDocument j_doc(j_alert);
+
+    qDebug() << "post alert: " << j_alert;
 
     auto ctx = std::make_shared<RequestContext>(
                 m_nm.post(request, j_doc.toJson()));
@@ -300,6 +304,8 @@ void CConnection::delete_camera_alert(int camera_id, QString alert_id,
 void CConnection::update_camera_alert(int camera_id, QString alert_id, QJsonObject const & j_alert,
     std::function<void(QJsonObject const&)> callback)
 {
+    qDebug() << __FUNCTION__;
+
     QNetworkRequest request(QString("%1/api/cameras/%2/alerts/%3/").arg(m_apiUrl).arg(camera_id).arg(alert_id));
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());

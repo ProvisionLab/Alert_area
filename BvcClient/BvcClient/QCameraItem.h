@@ -19,18 +19,7 @@ public:
     void del_alert(QString alert_id);
     void update_alert(BVC::CAlertData const & alert);
 
-    QString get_url(QString username, QString password) const
-    {
-        if (username.isEmpty() || password.isEmpty())
-            return m_Url;
-
-        QUrl url(m_Url);
-
-        url.setUserName(username);
-        url.setPassword(password);
-
-        return url.toString();
-    }
+    QString get_url(QString username, QString password) const;
 
 public:
 

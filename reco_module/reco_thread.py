@@ -85,6 +85,7 @@ class RecoThread(threading.Thread):
     def get_camera_url(self, camera):
         
         camera_url = camera['url']
+        return camera_url
 
         username = camera.get('username')
         password = camera.get('password')
