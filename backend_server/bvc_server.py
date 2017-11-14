@@ -5,13 +5,25 @@ from flask_jwt import JWT, jwt_required, current_identity
 import json
 import bvc_db
 from datetime import timedelta
+import logging
+from logging.handlers import RotatingFileHandler
 import bvc_users
 import bvc_config
 
 app = Flask(__name__)
+
 app.config['SECRET_KEY'] = 'bvc-secret'
 app.config['JWT_AUTH_URL_RULE'] = '/api/auth'
 app.config['JWT_EXPIRATION_DELTA'] = timedelta(seconds=24*3600)   # 2do: change in future
+
+log_handler = RotatingFileHandler('bvc_server.log', maxBytes=100000, backupCount=1)
+log_handler.setLevel(logging.INFO)
+app.logger.addHandler(log_handler)
+
+log_werkzeug = logging.getLogger('werkzeug')
+log_werkzeug.setLevel(logging.INFO)
+log_werkzeug.addHandler(log_handler)
+
 
 #####################################################
 ## JWT implementation
@@ -53,8 +65,12 @@ def internal_error(e):
 @app.route('/api/cameras/all/', methods=["GET"])
 @jwt_required()
 def api_cameras_get_all():
-  cameras = bvc_db.get_cameras()
-  return flask.jsonify({'cameras':cameras})
+
+    app.logger.info('get all cameras')
+
+    cameras = bvc_db.get_cameras()
+
+    return flask.jsonify({'cameras':cameras})
 
 @app.route('/api/cameras/', methods=["POST"])
 @jwt_required()
@@ -62,9 +78,11 @@ def api_camera_set_all():
 
   if request.method == 'POST':
 
+      app.logger.info('set all cameras')
+
       cameras = request.get_json()
 
-      print("set cameras: ", cameras)
+      #print("set cameras: ", cameras)
 
       if not bvc_db.update_cameras(cameras):
           return error_response(404, "failed")
@@ -92,7 +110,7 @@ def api_camera_alerts(camera_id:str):
     alerts, err = bvc_db.get_camera_alerts(camera_id)
 
     if alerts is None:
-      return error_response(404, err)
+        return error_response(404, err)
 
     return flask.jsonify({ 'alerts' : alerts })
 
@@ -101,7 +119,7 @@ def api_camera_alerts(camera_id:str):
     alert_id, err = bvc_db.append_camera_alert(camera_id, request.get_json())
 
     if alert_id is None:
-      return error_response(404, err)
+        return error_response(404, err)
 
     return flask.jsonify({ 'alert' : { 'id' : alert_id } })
 
@@ -156,4 +174,4 @@ def api_alerts():
 
 if __name__ == '__main__':
     #app.run(host="127.0.0.1", port=5000)
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, threaded=True, debug=False)
