@@ -2,15 +2,15 @@
 
 # Install MongoDB
 
-sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927
-
-sudo apt-get update
-
-sudo apt-get install -y mongodb-org
+if [ -z "`service --status-all | grep mongodb`" ]
+    echo Install MongoDB
+    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 0C49F3730359A14518585931BC711F9BA15703C6
+    sudo apt-get update
+    sudo apt-get install -y mongodb
+fi
 
 # start MongoDB
 sudo service mondodb start
-
 
 
 # Install python packages
