@@ -1,8 +1,9 @@
 #!/bin/sh
 
+USE_CUDA=0
+
 sudo apt-get update
 sudo apt-get install -y git wget python3
-
 
 # build opencv
 
@@ -17,59 +18,96 @@ sudo apt-get install --assume-yes libgdal-dev
 
 OPENCV_VER=3.3.0
 
-wget https://github.com/opencv/opencv/archive/$(OPENCV_VER).zip
+if [ ! -d ./opencv-$OPENCV_VER ]; then
 
-unzip opencv-$(OPENCV_VER).zip
-rm opencv-$(OPENCV_VER).zip
+    echo downloading opencv $OPENCV_VER...
 
-cd opencv-$(OPENCV_VER)/
+    wget https://github.com/opencv/opencv/archive/$OPENCV_VER.zip || exit
+
+    unzip $OPENCV_VER.zip
+    rm $OPENCV_VER.zip
+
+fi
+
+cd opencv-$OPENCV_VER/
 mkdir build
 
 cd build/
 
-cmake -DCMAKE_BUILD_TYPE=RELEASE ^
-    -DCMAKE_INSTALL_PREFIX=/usr/local ^
-    -DWITH_FFMPEG=YES ^
-    ..
+if [ ! -f ./CMakeCache.txt ]; then
 
-make -j $(($(nproc) + 1))
+    echo buildind opencv ...
+
+    cmake -DCMAKE_BUILD_TYPE=RELEASE \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -DWITH_FFMPEG=YES \
+        .. || exit
+
+    make -j $(($(nproc) + 1)) || exit
+
+fi
 
 # Install opencv
-sudo make install
+sudo make install || exit
 sudo /bin/bash -c 'echo "/usr/local/lib" > /etc/ld.so.conf.d/opencv.conf'
 sudo ldconfig
 
 cd ../../
 
+
 # Install python dependencies
 
 pip3 install -r dependencies.txt
 
+if [ "$USE_CUDA" = "1" ]; then
 
 # Install CUDA
 
-wget "http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.61-1_amd64.deb"
-sudo dpkg -i cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
-sudo apt-get update
-sudo apt-get install cuda
+if [ ! -d /usr/local/cuda ]; then
+
+    echo installing CUDA
+
+    wget "http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.61-1_amd64.deb" || exit
+    sudo dpkg -i cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
+    sudo apt-get update
+    sudo apt-get install -y cuda
+fi
 
 # Install CUDNN
 
-CUDNN_URL="http://developer.download.nvidia.com/compute/redist/cudnn/v5.1/cudnn-8.0-linux-x64-v5.1.tgz"
-wget ${CUDNN_URL}
-sudo tar -xzf cudnn-8.0-linux-x64-v5.1.tgz -C /usr/local
-rm cudnn-8.0-linux-x64-v5.1.tgz && sudo ldconfig
+if [ ! -d /usr/local/cuda ]; then
+
+    echo installing CUDNN
+
+    CUDNN_URL="http://developer.download.nvidia.com/compute/redist/cudnn/v5.1/cudnn-8.0-linux-x64-v5.1.tgz"
+    wget ${CUDNN_URL} || exit
+    sudo tar -xzf cudnn-8.0-linux-x64-v5.1.tgz -C /usr/local
+    rm cudnn-8.0-linux-x64-v5.1.tgz && sudo ldconfig
+fi
+
+fi # USE_CUDA
 
 # install tensorflow
 
-pip3 install tensorflow-gpu
+if [ "$USE_CUDA" = "1" ]; then
 
+    pip3 install tensorflow-gpu
+
+else
+
+    pip3 install tensorflow
+
+fi
 
 # download tensorflow models
 
 cd object_detection/
-wget http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_11_06_2017.tar.gz
-tar -xf ssd_mobilenet_v1_coco_11_06_2017.tar.gz
-rm ssd_mobilenet_v1_coco_11_06_2017.tar.gz
-cd ..
 
+if [ ! -d ./ssd_mobilenet_v1_coco_11_06_2017 ]; then
+
+    wget http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_11_06_2017.tar.gz || exit
+    tar -xf ssd_mobilenet_v1_coco_11_06_2017.tar.gz && rm ssd_mobilenet_v1_coco_11_06_2017.tar.gz
+
+fi
+
+cd ..
