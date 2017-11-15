@@ -1,9 +1,5 @@
 #!/bin/sh
 
+python3 reco_client.py
 
 
-
-
-
-
-chmod +x start.sh

@@ -17,7 +17,7 @@ sudo service mongodb start
 sudo apt-get install -y python3 python3-pip
 pip3 install --upgrade pip
 
-pip3 install -r dependencies.txt
+sudo pip3 install -r dependencies.txt
 
 # Install Gunicorn
 

@@ -1,5 +1,5 @@
 
-DEBUG = True
+DEBUG = False
 
 # list of camera names
 # to capture all cameras use empty list

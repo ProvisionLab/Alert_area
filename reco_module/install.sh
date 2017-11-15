@@ -3,18 +3,18 @@
 USE_CUDA=0
 
 sudo apt-get update
-sudo apt-get install -y git wget python3
+sudo apt-get install -y git wget python3  python3-pip
+pip3 install --upgrade pip
+
+chmod +x install_cuda.sh
+
+if [ "$USE_CUDA" = "1" ]; then
+
+    ./install_cuda.sh || exit
+
+fi
 
 # build opencv
-
-sudo apt-get install --assume-yes build-essential cmake git python3
-sudo apt-get install --assume-yes pkg-config unzip ffmpeg qtbase5-dev python-dev python3-dev python-numpy python3-numpy
-sudo apt-get install --assume-yes libopencv-dev libgtk-3-dev libdc1394-22 libdc1394-22-dev libjpeg-dev libpng12-dev libtiff5-dev libjasper-dev
-sudo apt-get install --assume-yes libavcodec-dev libavformat-dev libswscale-dev libxine2-dev libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev
-sudo apt-get install --assume-yes libv4l-dev libtbb-dev libfaac-dev libmp3lame-dev libopencore-amrnb-dev libopencore-amrwb-dev libtheora-dev
-sudo apt-get install --assume-yes libvorbis-dev libxvidcore-dev v4l-utils python-vtk
-sudo apt-get install --assume-yes liblapacke-dev libopenblas-dev checkinstall
-sudo apt-get install --assume-yes libgdal-dev
 
 OPENCV_VER=3.3.0
 
@@ -35,6 +35,16 @@ mkdir build
 cd build/
 
 if [ ! -f ./CMakeCache.txt ]; then
+
+    sudo apt-get install --assume-yes build-essential cmake git
+    sudo apt-get install --assume-yes pkg-config unzip ffmpeg python-dev python-numpy python3-dev python3-numpy 
+
+    sudo apt-get install --assume-yes libdc1394-22 libdc1394-22-dev libjpeg-dev libpng12-dev libtiff5-dev libjasper-dev
+    sudo apt-get install --assume-yes libavcodec-dev libavformat-dev libswscale-dev libxine2-dev 
+    sudo apt-get install --assume-yes libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev
+
+    sudo apt-get install --assume-yes install x264
+
 
     echo buildind opencv ...
 
@@ -59,44 +69,14 @@ cd ../../
 
 pip3 install -r dependencies.txt
 
-if [ "$USE_CUDA" = "1" ]; then
-
-# Install CUDA
-
-if [ ! -d /usr/local/cuda ]; then
-
-    echo installing CUDA
-
-    wget "http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.61-1_amd64.deb" || exit
-    sudo dpkg -i cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
-    sudo apt-get update
-    sudo apt-get install -y cuda
-fi
-
-# Install CUDNN
-
-if [ ! -d /usr/local/cuda ]; then
-
-    echo installing CUDNN
-
-    CUDNN_URL="http://developer.download.nvidia.com/compute/redist/cudnn/v5.1/cudnn-8.0-linux-x64-v5.1.tgz"
-    wget ${CUDNN_URL} || exit
-    sudo tar -xzf cudnn-8.0-linux-x64-v5.1.tgz -C /usr/local
-    rm cudnn-8.0-linux-x64-v5.1.tgz && sudo ldconfig
-fi
-
-fi # USE_CUDA
-
 # install tensorflow
 
 if [ "$USE_CUDA" = "1" ]; then
-
     pip3 install tensorflow-gpu
-
 else
-
+    sudo apt-get install -y python3-tk
     pip3 install tensorflow
-
+    #sudo pip3 install matplotlib
 fi
 
 # download tensorflow models
@@ -111,3 +91,5 @@ if [ ! -d ./ssd_mobilenet_v1_coco_11_06_2017 ]; then
 fi
 
 cd ..
+
+chmod +x start.sh
