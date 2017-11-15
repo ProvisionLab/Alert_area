@@ -159,6 +159,9 @@ class RecoThread(threading.Thread):
 
                 del self.analyzer
 
+            else:
+                print("camera {0} not opened".format(self.camera['name']))
+
             cap.release()
 
         except:

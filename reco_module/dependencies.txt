@@ -1,4 +1,2 @@
 requests
-unittest
-opencv-python
 paramiko

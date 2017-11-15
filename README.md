@@ -20,6 +20,38 @@ reco_module http://download.tensorflow.org/models/object_detection/ssd_mobilenet
 Install Gunicorn:
 sudo apt-get install gunicorn3
 
+
+### Installing of server
+
+Download project from git or else to folder ~/BVC
+
+Install backend server
+
+```
+cd ~/BVC/backend_server
+chmod +x install.sh
+./install.sh
+```
+
+Install recognition service
+
+```
+cd ~/BVC/reco_module
+chmod +x install.sh
+./install.sh
+```
+
+Start services
+
+```
+cd ~/BVC/backend_server
+./start.sh
+
+cd ~/BVC/reco_module
+./start.sh
+```
+
+
 ### Build
 #### OpenCV3.3
 

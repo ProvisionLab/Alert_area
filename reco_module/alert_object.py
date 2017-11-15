@@ -54,7 +54,7 @@ class AlertObject(object):
             image = cv2.resize(image, (320,200), interpolation=cv2.INTER_AREA)
             data = encode_cvimage(image)
 
-            if data:
+            if data is not None:
                 self.image = str(base64.b64encode(data))
             else:
                 self.image = None

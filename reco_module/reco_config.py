@@ -1,5 +1,4 @@
 
-
 DEBUG = True
 
 # list of camera names
@@ -12,10 +11,10 @@ cameras = [
 #    'Restaurant',
 #    'Kiev'
 #    'Kiev 2'
-    'Reolink'
+#    'Reolink'
 ]
 
-api_url = 'http://192.168.88.247:5000'
+api_url = 'http://127.0.0.1:5000'
 api_username = 'reco1'
 api_password = 'reco1passwd'
 
@@ -38,3 +37,4 @@ sftp_password = '.4Bk}+3B3'
 #sftp_host = '192.168.88.247'
 #sftp_username = 'nabus'
 #sftp_password = 'nabus28110*'
+

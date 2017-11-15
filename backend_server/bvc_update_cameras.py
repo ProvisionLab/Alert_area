@@ -2,7 +2,6 @@ import requests
 import bvc_db
 import bvc_config
 
-
 def is_request_succeeded(r):
     return r.status_code == 200 or r.status_code == 201
 
