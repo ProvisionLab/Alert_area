@@ -1,5 +1,8 @@
 #!/bin/sh
 
+sudo apt-get install -y python3 python3-pip
+sudo pip3 install --upgrade pip
+
 # Install MongoDB
 
 if [ -z "`service --status-all | grep mongodb`" ]; then
@@ -14,10 +17,8 @@ sudo service mongodb start
 
 # Install python packages
 
-sudo apt-get install -y python3 python3-pip
-pip3 install --upgrade pip
 
-pip3 install -r dependencies.txt
+sudo pip3 install -r dependencies.txt
 
 # Install Gunicorn
 

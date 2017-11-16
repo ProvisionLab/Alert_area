@@ -4,7 +4,7 @@ USE_CUDA=1
 
 sudo apt-get update
 sudo apt-get install -y git wget unzip python3  python3-pip
-pip3 install --upgrade pip
+sudo pip3 install --upgrade pip
 
 chmod +x install_cuda.sh
 
@@ -45,12 +45,12 @@ if [ ! -f ./CMakeCache.txt ]; then
 
     sudo apt-get install --assume-yes install x264
 
-
     echo buildind opencv ...
 
     cmake -DCMAKE_BUILD_TYPE=RELEASE \
         -DCMAKE_INSTALL_PREFIX=/usr/local \
         -DWITH_FFMPEG=YES \
+        -DWITH_CUDA=OFF \
         .. || exit
 
     make -j $(($(nproc) + 1)) || exit
@@ -67,9 +67,9 @@ cd ../../
 
 # Install python dependencies
 
-pip3 install -r dependencies.txt
+sudo pip3 install -r dependencies.txt
 
-sudo apt-get install -y python3-matplotlib
+sudo pip3 install -r matplotlib
 
 # install tensorflow
 

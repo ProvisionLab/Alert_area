@@ -1,7 +1,8 @@
 #pragma once
 
-//#define BVCAPI_URL      "http://localhost:5000"
-#define BVCAPI_URL      "http://192.168.88.247:5000"
+#define BVCAPI_URL      "http://localhost:5000"
+//#define BVCAPI_URL      "http://192.168.88.247:5000"
+//#define BVCAPI_URL      "http://52.32.99.45:5000"
 #define BVCAPI_USERNAME "user1"
 #define BVCAPI_PASSWORD "qwerty1"
 
