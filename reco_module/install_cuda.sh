@@ -5,28 +5,39 @@
 sudo apt-get install -y wget python3 python3-pip
 
 
+CUDA_VER=8.0
+CUDNN_VER=v6.0
+
 # Install CUDA
 
-if [ ! -d /usr/local/cuda ]; then
+if [ ! -f /usr/local/cuda-$CUDA_VER/version.txt ]; then
 
     echo installing CUDA
 
-    wget "http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.61-1_amd64.deb" || exit
-    sudo dpkg -i cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
-    sudo apt-get update
-    sudo apt-get install -y cuda
+    #wget "http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.61-1_amd64.deb" || exit
+    #sudo dpkg -i cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
+    #sudo apt-get update
+    sudo apt-get install -y --no-install-recommends cuda-$CUDA_VER
 fi
 
 # Install CUDNN
 
-if [ ! -d /usr/local/cuda ]; then
+if [ -d /usr/local/cuda-$CUDA_VER -a ! -f /usr/local/cuda-$CUDA_VER/lib64/libcudnn.so ]; then
 
     echo installing CUDNN
 
-    CUDNN_URL="http://developer.download.nvidia.com/compute/redist/cudnn/v5.1/cudnn-8.0-linux-x64-v5.1.tgz"
+    CUDNN_NAME=cudnn-$CUDA_VER-linux-x64-$CUDNN_VER.tgz
+
+    CUDNN_URL="http://developer.download.nvidia.com/compute/redist/cudnn/$CUDNN_VER/$CUDNN_NAME"
     wget ${CUDNN_URL} || exit 1
-    sudo tar -xzf cudnn-8.0-linux-x64-v5.1.tgz -C /usr/local
-    rm cudnn-8.0-linux-x64-v5.1.tgz && sudo ldconfig
+
+    tar -xzf $CUDNN_NAME
+
+    sudo mv -v cuda/inclide/* /usr/local/cuda-$CUDA_VER/include
+    sudo mv -v cuda/lib64/* /usr/local/cuda-$CUDA_VER/lib64
+
+    rm $CUDNN_NAME 
+    sudo ldconfig
 fi
 
 exit 0
