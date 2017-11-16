@@ -1,6 +1,6 @@
 #!/bin/sh
 
-USE_CUDA=0
+USE_CUDA=1
 
 sudo apt-get update
 sudo apt-get install -y git wget python3  python3-pip
