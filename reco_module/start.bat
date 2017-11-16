@@ -1,1 +1,2 @@
-start python reco_client.py
+start python reco_main.py
+

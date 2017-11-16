@@ -1,5 +1,5 @@
 #!/bin/sh
 
-python3 reco_client.py
+python3 reco_main.py
 
 

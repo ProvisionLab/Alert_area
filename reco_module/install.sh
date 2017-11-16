@@ -3,7 +3,7 @@
 USE_CUDA=1
 
 sudo apt-get update
-sudo apt-get install -y git wget python3  python3-pip
+sudo apt-get install -y git wget unzip python3  python3-pip
 pip3 install --upgrade pip
 
 chmod +x install_cuda.sh
@@ -69,14 +69,15 @@ cd ../../
 
 pip3 install -r dependencies.txt
 
+sudo apt-get install -y python3-matplotlib
+
 # install tensorflow
 
 if [ "$USE_CUDA" = "1" ]; then
-    pip3 install tensorflow-gpu
+    sudo -H pip3 install tensorflow-gpu
 else
     sudo apt-get install -y python3-tk
-    pip3 install tensorflow
-    #sudo pip3 install matplotlib
+    sudo pip3 install tensorflow
 fi
 
 # download tensorflow models
