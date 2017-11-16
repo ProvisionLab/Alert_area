@@ -55,7 +55,7 @@ class RecoClient(object):
                 time.sleep(0.1)
 
 
-        print('stoping...')
+        print('stoping... this may take some time')
 
         for t in self.threads:
             t.join()
@@ -180,7 +180,7 @@ class RecoClient(object):
                         json=alert.as_dict())
 
         if r.status_code == 200:
-            print('post alert {0}/{1}'.format(alert.camera_id, alert.alert_type))
+            print('post alert {2} / {0} \'{1}\''.format(alert.camera_id, alert.camera_name, alert.alert_type))
         else:
             print('failed to post alert')
 

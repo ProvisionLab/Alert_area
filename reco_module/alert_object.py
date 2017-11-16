@@ -19,6 +19,7 @@ def encode_cvimage(image):
 class AlertObject(object):
     
     camera_id = None
+    camera_name = None
 
     cvimage = None
 

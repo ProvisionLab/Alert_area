@@ -22,9 +22,8 @@ class UpstreamClient(object):
                 print("post alert failed: ", res)
                 return False
 
-            res = self.do_auth()
-            if not self.is_request_succeeded(res):
-                print("post alert auth failed: ", res)
+            if not self.do_auth():
+                print("post alert auth failed")
                 return False
 
             res = self.do_post(alert)
@@ -33,7 +32,7 @@ class UpstreamClient(object):
                 print("post alert failed: ", res)
                 return False
     
-        print("post alert: camera: {0} alert: {1}".format(alert.camera_id, alert.alert_type))
+        print('post alert {2} / {0} \'{1}\''.format(alert.camera_id, alert.camera_name, alert.alert_type))
         
         return True
 
