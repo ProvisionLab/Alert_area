@@ -49,6 +49,8 @@ class AlertObject(object):
             
             if rog_sftp.sftp_upload(reco_config.sftp_path + fname, data):
                 self.image = fname
+            else:
+                self.image = 'noimage'
 
         else:
 
@@ -65,8 +67,6 @@ class AlertObject(object):
         
         self.cvimage = image
         
-
-
     def as_dict(self):
 
         payload = { 

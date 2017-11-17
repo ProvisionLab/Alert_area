@@ -13,6 +13,7 @@ def sftp_upload(fname, image):
             hostname=reco_config.sftp_host, 
             username=reco_config.sftp_username, 
             password=reco_config.sftp_password)
+            
         sftp = client.open_sftp()
 
         fr = sftp.file(fname, 'wb')
@@ -24,7 +25,8 @@ def sftp_upload(fname, image):
             fr.close()
 
     except:
-        traceback.print_exc()
+        #traceback.print_exc()
+        print("sending to sftp failed...")
         return False
         
     return True
