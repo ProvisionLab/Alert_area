@@ -4,42 +4,31 @@ import paramiko
 import reco_config
 
 def sftp_upload(fname, image):
-
-    client = paramiko.SSHClient()
-
+    
     res = False
 
     try:
-       
-        client.set_missing_host_key_policy(paramiko.client.AutoAddPolicy)
 
-        client.connect(
-            hostname=reco_config.sftp_host, 
-            username=reco_config.sftp_username, 
-            password=reco_config.sftp_password)
+        with paramiko.SSHClient() as client:
 
-        sftp = client.open_sftp()
+            client.set_missing_host_key_policy(paramiko.client.AutoAddPolicy)
 
-        fr = sftp.file(fname, 'wb')
-        fr.set_pipelined(True)
+            client.connect(
+                hostname=reco_config.sftp_host, 
+                username=reco_config.sftp_username, 
+                password=reco_config.sftp_password)
 
-        try:
-            fr.write(image)
-        finally:
-            fr.close()
-
-        res = True
+            with client.open_sftp() as sftp: 
+                with sftp.file(fname, 'wb') as fr:
+                    fr.set_pipelined(True)
+                    fr.write(image)
+                    res = True
 
     except:
 
         #traceback.print_exc()
         print("sending to sftp failed...")
 
-    finally:
-
-        if client:
-            client.close()
-       
     return res
 
 def test():
