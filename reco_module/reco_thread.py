@@ -33,6 +33,7 @@ class RecoThread(threading.Thread):
     """
 
     camera = None
+    alert_areas = None
 
     dbg = None
 
@@ -75,11 +76,19 @@ class RecoThread(threading.Thread):
 
         #print('############## update_areas #################')
 
+        self.alert_areas = areas
+
+        #print("update_areas: {0} {1}".format(self.camera["id"], areas))
+
+        if areas is None:
+            return
+
         if self.analyzer:
             self.analyzer.update_areas(areas)
 
         if self.dbg:
             self.dbg.update_areas(areas)
+
         pass
 
     def get_camera_url(self, camera):
@@ -101,12 +110,15 @@ class RecoThread(threading.Thread):
 
     # return: True to continue, False to stop
     def run_capture(self, detector, tracker):
-        
-        camera_url = self.get_camera_url(self.camera)
+
         camera_id = self.camera['id']
+        camera_url = self.get_camera_url(self.camera)
+
+        if not self.alert_areas:
+            print("camera {0} has no alerts, resetting...".format(self.camera['name']))
+            return False
 
         # open stream by url
-
         cap = cv2.VideoCapture(camera_url)
         #fourcc = cv2.VideoWriter_fourcc(*'XVID')
         #print(cap.get(7))
@@ -117,16 +129,11 @@ class RecoThread(threading.Thread):
             print("camera {0} not opened".format(self.camera['name']))
             return False
 
+        print('start capture: \'{0}\' {1}'.format(self.camera['name'], self.camera['url']))
+        
         bContinue = False
             
-        # setup analyzer
-        alert_areas = self.connection.get_camera_alerts(camera_id)
-
-        if alert_areas is None or alert_areas is not list:
-            print("camera {0} alerts empty".format(self.camera['name']))
-            return False
-
-        self.analyzer = TrackAnalyzer2(alert_areas)
+        self.analyzer = TrackAnalyzer2(self.alert_areas)
         self.analyzer.on_alert = self.on_alert
 
         motion_detector = MotionDetector(int(cap.get(3) * cap.get(4) / 600))
@@ -141,6 +148,10 @@ class RecoThread(threading.Thread):
             with tf.Session(graph=detector.detection_graph, config=config) as sess:
                 # process stream
                 while not self.bStop and cap.isOpened():
+                    
+                    if not self.alers_areas:
+                        bContinue = False
+                        break
 
                     res, frame = cap.read()
 
@@ -173,7 +184,19 @@ class RecoThread(threading.Thread):
 
     def run(self):
 
-        print('start reco: \'{0}\', {1}'.format(self.camera['name'], self.camera['url']))
+        camera_id = self.camera['id']
+
+        print('start reco: \'{0}\''.format(self.camera['name']))
+
+        # setup analyzer
+        alert_areas = self.connection.get_camera_alerts(camera_id)
+
+        # no capture if no alerts
+        if not alert_areas:
+            print("camera {0} has no alerts configured".format(self.camera['name']))
+            return False
+
+        self.alers_areas = alert_areas
 
         detector = PeopleDetector()
         tracker = TrackerEmu()

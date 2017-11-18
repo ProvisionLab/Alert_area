@@ -12,14 +12,14 @@ cameras = [
 #    'Kiev',
 #    'Kiev 2',
 #    'Reolink',
-    'Round-About',
-    'Road',
-    'Kennel',
-    'Prospect-North',
-    'Birds Eye',
-    'Dog Play',
-    'Island House',
-    'Bench',
+#    'Round-About',
+#    'Road',
+#    'Kennel',
+#    'Prospect-North',
+#    'Birds Eye',
+#    'Dog Play',
+#    'Island House',
+#    'Bench',
 ]
 
 api_url = 'http://127.0.0.1:5000'

@@ -54,7 +54,6 @@ class RecoClient(object):
             else:
                 time.sleep(0.1)
 
-
         print('stoping... this may take some time')
 
         for t in self.threads:
@@ -165,9 +164,16 @@ class RecoClient(object):
                         headers={'Authorization': 'JWT {0}'.format(self.access_token)})
 
         if r.status_code != 200:
+            print('get_camera_alerts {0} failed: {1}'.format(camera_id, r.status_code))
             return None
 
-        return r.json()['alerts']
+        alerts = r.json()['alerts']
+
+        if not isinstance(alerts,list):
+            print('get_camera_alerts {0} invalid result: {1}'.format(camera_id, alerts))
+            return None
+
+        return alerts
 
     def post_reco_alert(self, alert: AlertObject):
         
