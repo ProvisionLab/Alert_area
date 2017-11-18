@@ -50,9 +50,10 @@ class RecoThread(threading.Thread):
     def exist_any_recognition(cls):
         return cls.thread_count > 0
 
-    def __init__(self, connection, camera):
+    def __init__(self, connection, camera, areas):
         self.connection = connection
         self.camera = camera
+        self.alert_areas = areas
 
         RecoThread.thread_count += 1
 
@@ -78,7 +79,7 @@ class RecoThread(threading.Thread):
 
         self.alert_areas = areas
 
-        #print("update_areas: {0} {1}".format(self.camera["id"], areas))
+        print("update_areas: {0} {1}".format(self.camera["id"], areas))
 
         if areas is None:
             return
@@ -150,7 +151,7 @@ class RecoThread(threading.Thread):
             # process stream
             while not self.bStop and cap.isOpened():
                 
-                if not self.alers_areas:
+                if not self.alert_areas:
                     bContinue = False
                     break
 
@@ -195,6 +196,7 @@ class RecoThread(threading.Thread):
         # no capture if no alerts
         if not alert_areas:
             print("camera {0} has no alerts configured".format(self.camera['name']))
+            self.bExit = True
             return False
 
         self.alers_areas = alert_areas

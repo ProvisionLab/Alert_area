@@ -66,8 +66,6 @@ class RecoClient(object):
         if not self.update_cameras():
             return False
 
-        self.update_areas()
-
         return True
 
     def update_cameras(self):
@@ -89,22 +87,24 @@ class RecoClient(object):
 
         return True
 
-    def update_areas(self):
-        for t in self.threads:
-            areas = self.get_camera_alerts(t.camera['id'])
-            t.update_areas(areas)
-
     def set_cameras(self, cameras):
         
         # remove stoped threads
         del_threads = [t for t in self.threads if t.bExit]        
-        self.threads = [t for t in self.threads if not t.bExit]        
-        
+        self.threads = [t for t in self.threads if not t.bExit]
+
         for t in del_threads:
             t.join()
 
+        # get new cameras alerts
+        for c in cameras:
+            areas = self.get_camera_alerts(c['id'])
+            c['areas'] = areas;
+
+        # remove cameras with empty areas
+        cameras = [c for c in cameras if c['areas']]
+      
         #
-        
         old_cameras = [t.camera for t in self.threads]
 
         old_ids = [c['id'] for c in old_cameras]
@@ -122,18 +122,24 @@ class RecoClient(object):
 
         self.threads = new_threads
 
+        # update alert areas
+        for t in self.threads:
+            camera_id = t.camera['id']
+            for c in cameras:
+                if c['id'] == camera_id:
+                    t.camera = c
+                    t.update_areas(c['areas'])   
+
+        # add new camera threads
         add_cameras = [c for c in cameras if c['id'] not in del_ids and c['id'] not in old_ids]
 
         for c in add_cameras:
             print("start recognition of camera: ", c['name'])
-            t = RecoThread(self, c)
+            t = RecoThread(self, c, c['areas'])
             self.threads.append(t)
             t.start()
             
         self.cameras = cameras
-
-        #for t in del_threads:
-        #    t.join()
 
         pass
 
