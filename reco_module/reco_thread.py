@@ -121,6 +121,11 @@ class RecoThread(threading.Thread):
             
         # setup analyzer
         alert_areas = self.connection.get_camera_alerts(camera_id)
+
+        if alert_areas is None or alert_areas is not list:
+            print("camera {0} alerts empty".format(self.camera['name']))
+            return False
+
         self.analyzer = TrackAnalyzer2(alert_areas)
         self.analyzer.on_alert = self.on_alert
 
