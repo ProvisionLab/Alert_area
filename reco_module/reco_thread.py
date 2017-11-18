@@ -144,38 +144,39 @@ class RecoThread(threading.Thread):
         frame_id = 0
 
         # session = tf.Session(config=config, ...)
-        with detector.detection_graph.as_default():
-            with tf.Session(graph=detector.detection_graph, config=config) as sess:
-                # process stream
-                while not self.bStop and cap.isOpened():
-                    
-                    if not self.alers_areas:
-                        bContinue = False
-                        break
+        with detector.detection_graph.as_default(), \
+            tf.Session(graph=detector.detection_graph, config=config) as sess:
 
-                    res, frame = cap.read()
-
-                    if not res:
-                        bContinue = True
-                        #continue
-                        break
-
-                    if res and frame_id % 2 == 0 and motion_detector.isMotion(frame):
-                        boxes = detector.process_frame(frame, sess)
-
-                        h, w = frame.shape[:2]
+            # process stream
+            while not self.bStop and cap.isOpened():
                 
-                        tracker.objects = boxes_to_track_objects(boxes)
-                        objects = list(tracker.objects)
-                        self.current_frame = frame
-                        self.analyzer.process_objects(w, h, objects)
+                if not self.alers_areas:
+                    bContinue = False
+                    break
 
-                    if self.dbg and self.dbg.draw_frame(frame, objects):
-                        bContinue = False
-                        break
+                res, frame = cap.read()
 
-                    frame_id += 1
-                    pass #while
+                if not res:
+                    bContinue = True
+                    #continue
+                    break
+
+                if res and frame_id % 2 == 0 and motion_detector.isMotion(frame):
+                    boxes = detector.process_frame(frame, sess)
+
+                    h, w = frame.shape[:2]
+            
+                    tracker.objects = boxes_to_track_objects(boxes)
+                    objects = list(tracker.objects)
+                    self.current_frame = frame
+                    self.analyzer.process_objects(w, h, objects)
+
+                if self.dbg and self.dbg.draw_frame(frame, objects):
+                    bContinue = False
+                    break
+
+                frame_id += 1
+                pass #while
 
         del self.analyzer
         cap.release()
