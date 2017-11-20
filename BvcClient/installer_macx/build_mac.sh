@@ -1,15 +1,24 @@
 #!/bin/sh
 
 #path where qt was installed
-QTDIR=~/Qt/5.8/clang_64/bin
+QTDIR=~/Qt/5.9.2/clang_64/bin
 #QTDIR=/usr/local/Cellar/qt/5.9.2/bin
 
-#path where BvcClient.app are building
-BUILD_DIR=../build-BvcClient-Desktop_Qt_5_8_0_clang_64bit-Release
-#BUILD_DIR=../BvcClient
-
 APPNAME=ROG
-BUNDLE_PATH=$BUILD_DIR/$APPNAME.app
+
+if [ -d ../BvcClient/$APPNAME.app ]; then
+  BUILD_DIR=../BvcClient
+  BUNDLE_PATH=$BUILD_DIR/$APPNAME.app
+else
+
+  BUNDLE_PATH=`find ../build-*-Release -name $APPNAME.app -print -quit`
+  BUILD_DIR=${BUNDLE_PATH%/*}
+fi
+
+if [ -z BUNDLE_PATH ]; then
+  echo not fount bundle $APPNAME.app
+  exit 1
+fi
 
 $QTDIR/macdeployqt $BUNDLE_PATH
 
@@ -43,6 +52,6 @@ done
 
 echo ==== check end =================
 
-$QTDIR/macdeployqt $BUNDLE_PATH -dmg
+$QTDIR/macdeployqt $BUNDLE_PATH 
 
-mv $BUILD_DIR/$APPNAME.dmg .
+hdiutil create $APPNAME.dmg -srcfolder $BUNDLE_PATH -format UDZO -volname "$APPNAME volume"

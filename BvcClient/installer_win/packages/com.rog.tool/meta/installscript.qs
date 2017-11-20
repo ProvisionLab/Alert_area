@@ -17,7 +17,7 @@ Component.prototype.createOperations = function()
 
         // 1638 - other version is installed
         // 3010 - reboot required
-        component.addElevatedOperation("Execute", "{0,1638,3010}", "@TargetDir@\\vcredist_x64.exe", "/norestart", "/quiet");
+        component.addElevatedOperation("Execute", "{0,1602,1638,3010}", "@TargetDir@\\vcredist_x64.exe");
     }
 
     if (installer.value("os") === "x11")
