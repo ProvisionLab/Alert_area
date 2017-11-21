@@ -17,6 +17,8 @@ public:
 
     operator QJsonObject() const;
 
+    void update_state(QJsonObject const & json);
+
     void set_alerts(QJsonArray const & json);
     void del_alert(QString alert_id);
     void update_alert(BVC::CAlertData const & alert);

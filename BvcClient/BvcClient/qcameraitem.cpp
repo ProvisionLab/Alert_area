@@ -48,6 +48,16 @@ QCameraItem::QCameraItem(QJsonObject const & json)
     setCheckState(m_enabled ? Qt::Checked : Qt::Unchecked);
 }
 
+void QCameraItem::update_state(QJsonObject const & json)
+{
+    if (json.contains("enabled"))
+        m_enabled = json["enabled"].toBool();
+    else
+        m_enabled = true;
+
+    setCheckState(m_enabled ? Qt::Checked : Qt::Unchecked);
+}
+
 QCameraItem::operator QJsonObject() const
 {
     QJsonObject j_camera;

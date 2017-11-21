@@ -125,6 +125,8 @@ def set_camera_enabled(camera_id: int, enabled: bool):
 
         result = db.cameras.update_one({'id': camera_id }, { '$set': { 'enabled' : enabled }} )
 
+        return {}, None
+
     except:
         return None, 'camera {0} not found'.format(camera_id)
 

@@ -162,22 +162,17 @@ void MainWindow::on_rog_get_cameras(QJsonArray const & cameras)
     {
         if (succeeded)
         {
-            if (ui->m_cameraListView->count() == 0)
-            {
-                m_conn.get_cameras([this](QJsonObject const & json)
-                {
-                    qDebug() << "get_cameras: " << json;
-                    on_get_cameras(json["cameras"].toArray());
-
-                    //post_cameras();
-                });
-            }
-
-            else
+            if (ui->m_cameraListView->count() > 0)
             {
                 // update backend cameras list
                 post_cameras();
             }
+
+            m_conn.get_cameras([this](QJsonObject const & json)
+            {
+                qDebug() << "get_cameras: " << json;
+                on_get_cameras(json["cameras"].toArray());
+            });
         }
         else
         {
@@ -191,12 +186,32 @@ void MainWindow::on_get_cameras(QJsonArray const & cameras)
 {
     qDebug() << __FUNCTION__;
 
+    bool append_cameras = ui->m_cameraListView->count() == 0;
+
     for (auto && x : cameras)
     {
        if (x.isObject())
        {
            auto && j_camera = x.toObject();
-           ui->m_cameraListView->addItem(new QCameraItem(j_camera));
+
+           if (append_cameras)
+           {
+               ui->m_cameraListView->addItem(new QCameraItem(j_camera));
+           } else
+           {
+                int camera_id = j_camera["id"].toInt();
+
+                for (int i = 0; i < ui->m_cameraListView->count(); ++i)
+                {
+                    auto * camera = static_cast<QCameraItem*>(ui->m_cameraListView->item(i));
+                    if (camera->m_Id == camera_id)
+                    {
+                        // update camera state
+                        camera->update_state(j_camera);
+                        break;
+                    }
+                }
+           }
        }
     }
 }
@@ -243,13 +258,16 @@ void MainWindow::on_camera_select()
 
 void MainWindow::on_camera_checked(QListWidgetItem *item)
 {
-    qDebug() << __FUNCTION__;
+    qDebug() << __FUNCTION__ << ", checked: " << item->checkState();
 
     auto * camera = static_cast<QCameraItem*>(item);
+
+    camera->m_enabled = camera->checkState() == Qt::Checked;
+
     if (camera)
         m_conn.set_camera_enabled(camera->m_Id, camera->m_enabled, [this, camera](bool succeeded)
     {
-        qDebug() << "set_camera_enabled: " << succeeded;
+        qDebug() << "set_camera_enabled: succeeded: " << succeeded;
     });
 }
 
