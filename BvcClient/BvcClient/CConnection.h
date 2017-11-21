@@ -23,6 +23,7 @@ public:
     void get_cameras(std::function<void(QJsonObject const&)> callback);
     void set_cameras(QJsonArray const j_cameras, std::function<void(bool succeeded)> callback);
 
+    void set_camera_enabled(int camera_id, bool enabled, std::function<void(bool succeeded)> callback);
     void get_camera_alerts(int camera_id, std::function<void(QJsonObject const&)> callback);
 
     void post_camera_alert(int camera_id, QJsonObject const & j_alert, std::function<void(QJsonObject const&)> callback);

@@ -1,13 +1,15 @@
 #include "mainwindow.h"
 #include <QApplication>
-#include "auth_config.h"
+
+#define COMPANY_NAME    "ROG Security, Inc."
+#define APPNAME         "ROG Tool"
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
     QApplication::setOrganizationName(COMPANY_NAME);
-    QApplication::setApplicationName(APP_NAME);
+    QApplication::setApplicationName(APPNAME);
 
     a.setWindowIcon(QIcon(":/rog_256.ico"));
     MainWindow w;

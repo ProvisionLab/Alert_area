@@ -7,6 +7,7 @@
 #include "CConnection.h"
 
 class QCameraItem;
+class QListWidgetItem;
 
 
 namespace Ui {
@@ -40,12 +41,15 @@ private slots:
     void on_auth_failed();
 
     void on_camera_select();
+    void on_camera_checked(QListWidgetItem *item);
+
     void on_alert_select();
 
     void on_camera_alerts_changed(QCameraItem* camera);
 
     void on_camera_connected(bool bOk);
     void on_camera_frame();
+
 
     void on_add_new_alert();
 

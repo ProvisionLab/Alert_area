@@ -15,6 +15,8 @@ public:
     QCameraItem(QString const & name);
     QCameraItem(QJsonObject const & json);
 
+    operator QJsonObject() const;
+
     void set_alerts(QJsonArray const & json);
     void del_alert(QString alert_id);
     void update_alert(BVC::CAlertData const & alert);
@@ -25,6 +27,7 @@ public:
 
     int m_Id;
     QString m_Url;
+    bool m_enabled;
 
     std::vector<BVC::CAlertData>    m_alerts;
 };

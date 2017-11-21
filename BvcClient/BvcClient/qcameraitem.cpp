@@ -36,6 +36,28 @@ QCameraItem::QCameraItem(QJsonObject const & json)
         m_Url = json["rtspUrl"].toString();
     else
         m_Url = json["url"].toString();
+
+    if (json.contains("enabled"))
+        m_enabled = json["enabled"].toBool();
+    else
+        m_enabled = true;
+
+
+    //
+    setFlags(flags() | Qt::ItemIsUserCheckable);
+    setCheckState(m_enabled ? Qt::Checked : Qt::Unchecked);
+}
+
+QCameraItem::operator QJsonObject() const
+{
+    QJsonObject j_camera;
+
+    j_camera["id"] = m_Id;
+    j_camera["name"] = text();
+    j_camera["url"] = m_Url;
+    j_camera["enabled"] = m_enabled;
+
+    return j_camera;
 }
 
 void QCameraItem::set_alerts(QJsonArray const & json)

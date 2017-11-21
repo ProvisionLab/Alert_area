@@ -26,6 +26,13 @@ copy "%OPENCV_BIN%\opencv_ffmpeg320_64.dll" "%PACKAGEDIR%\opencv_ffmpeg320_64.dl
 copy "%OPENCV_BIN%\opencv_world320.dll" "%PACKAGEDIR%\opencv_world320.dll"
 copy "..\BvcClient\rog_256.ico" "%PACKAGEDIR%\rog.ico"
 
+rem sign
+
+DigiCertUtil.exe sign /sha1 "07639818f447f2fa350e04ab3bf4b602e9930116" "%PACKAGEDIR%\%APPNAME%"
+
 rem build installer
 
 "%QTDIR%\Tools\QtInstallerFramework\3.0\bin\binarycreator.exe" --offline-only -c config\config.xml -p packages RogToolInstaller64.exe
+
+DigiCertUtil.exe sign /sha1 "07639818f447f2fa350e04ab3bf4b602e9930116" RogToolInstaller64.exe
+

@@ -232,6 +232,26 @@ void CConnection::set_cameras(QJsonArray const j_cameras, std::function<void(boo
 
 }
 
+void CConnection::set_camera_enabled(int camera_id, bool enabled, std::function<void(bool succeeded)> callback)
+{
+    QNetworkRequest request(QString("%1/api/cameras/%2/enabled").arg(m_apiUrl).arg(camera_id));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
+
+    QJsonObject j_value;
+    j_value["enabled"] = enabled;
+
+    auto *reply = m_nm.put(request, QJsonDocument(j_value).toJson());
+    auto ctx = std::make_shared<RequestContext>(reply);
+
+    QObject::connect(ctx->m_reply, &QNetworkReply::finished, [this, ctx, callback]()
+    {
+        callback(ctx->m_reply->error() == QNetworkReply::NoError);
+
+        ctx->m_reply->deleteLater();
+    });
+}
+
 void CConnection::get_camera_alerts(int camera_id, std::function<void(QJsonObject const&)> callback)
 {
     QNetworkRequest request(QString("%1/api/cameras/%2/alerts/").arg(m_apiUrl).arg(camera_id));

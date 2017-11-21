@@ -96,12 +96,15 @@ class RecoClient(object):
         for t in del_threads:
             t.join()
 
+        # remove disabled cameras
+        cameras = [c for c in cameras if c.get('enabled',True)]
+
         # get new cameras alerts
         for c in cameras:
             areas = self.get_camera_alerts(c['id'])
             c['areas'] = areas;
 
-        # remove cameras with empty areas
+        # remove cameras with no alert areas
         cameras = [c for c in cameras if c['areas']]
       
         #

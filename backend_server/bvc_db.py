@@ -15,13 +15,6 @@ def drop():
     db.cameras.drop()
 
 
-def append_camera( camera : dict ):
-    alerts = camera.get('alerts')
-    if alerts is not None:
-      for alert in alerts:
-        alert['id'] = str(ObjectId())
-    result = db.cameras.insert_one(camera)
-
 def get_cameras():
 
     # returns camera list or []
@@ -34,6 +27,16 @@ def get_cameras():
         camera.pop('_id')
 
     return cameras
+
+def append_camera( camera : dict ):
+    
+    alerts = camera.get('alerts')
+    
+    if alerts is not None:
+        for alert in alerts:
+            alert['id'] = str(ObjectId())
+    
+    result = db.cameras.insert_one(camera)
 
 def update_cameras(cameras : list):
 
@@ -116,24 +119,33 @@ def get_camera( camera_id : int ):
     except:
         return None, 'camera {0} not found'.format(camera_id)
 
+def set_camera_enabled(camera_id: int, enabled: bool):
+    
+    try:
+
+        result = db.cameras.update_one({'id': camera_id }, { '$set': { 'enabled' : enabled }} )
+
+    except:
+        return None, 'camera {0} not found'.format(camera_id)
+
 def get_camera_alerts( camera_id : int ):
 
-  try:  
+    try:  
 
-    #camera = db.cameras.find_one({ '_id' : ObjectId(camera_id) }, { 'alerts':True } )
-    camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts':True } )
+        #camera = db.cameras.find_one({ '_id' : ObjectId(camera_id) }, { 'alerts':True } )
+        camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts':True } )
 
-    if camera is None: 
-      return None, 'camera {0} not found'.format(camera_id)
+        if camera is None: 
+            return None, 'camera {0} not found'.format(camera_id)
 
-    alerts = camera.get('alerts')
-    if alerts is None:
-      return [], None
+        alerts = camera.get('alerts')
+        if alerts is None:
+            return [], None
 
-    return alerts, None
+        return alerts, None
 
-  except:
-    return None, 'camera {0} not found'.format(camera_id)
+    except:
+            return None, 'camera {0} not found'.format(camera_id)
 
 def append_camera_alert( camera_id : int, alert : dict ):
 
@@ -144,7 +156,7 @@ def append_camera_alert( camera_id : int, alert : dict ):
 
         result = db.cameras.update_one({'id' : camera_id }, { '$push': { 'alerts' : alert }} )
         if result.modified_count == 0: 
-          return None, 'camera {0} not found'.format(camera_id)
+            return None, 'camera {0} not found'.format(camera_id)
     
         return alert_id, None
 
@@ -153,29 +165,23 @@ def append_camera_alert( camera_id : int, alert : dict ):
 
 def get_camera_alert( camera_id: int, alert_id: int):
 
-  try:  
+    try:  
 
-    camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts':True } )
-    if camera is None:
-      return None, 'camera {0} not found'.format(camera_id)
+        camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts':True } )
+        if camera is None:
+            return None, 'camera {0} not found'.format(camera_id)
 
-    alerts = camera.get('alerts')
+        alerts = camera.get('alerts')
 
-    alert = None
+        if alerts is not None:
+            for i,a in enumerate(alerts):
+                if a['id'] == alert_id:
+                    return a, None
 
-    if alerts is not None:
-      for i,a in enumerate(alerts):
-        if a['id'] == alert_id:
-          alert = a
-          break;
+        return None, 'camera {0} alert {1} not found'.format(camera_id, alert_id)
 
-    if alert is None:
-      return None, 'camera {0} alert {1} not found'.format(camera_id, alert_id)
-
-    return alert, None
-
-  except:
-    return None, 'camera {0} not found'.format(camera_id)
+    except:
+        return None, 'camera {0} not found'.format(camera_id)
 
 def delete_camera_alert( camera_id: int, alert_id: str ):
 
@@ -183,17 +189,17 @@ def delete_camera_alert( camera_id: int, alert_id: str ):
     
         camera = db.cameras.find_one({ 'id': camera_id }, { 'alerts':True } )
         if camera is None:
-          return None, 'camera {0} not found'.format(camera_id)
+            return None, 'camera {0} not found'.format(camera_id)
 
         alerts = camera.get('alerts')
 
         if alerts is None:
-          return None, 'camera {0} alert {1} not found'.format(camera_id, alert_id)
+            return None, 'camera {0} alert {1} not found'.format(camera_id, alert_id)
 
         new_alerts = [a for a in alerts if a['id'] != alert_id]
 
         if len(alerts)==len(new_alerts):
-          return None, 'camera {0} alert {1} not found'.format(camera_id, alert_id)
+            return None, 'camera {0} alert {1} not found'.format(camera_id, alert_id)
 
         result = db.cameras.update_one({'id': camera_id }, { '$set': { 'alerts' : new_alerts }} )
         return {}, None
@@ -210,18 +216,28 @@ def update_camera_alert( camera_id: int, alert_id : str, alert : dict ):
 
         camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts':True } )
         if camera is None:
-          return None, 'camera {0} not found'.format(camera_id)
+            return None, 'camera {0} not found'.format(camera_id)
 
         alerts = camera.get('alerts')
 
         if alerts is not None:
-          for i,a in enumerate(alerts):
-            if a['id'] == alert_id:
-              alerts[i] = alert
-              result = db.cameras.update_one({'id': camera_id }, { '$set': { 'alerts' : alerts }} )
-              return {}, None
+            for i,a in enumerate(alerts):
+                if a['id'] == alert_id:
+                    alerts[i] = alert
+                    result = db.cameras.update_one({'id': camera_id }, { '$set': { 'alerts' : alerts }} )
+                    return {}, None
 
-        return None, 'camera {0} alert {1} not found'.format(camera_id, alert_id)
+        return None, 'camera {0}, alert {1} not found'.format(camera_id, alert_id)
 
     except:
         return None, 'camera {0} not found'.format(camera_id)
+
+def help():
+    print("examples:")
+    print("cameras = get_cameras()")
+    print("camera = get_camera(24)")
+    print("set_camera({'id':24, 'name':'First', 'url': 'rtsp://1.2.3.4:500', 'enabled':True})")
+    print("append_camera({'id':24, 'name':'First', 'url': 'rtsp://1.2.3.4:500', 'enabled':True})")
+    print("alerts = get_camera_alerts(24)")
+    print("set_camera_enabled(24, True)")
+    

@@ -65,7 +65,9 @@ done
 
 echo ==== check end =================
 
-$QTDIR/macdeployqt "$BUNDLE_PATH"
+#$QTDIR/macdeployqt "$BUNDLE_PATH"
+
+echo ==== signing ===================
 
 for f in `find $BUNDLE_PATH/Contents -name lib*.dylib` ; do
     codesign -f -s "ROG Security, Inc." $f || exit 1
@@ -77,7 +79,6 @@ done
 
 codesign -f -s "ROG Security, Inc." "$BUNDLE_PATH" || exit 1
 
-MACOSNAME=`sw_vers -productName`
-MACOSVER=`sw_vers -productVersion`
-
 hdiutil create $DMGNAME -srcfolder "$BUNDLE_PATH" -format UDZO -volname "$APPNAME for $MACOSNAME $MACOSVER"
+
+codesign -f -s "ROG Security, Inc." $DMGNAME

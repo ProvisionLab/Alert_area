@@ -127,32 +127,32 @@ def api_camera_alerts(camera_id:str):
 @jwt_required()
 def api_camera_alert_(camera_id:str, alert_id:str):
 
-  if request.method == 'GET':
+    if request.method == 'GET':
 
-    alert, err = bvc_db.get_camera_alert(camera_id, alert_id)
+        alert, err = bvc_db.get_camera_alert(camera_id, alert_id)
 
-    if alert is None:
-      return error_response(404, err)
+        if alert is None:
+            return error_response(404, err)
 
-    return flask.jsonify({'alert' : alert })
+        return flask.jsonify({'alert' : alert })
 
-  if request.method == 'PUT':
+    if request.method == 'PUT':
 
-    res, err = bvc_db.update_camera_alert(camera_id, alert_id, request.get_json())
+        res, err = bvc_db.update_camera_alert(camera_id, alert_id, request.get_json())
 
-    if res is None:
-      return error_response(404, err)
+        if res is None:
+            return error_response(404, err)
 
-    return flask.jsonify(res)
+        return flask.jsonify(res)
 
-  if request.method == 'DELETE':
+    if request.method == 'DELETE':
 
-    res, err = bvc_db.delete_camera_alert(camera_id, alert_id)
+        res, err = bvc_db.delete_camera_alert(camera_id, alert_id)
 
-    if res is None:
-      return error_response(404, err)
+        if res is None:
+            return error_response(404, err)
 
-    return flask.jsonify(res)
+        return flask.jsonify(res)
 
 @app.route('/api/alerts/', methods=["POST"])
 @jwt_required()
@@ -171,6 +171,34 @@ def api_alerts():
     print("alert: {0} / {1}".format(camera_id, alert_type))
 
     return flask.jsonify({})
+
+@app.route('/api/cameras/<int:camera_id>/enabled', methods=["GET", "PUT"])
+@jwt_required()
+def api_camera_enabled():
+
+    if request.method == 'GET':
+    
+        camera, err = bvc_db.get_camera(camera_id)
+
+        if camera is None:
+            return error_response(404, err)
+
+        return flask.jsonify({'enabled' : camera.get('enabled', True) })
+
+    if request.method == 'PUT':
+
+        enabled = request.get_json()['enabled']
+
+        if not isinstance(enabled,bool):
+            return error_response(400, "invalid argument")
+
+        res, err = bvc_db.set_camera_enabled(camera_id, enabled)
+
+        if res is None:
+            return error_response(404, err)
+
+        return flask.jsonify(res)
+
 
 if __name__ == '__main__':
     #app.run(host="127.0.0.1", port=5000)

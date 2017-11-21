@@ -29,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->m_editPanel->hide();
 
     connect( ui->m_cameraListView, SIGNAL(itemSelectionChanged()), this, SLOT(on_camera_select()));
+    connect(ui->m_cameraListView, SIGNAL(itemChanged(QListWidgetItem*)), this, SLOT(on_camera_checked(QListWidgetItem*)));
+
     connect( ui->m_alertsListView, SIGNAL(itemSelectionChanged()), this, SLOT(on_alert_select()));
 
     connect( ui->m_bnAddAlert, SIGNAL(clicked()), this, SLOT(on_add_new_alert()));
@@ -138,11 +140,7 @@ void MainWindow::post_cameras()
     for (int i = 0; i < ui->m_cameraListView->count(); ++i)
     {
         auto * camera = static_cast<QCameraItem*>(ui->m_cameraListView->item(i));
-        QJsonObject j_camera;
-        j_camera["id"] = camera->m_Id;
-        j_camera["name"] = camera->text();
-        j_camera["url"] = camera->m_Url;
-        j_cameras.append(j_camera);
+        j_cameras.append(QJsonObject(*camera));
     }
 
     m_conn.set_cameras(j_cameras, [this](bool succeeded)
@@ -241,6 +239,18 @@ void MainWindow::on_camera_select()
             emit on_camera_alerts_changed(camera);
         });
     }
+}
+
+void MainWindow::on_camera_checked(QListWidgetItem *item)
+{
+    qDebug() << __FUNCTION__;
+
+    auto * camera = static_cast<QCameraItem*>(item);
+    if (camera)
+        m_conn.set_camera_enabled(camera->m_Id, camera->m_enabled, [this, camera](bool succeeded)
+    {
+        qDebug() << "set_camera_enabled: " << succeeded;
+    });
 }
 
 void MainWindow::on_alert_select()
