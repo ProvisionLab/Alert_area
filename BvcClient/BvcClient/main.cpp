@@ -6,8 +6,8 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    QApplication::setOrganizationName(COMPANY_NAME)
-    QApplication::setApplicationName(APP_NAME)
+    QApplication::setOrganizationName(COMPANY_NAME);
+    QApplication::setApplicationName(APP_NAME);
 
     a.setWindowIcon(QIcon(":/rog_256.ico"));
     MainWindow w;
