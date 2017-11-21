@@ -13,3 +13,7 @@
 #define ROGAPI_USERNAME "nabus@test.com"
 #define ROGAPI_PASSWORD "password123"
 #endif
+
+
+#define COMPANY_NAME    "ROG Security, Inc."
+#define APP_NAME        "ROG Tool"

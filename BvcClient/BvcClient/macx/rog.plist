@@ -8,7 +8,11 @@
         <string>rog_256.icns</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
-	<key>CFBundleIdentifier</key>
-        <string>com.rog.tool</string>
+        <key>CFBundleShortVersionString</key>
+        <string>1.0.0</string>
+        <key>CFBundleVersion</key>
+        <string>1.0.0</string>
+        <key>CFBundleIdentifier</key>
+        <string>ROG Security, Inc.</string>
 </dict>
 </plist>

@@ -28,6 +28,11 @@ if [ -z BUNDLE_PATH ]; then
   exit 1
 fi
 
+if [ ! -f $QTDIR/macdeployqt ]; then
+    echo not found $QTDIR/macdeployqt
+    exit 1
+fi
+
 $QTDIR/macdeployqt $BUNDLE_PATH
 
 echo ==== patch =================
@@ -42,9 +47,9 @@ for f in $BUNDLE_PATH/Contents/Frameworks/lib*.dylib; do
             echo $fb $f2 $f2b
             if [ "$fb" = "$f2b" ]; then
                 echo change id of $f
-                install_name_tool -id @executable_path/$fb $f
+                install_name_tool -id @executable_path/../Frameworks/$fb $f
             else
-                install_name_tool -change $f2 @executable_path/$f2b $f
+                install_name_tool -change $f2 @executable_path/../Frameworks/$f2b $f
             fi
         done
     fi

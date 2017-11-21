@@ -90,10 +90,10 @@ macx {
 
     ICON=macx/rog_256.icns
 
-    QMAKE_INFO_PLIST = macx/Info.plist
+    QMAKE_INFO_PLIST = macx/rog.plist
 
-    OTHER_FILES += macx/Info.plist
-    DISTFILES += macx/Info.plist
+    OTHER_FILES += macx/rog.plist
+    DISTFILES += macx/rog.plist
 
     # make sure PATH contains pkg-config & PKG_CONFIG_PATH is defined
 #   QT_CONFIG -= no-pkg-config
