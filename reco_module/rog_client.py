@@ -14,25 +14,33 @@ class RogClient(object):
 
         logging.debug(alert.as_dict())
 
-        res = self.do_post(alert)
-
-        if not self.is_request_succeeded(res):
-
-            if res != 401:
-                return False
-
-            if not self.do_auth():
-                return False
+        try:
 
             res = self.do_post(alert)
 
             if not self.is_request_succeeded(res):
-                return False
 
-        logging.info('rog post alert, type: %s, camera: [%d] \'%s\'',
-                     alert.alert_type, alert.camera_id, alert.camera_name)
+                if res != 401:
+                    return False
 
-        return True
+                if not self.do_auth():
+                    return False
+
+                res = self.do_post(alert)
+
+                if not self.is_request_succeeded(res):
+                    return False
+
+            logging.info('rog post alert, type: %s, camera: [%d] \'%s\'',
+                        alert.alert_type, alert.camera_id, alert.camera_name)
+
+            return True
+
+        except:
+
+            logging.error('rog post alert exception')
+            return False
+
 
     ###################################
 
@@ -64,12 +72,10 @@ class RogClient(object):
         #return 200
 
         r = requests.post('{0}/api/v2/bvc_alert'.format(reco_config.rogapi_url),
-                          headers={'Authorization': '{0}'.format(self.access_token)},
-                          json=alert.as_dict())
+                        headers={'Authorization': '{0}'.format(self.access_token)},
+                        json=alert.as_dict())
 
         if not self.is_request_succeeded(r.status_code):
             logging.error("rog post alert failed, camera: [%d], status: %d", alert.camera_id, r.status_code)
-            logging.debug("rog post alert response data: %s", r.json())
 
         return r.status_code
- 
