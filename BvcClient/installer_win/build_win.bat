@@ -28,11 +28,10 @@ copy "..\BvcClient\rog_256.ico" "%PACKAGEDIR%\rog.ico"
 
 rem sign
 
-DigiCertUtil.exe sign /sha1 "07639818f447f2fa350e04ab3bf4b602e9930116" "%PACKAGEDIR%\%APPNAME%"
+DigiCertUtil.exe sign /sha1 "07639818f447f2fa350e04ab3bf4b602e9930116" /noInput "%PACKAGEDIR%\%APPNAME%"
 
 rem build installer
 
 "%QTDIR%\Tools\QtInstallerFramework\3.0\bin\binarycreator.exe" --offline-only -c config\config.xml -p packages RogToolInstaller64.exe
 
-DigiCertUtil.exe sign /sha1 "07639818f447f2fa350e04ab3bf4b602e9930116" RogToolInstaller64.exe
-
+DigiCertUtil.exe sign /sha1 "07639818f447f2fa350e04ab3bf4b602e9930116" /noInput RogToolInstaller64.exe

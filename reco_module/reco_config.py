@@ -1,9 +1,10 @@
 
 DEBUG = False
+show_dbg_window = False
 
 # list of camera names
 # to capture all cameras use empty list
-cameras = [
+filter_cameras = [
 #    'Beach',
 #    'Ice Rink',
 #    'Warehouse',
@@ -22,7 +23,8 @@ cameras = [
 #    'Bench',
 ]
 
-api_url = 'http://127.0.0.1:5000'
+#api_url = 'http://127.0.0.1:5000'
+api_url = 'http://52.32.99.45:5000'
 api_username = 'reco1'
 api_password = 'reco1passwd'
 
@@ -33,9 +35,9 @@ send_image_to_sftp = True
 
 # upstream settings
 
-usapi_url = 'https://morning-lake-10802.herokuapp.com'
-usapi_username = 'nabus@test.com'
-usapi_password = 'password123'
+rogapi_url = 'https://morning-lake-10802.herokuapp.com'
+rogapi_username = 'nabus@test.com'
+rogapi_password = 'password123'
 
 sftp_host = '54.67.96.88'
 sftp_path = 'ftp/bvc/'

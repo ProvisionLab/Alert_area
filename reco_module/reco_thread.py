@@ -14,19 +14,13 @@ from debug_window import DebugWindow
 import reco_config
 import tensorflow as tf
 from urllib.parse import quote
+import logging
 
-# camera: { 'id' : str, 'url' : str }
-
-
-def inc(id):
-    id += 1
-    return id
+# camera: { 'id': int, 'name': str, url': str, 'enabled': bool }
 
 def boxes_to_track_objects(boxes):
-    id = 0
-    objects = dict([(TrackObject(id, (b[1] + b[3]) / 2, b[2], b[3] - b[1], b[2] - b[0]), inc(id)) for b in boxes])
+    objects = dict([(TrackObject(1+i, (b[1] + b[3]) / 2, b[2], b[3] - b[1], b[2] - b[0]), 1+i) for i, b in enumerate(boxes)])
     return objects
-        
 
 class RecoThread(threading.Thread):
     """
@@ -60,6 +54,7 @@ class RecoThread(threading.Thread):
         threading.Thread.__init__(self)
 
     def stop(self):
+        logging.debug("signal to stop camera [%d]", self.camera['id'])
         self.bStop = True
 
     def on_alert(self, alert: AlertObject, is_enter: bool, pos):
@@ -68,6 +63,8 @@ class RecoThread(threading.Thread):
 
         alert.camera_id = camera_id
         alert.camera_name = self.camera['name']
+
+        logging.debug("new alert: %s", alert)
 
         alert.set_image(self.current_frame)
 
@@ -79,10 +76,13 @@ class RecoThread(threading.Thread):
 
         self.alert_areas = areas
 
-        print("update_areas: {0} {1}".format(self.camera["id"], areas))
+        logging.debug("update_areas: [%d] %s", self.camera['id'], areas)
 
         if areas is None:
+            logging.warning("update areas of camera: [%d] \'%s\', None", self.camera['id'], self.camera['name'])
             return
+
+        logging.info("update areas of camera: [%d] \'%s\', %d areas", self.camera['id'], self.camera['name'], len(areas))
 
         if self.analyzer:
             self.analyzer.update_areas(areas)
@@ -109,14 +109,17 @@ class RecoThread(threading.Thread):
 
         return camera_url
 
-    # return: True to continue, False to stop
     def run_capture(self, detector, tracker):
+        """
+        capture of camera loop
+        @return: True to restart, False to stop
+        """
 
         camera_id = self.camera['id']
         camera_url = self.get_camera_url(self.camera)
 
         if not self.alert_areas:
-            print("camera {0} has no alerts, resetting...".format(self.camera['name']))
+            logging.info("camera %s has no alerts, resetting...", self.camera['name'])
             return False
 
         # open stream by url
@@ -127,10 +130,10 @@ class RecoThread(threading.Thread):
         objects = None
 
         if not cap.isOpened():
-            print("camera {0} not opened".format(self.camera['name']))
+            logging.error("camera [%d] \'%s\' not opened", camera_id, self.camera['name'])
             return False
 
-        print('start capture: \'{0}\' {1}'.format(self.camera['name'], self.camera['url']))
+        logging.info('start capture of camera: \'%s\', url: \'%s\'', self.camera['name'], camera_url)
         
         bContinue = False
             
@@ -158,6 +161,7 @@ class RecoThread(threading.Thread):
                 res, frame = cap.read()
 
                 if not res:
+                    logging.warning("camera [%d], frame not readed, restarting of capture", camera_id)
                     bContinue = True
                     #continue
                     break
@@ -173,6 +177,7 @@ class RecoThread(threading.Thread):
                     self.analyzer.process_objects(w, h, objects)
 
                 if self.dbg and self.dbg.draw_frame(frame, objects):
+                    logging.info("stop signal from debug window [%d]", camera_id)
                     bContinue = False
                     break
 
@@ -188,14 +193,14 @@ class RecoThread(threading.Thread):
 
         camera_id = self.camera['id']
 
-        print('start reco: \'{0}\''.format(self.camera['name']))
+        logging.info('reco thread start: camera [%d] \'%s\'', camera_id, self.camera['name'])
 
         # setup analyzer
         alert_areas = self.connection.get_camera_alerts(camera_id)
 
         # no capture if no alerts
         if not alert_areas:
-            print("camera {0} has no alerts configured".format(self.camera['name']))
+            logging.warning("camera \'%s\' has no alerts configured", self.camera['name'])
             self.bExit = True
             return False
 
@@ -204,18 +209,18 @@ class RecoThread(threading.Thread):
         detector = PeopleDetector()
         tracker = TrackerEmu()
 
-        if reco_config.DEBUG:
+        if reco_config.DEBUG and reco_config.show_dbg_window:
             self.dbg = DebugWindow(self.camera, tracker, self.connection)
 
         try:
 
             while self.run_capture(detector, tracker):
-                print("restart reco: \'{0}\'".format(self.camera['name']))
+                logging.info("restart reco: \'%s\'", self.camera['name'])
                 pass
                   
         except:
-            print('exception: {0}'.format(self.camera['id']))
-            traceback.print_exc()
+            logging.exception('exception while capture of camera: %d', camera_id)
+            #traceback.print_exc()
 
         RecoThread.thread_count -= 1
 
@@ -223,7 +228,7 @@ class RecoThread(threading.Thread):
             self.dbg.close()
             del self.dbg
 
-        print('end: {0}, threads: {1}'.format(self.camera['id'], RecoThread.thread_count))
+        logging.info('reco thread end: camera [%d], threads left: %d', camera_id, RecoThread.thread_count)
 
         self.bExit = True
         pass

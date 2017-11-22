@@ -63,11 +63,11 @@ for f in $BUNDLE_PATH/Contents/Frameworks/lib*.dylib; do
     done
 done
 
-echo ==== check end =================
+echo ==== check end ===================
 
 #$QTDIR/macdeployqt "$BUNDLE_PATH"
 
-echo ==== signing ===================
+echo ==== signing =====================
 
 for f in `find $BUNDLE_PATH/Contents -name lib*.dylib` ; do
     codesign -f -s "ROG Security, Inc." $f || exit 1

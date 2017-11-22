@@ -9,31 +9,17 @@ from datetime import timedelta
 
 import logging
 import flask.logging
-from logging.handlers import RotatingFileHandler
 
 import bvc_users
 import bvc_config
+
+import bvc_logging, logging
 
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'bvc-secret'
 app.config['JWT_AUTH_URL_RULE'] = '/api/auth'
 app.config['JWT_EXPIRATION_DELTA'] = timedelta(seconds=24*3600)   # 2do: change in future
-
-#####################################################
-## logging
-
-if bvc_config.log_file_name:
-
-    log_handler = RotatingFileHandler(bvc_config.log_file_name, maxBytes=100000, backupCount=1)
-    log_handler.setLevel(logging.INFO)
-    app.logger.addHandler(log_handler)
-
-    log_werkzeug = logging.getLogger('werkzeug')
-    log_werkzeug.setLevel(logging.INFO)
-    log_werkzeug.addHandler(log_handler)
-
-app.logger.setLevel(logging.INFO)
 
 #####################################################
 ## JWT implementation

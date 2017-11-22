@@ -1,13 +1,15 @@
 """
+main module
 """
 import time
 import signal
 import requests
 from reco_thread import RecoThread
-from rog_client import UpstreamClient
+from rog_client import RogClient
 from alert_object import AlertObject
 import reco_config
 
+import reco_logging, logging
 
 class RecoClient(object):
     
@@ -20,24 +22,37 @@ class RecoClient(object):
     bStop = False
 
     def __init__(self):
-        self.alerts = []
-        signal.signal(signal.SIGINT, self.stop_execution)
 
-        self.usapi = UpstreamClient()
+        self.threads = []
+        self.alerts = []
+
+        self.rogapi = RogClient()
+
+        signal.signal(signal.SIGINT, self.stop_execution)
         pass
 
     def stop_execution(self, signum, taskfrm):
+        """
+        SIGINT handler
+        """
         print('Ctrl+C was pressed')
         self.bStop = True
+
+        logging.info("SIGINT reseived, stop all recognitions")
 
         for t in self.threads:
             t.stop()
         
     def run(self):
-        
-        self.threads = []
+        """
+        main loop
+        periodically reads config state from backend
+        starts/stops recognition threads
+        """
 
         print("press Ctrl+C to quit")
+
+        logging.info("start")
 
         self.updatate_timer = 0 #time.time()
 
@@ -45,8 +60,10 @@ class RecoClient(object):
             
             update_delta = time.time() - self.updatate_timer
             if update_delta >= reco_config.update_interval:
-                if not self.update():
+
+                if not self.update_cameras():
                     break
+
                 self.updatate_timer = time.time()
 
             if self.alerts:
@@ -54,55 +71,62 @@ class RecoClient(object):
             else:
                 time.sleep(0.1)
 
-        print('stoping... this may take some time')
+        logging.info("stopping... this may take some time")
 
         for t in self.threads:
             t.join()
 
-        print('Quit')
-
-    def update(self):
-
-        if not self.update_cameras():
-            return False
-
-        return True
+        logging.info("Quit")
 
     def update_cameras(self):
+        """
+        gets cameras from backend
+        updates recognizers
+        """
         
         if not self.do_auth(reco_config.api_username, reco_config.api_password):
-            print("backend auth request failed")
             return False
 
         cameras = self.do_get_cameras()
 
         if cameras is None:
-            print("backend cameras request failed")
+            logging.error("backend cameras request failed, no cameras returned")
             return False
 
-        if reco_config.cameras:
-            cameras = [c for c in cameras if c['name'] in reco_config.cameras]
+        if reco_config.filter_cameras:
+            cameras = [c for c in cameras if c['name'] in reco_config.filter_cameras]
+
+        # remove disabled cameras
+        cameras = [c for c in cameras if c.get('enabled',True)]
 
         self.set_cameras(cameras)
 
         return True
 
-    def set_cameras(self, cameras):
-        
-        # remove stoped threads
+    def remove_stoped_threads(self):
+
         del_threads = [t for t in self.threads if t.bExit]        
         self.threads = [t for t in self.threads if not t.bExit]
 
         for t in del_threads:
             t.join()
 
-        # remove disabled cameras
-        cameras = [c for c in cameras if c.get('enabled',True)]
+    def set_cameras(self, cameras):
+        """
+        sets cameras for recognition
+        stops/starts recognition
+        updates alert areas of recognizers
+        """
+        
+        # remove stoped threads
+        self.remove_stoped_threads()
 
         # get new cameras alerts
         for c in cameras:
             areas = self.get_camera_alerts(c['id'])
             c['areas'] = areas;
+            if not areas:
+                logging.warning("camera [%d] \'%s\' has no alerts configured", c['id'], c['name'])
 
         # remove cameras with no alert areas
         cameras = [c for c in cameras if c['areas']]
@@ -120,7 +144,7 @@ class RecoClient(object):
         new_threads = [t for t in self.threads if t.camera['id'] not in del_ids]
 
         for t in del_threads:
-            print("stop recognition of camera: ", t.camera['name'])
+            logging.info("stop recognition of camera: [%d] \'%s\'", t.camera['id'], t.camera['name'])
             t.stop()
 
         self.threads = new_threads
@@ -137,21 +161,24 @@ class RecoClient(object):
         add_cameras = [c for c in cameras if c['id'] not in del_ids and c['id'] not in old_ids]
 
         for c in add_cameras:
-            print("start recognition of camera: ", c['name'])
+            logging.info("start recognition of camera: [%d] \'%s\'", c['id'], c['name'])
             t = RecoThread(self, c, c['areas'])
             self.threads.append(t)
             t.start()
             
         self.cameras = cameras
-
         pass
 
     def do_auth(self, username, password):
+
         r = requests.post(
             self.api_url+'/api/auth',
             json={'username':username, 'password':password})
 
+        logging.debug("backend auth status: %d", r.status_code)
+
         if r.status_code != 200:
+            logging.error("backend auth request failed for username %s, status: %d", reco_config.api_username, r.status_code)
             return False
 
         self.access_token = r.json()['access_token']
@@ -162,7 +189,10 @@ class RecoClient(object):
         r = requests.get('{0}/api/cameras/all/'.format(self.api_url),
                             headers={'Authorization': 'JWT {0}'.format(self.access_token)})
 
+        logging.debug("backend get_cameras status: %d", r.status_code)
+
         if r.status_code != 200:
+            logging.error("backend get_cameras failed, status: %d", r.status_code)
             return None
         
         return r.json()['cameras']
@@ -172,45 +202,58 @@ class RecoClient(object):
         r = requests.get('{0}/api/cameras/{1}/alerts/'.format(self.api_url, camera_id),
                         headers={'Authorization': 'JWT {0}'.format(self.access_token)})
 
+        logging.debug("backend get_camera_alerts, camera: [%d], status: %d", camera_id, r.status_code)
+
         if r.status_code != 200:
-            print('get_camera_alerts {0} failed: {1}'.format(camera_id, r.status_code))
+            logging.error("backend get_camera_alerts failed, camera: [%d], status: %d", camera_id, r.status_code)
             return None
 
         alerts = r.json()['alerts']
 
         if not isinstance(alerts,list):
-            print('get_camera_alerts {0} invalid result: {1}'.format(camera_id, alerts))
+            logging.error("backend get_camera_alerts invalid result, camera: [%d], %s", camera_id, alerts)
             return None
 
         return alerts
 
     def post_reco_alert(self, alert: AlertObject):
-        
+        """
+        appends alert to alerts queue
+        """
+
         self.alerts.append(alert)
 
     def post_alert_internal(self, alert):
+        """
+        posts alert to backend
+        """
         
         r = requests.post('{0}/api/alerts/'.format(self.api_url),
                         headers={'Authorization': 'JWT {0}'.format(self.access_token)},
                         json=alert.as_dict())
 
+        logging.debug("backend post_alert, alert: %s, status: %d", alert, r.status_code)
+
         if r.status_code == 200:
-            print('post alert {2} / {0} \'{1}\''.format(alert.camera_id, alert.camera_name, alert.alert_type))
+            logging.info('post alert {2} / {0} \'{1}\''.format(alert.camera_id, alert.camera_name, alert.alert_type))
         else:
-            print('failed to post alert')
+            logging.error('backend: failed to post alert, status: %d', r.status_code)
 
     def post_all_alerts(self):
-        
+        """
+        posts all alerts from queue
+        """
+
         while self.alerts:
             alert = self.alerts.pop(0)
 
             alert.encode_image()
 
             if reco_config.send_alerts_to_rog:
-                self.usapi.post_alert(alert)        
+                self.rogapi.post_alert(alert)
             else:
-                self.post_alert_internal(alert)      
-           
+                self.post_alert_internal(alert)
+
 if __name__ == '__main__':
     
     app = RecoClient()

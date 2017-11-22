@@ -39,7 +39,7 @@ class AlertObject(object):
         image = self.cvimage
 
         if image is None:
-            self.image = 'nofile'
+            self.image = 'noimage'
             return
 
         if reco_config.send_image_to_sftp:
@@ -73,10 +73,7 @@ class AlertObject(object):
             'camera_id': self.camera_id, 
             'alert_type_id': self.alert_type, 
             'timestamp': self.timestamp, 
+            'image' : self.image if self.image else "noimage"
         }
 
-        if self.image:
-            payload['image'] = self.image
-
         return payload
-

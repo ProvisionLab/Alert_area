@@ -1,7 +1,8 @@
-import traceback
+#import traceback
 import uuid
 import paramiko
 import reco_config
+import logging
 
 def sftp_upload(fname, image):
     
@@ -27,7 +28,8 @@ def sftp_upload(fname, image):
     except:
 
         #traceback.print_exc()
-        print("sending to sftp failed...")
+        logging.debug("sftp exception", exc_info=True)
+        logging.error("sending file \'%s\' to sftp failed...", fname)
 
     return res
 
