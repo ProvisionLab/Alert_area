@@ -3,7 +3,7 @@ main module
 """
 import time
 import signal
-import requests
+import requests, requests.utils
 from reco_thread import RecoThread
 from rog_client import RogClient
 from alert_object import AlertObject
@@ -254,7 +254,12 @@ class RecoClient(object):
             else:
                 self.post_alert_internal(alert)
 
+def get_user_agent(name="BVC reco_module"):
+    return name
+
 if __name__ == '__main__':
     
+    requests.utils.default_user_agent = get_user_agent
+
     app = RecoClient()
     app.run()
