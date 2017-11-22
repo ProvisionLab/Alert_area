@@ -25,11 +25,10 @@ def sftp_upload(fname, image):
                     fr.write(image)
                     res = True
 
-    except:
+    except Exception as e:
 
-        #traceback.print_exc()
         logging.debug("sftp exception", exc_info=True)
-        logging.error("sending file \'%s\' to sftp failed...", fname)
+        logging.error("sending file \'%s\' to sftp error, %s", fname, e)
 
     return res
 

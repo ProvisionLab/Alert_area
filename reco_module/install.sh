@@ -69,14 +69,14 @@ cd ../../
 
 sudo pip3 install -r dependencies.txt
 
-sudo pip3 install -r matplotlib
+sudo pip3 install matplotlib
+sudo apt-get install -y python3-tk
 
 # install tensorflow
 
 if [ "$USE_CUDA" = "1" ]; then
     sudo -H pip3 install tensorflow-gpu
 else
-    sudo apt-get install -y python3-tk
     sudo pip3 install tensorflow
 fi
 

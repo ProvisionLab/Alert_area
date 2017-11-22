@@ -244,8 +244,12 @@ class RecoClient(object):
         posts all alerts from queue
         """
 
+        alerts = []
+
         while self.alerts:
-            alert = self.alerts.pop(0)
+            alerts.append(self.alerts.pop(0))
+
+        for alert in alerts:
 
             alert.encode_image()
 
@@ -253,6 +257,7 @@ class RecoClient(object):
                 self.rogapi.post_alert(alert)
             else:
                 self.post_alert_internal(alert)
+
 
 def get_user_agent(name="BVC reco_module"):
     return name
