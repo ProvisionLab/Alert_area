@@ -69,7 +69,7 @@ class RecoClient(object):
             if self.alerts:
                 self.post_all_alerts()
             else:
-                time.sleep(0.1)
+                time.sleep(2.0)
 
         logging.info("stopping... this may take some time")
 
