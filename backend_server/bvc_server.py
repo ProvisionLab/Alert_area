@@ -62,7 +62,7 @@ def internal_error(e):
 @jwt_required()
 def api_cameras_get_all():
 
-    app.logger.info('get all cameras')
+    logging.info('get all cameras')
 
     cameras = bvc_db.get_cameras()
 
@@ -74,7 +74,7 @@ def api_camera_set_all():
 
     if request.method == 'POST':
 
-        app.logger.info('set all cameras')
+        logging.info('set all cameras')
 
         cameras = request.get_json()
 
@@ -99,10 +99,11 @@ def api_camera_get(camera_id:str):
 
     camera, err = bvc_db.get_camera(camera_id)
 
-    if camera is not None:
-        return flask.jsonify({'camera' : camera })
-    else:
+    if camera is None:
+        logging.error(err)
         return error_response(404, err)#"camera {0} not found".format(camera_id))
+
+    return flask.jsonify({'camera' : camera })
 
 @app.route('/api/cameras/<int:camera_id>/alerts/', methods=["GET", "POST"])
 @jwt_required()
@@ -113,6 +114,7 @@ def api_camera_alerts(camera_id:str):
     alerts, err = bvc_db.get_camera_alerts(camera_id)
 
     if alerts is None:
+        logging.error(err)
         return error_response(404, err)
 
     return flask.jsonify({ 'alerts' : alerts })
@@ -122,6 +124,7 @@ def api_camera_alerts(camera_id:str):
     alert_id, err = bvc_db.append_camera_alert(camera_id, request.get_json())
 
     if alert_id is None:
+        logging.error(err)
         return error_response(404, err)
 
     return flask.jsonify({ 'alert' : { 'id' : alert_id } })
@@ -135,6 +138,7 @@ def api_camera_alert_(camera_id:str, alert_id:str):
         alert, err = bvc_db.get_camera_alert(camera_id, alert_id)
 
         if alert is None:
+            logging.error(err)
             return error_response(404, err)
 
         return flask.jsonify({'alert' : alert })
@@ -144,6 +148,7 @@ def api_camera_alert_(camera_id:str, alert_id:str):
         res, err = bvc_db.update_camera_alert(camera_id, alert_id, request.get_json())
 
         if res is None:
+            logging.error(err)
             return error_response(404, err)
 
         return flask.jsonify(res)
@@ -153,6 +158,7 @@ def api_camera_alert_(camera_id:str, alert_id:str):
         res, err = bvc_db.delete_camera_alert(camera_id, alert_id)
 
         if res is None:
+            logging.error(err)
             return error_response(404, err)
 
         return flask.jsonify(res)
@@ -171,7 +177,7 @@ def api_alerts():
     if alert_type is None:
         return error_response(400, "invalid arguments")
 
-    print("alert: {0} / {1}".format(camera_id, alert_type))
+    logging.info("new alert: camera [%d], type: %s", camera_id, alert_type)
 
     return flask.jsonify({})
 
@@ -184,7 +190,7 @@ def api_camera_enabled(camera_id: int):
         camera, err = bvc_db.get_camera(camera_id)
 
         if camera is None:
-            app.logger.error(err)
+            logging.error(err)
             return error_response(404, err)
 
         return flask.jsonify({'enabled' : camera.get('enabled', True) })
@@ -199,10 +205,10 @@ def api_camera_enabled(camera_id: int):
         res, err = bvc_db.set_camera_enabled(camera_id, enabled)
 
         if res is None:
-            app.logger.error(err)
+            logging.error(err)
             return error_response(404, err)
 
-        app.logger.info("camera {0} enabled = {1}".format(camera_id, enabled))
+        logging.info("camera [%d] enabled = %s", camera_id, enabled)
 
         return flask.jsonify(res)
 

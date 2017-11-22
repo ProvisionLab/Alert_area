@@ -6,12 +6,10 @@ if [ -f bvc_server.pid ]; then
     exit 1
 fi
 
-echo starting...
+echo starting
 
 # start as daemon
 gunicorn3 bvc_server:app -b 0.0.0.0:5000 -p bvc_server.pid -D \
-    --access-logfile - \
+    --access-logfile bvc_access.log \
     --log-file bvc_server.log  \
-#    --workers 2 \
-#    --worker-class gevent \
-    --log-level -D info
+    --log-level info
