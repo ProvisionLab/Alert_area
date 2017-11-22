@@ -37,13 +37,13 @@ logging.config.dictConfig({
             'backupCount': 6,
         },
     },
+
     'loggers': {
-        'debug': {
-            'level': 'DEBUG',
-            'handlers': ['console'],
-            'propagate': False
-        }
+        'paramiko': {
+            'level': 'ERROR',
+        }    
     },
+
     'root': {
         'level': 'INFO',
         'handlers': ['console', 'infos', 'errors'],

@@ -15,36 +15,48 @@ logging.config.dictConfig({
         },
     },
     'handlers': {
+
         'console': {
             'level': 'DEBUG',
             'class':'logging.StreamHandler',
             'formatter' : 'simple',
         },
+
         'infos': {
             'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
             'filename' : 'bvc.log',
             'formatter' : 'detail',
             'maxBytes': 10000000,
-            'backupCount': 2,
+            'backupCount': 6,
         },
+
+        'access': {
+            'level':'INFO',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename' : 'bvc_access.log',
+            'formatter' : 'detail',
+            'maxBytes': 10000000,
+            'backupCount': 6,
+        },
+
         'errors': {
             'level':'ERROR',
             'class':'logging.handlers.RotatingFileHandler',
             'filename' : 'bvc_errors.log',
             'formatter' : 'detail',
             'maxBytes': 10000000,
-            'backupCount': 6,
+            'backupCount': 2,
         },
     },
 
     'loggers': {
         'werkzeug': {
             'level': 'INFO',
-            'handlers': [],
-            'propagate': True
-        }
-    },
+            'handlers': ['access'],
+            'propagate': False
+        },
+     },
 
     'root': {
         'level': 'INFO',
