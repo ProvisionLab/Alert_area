@@ -7,6 +7,8 @@
 #include <QDebug>
 #include "auth_config.h"
 
+#define BVC_USER_AGENT  "BVC ROGTool"
+
 namespace BVC {
 
 class RequestContext
@@ -63,6 +65,7 @@ void CConnection::Open()
 void CConnection::rog_auth(QString username, QString password, std::function<void(QString auth_token)> callback)
 {
     QNetworkRequest request(QString("%1/api/v2/sessions").arg(ROGAPI_URL));
+    request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
     QJsonObject j_session;
@@ -117,6 +120,7 @@ void CConnection::rog_auth(QString username, QString password, std::function<voi
 void CConnection::rog_get_cameras(QString const & rog_token, std::function<void(QJsonObject const&)> callback)
 {
     QNetworkRequest request(QString("%1/api/v2/me/cameras").arg(ROGAPI_URL));
+    request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setRawHeader("Authorization", rog_token.toLocal8Bit());
 
     auto ctx = std::make_shared<RequestContext>(
@@ -146,6 +150,7 @@ void CConnection::rog_get_cameras(QString const & rog_token, std::function<void(
 void CConnection::auth(std::function<void(bool succeeded)> callback)
 {
     QNetworkRequest request(QString("%1/api/auth").arg(m_apiUrl));
+    request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
     QJsonObject j_auth;
@@ -190,6 +195,7 @@ void CConnection::auth(std::function<void(bool succeeded)> callback)
 void CConnection::get_cameras(std::function<void(QJsonObject const&)> callback)
 {
     QNetworkRequest request(QString("%1/api/cameras/all/").arg(m_apiUrl));
+    request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
 
     auto ctx = std::make_shared<RequestContext>(
@@ -215,6 +221,7 @@ void CConnection::get_cameras(std::function<void(QJsonObject const&)> callback)
 void CConnection::set_cameras(QJsonArray const j_cameras, std::function<void(bool succeeded)> callback)
 {
     QNetworkRequest request(QString("%1/api/cameras/").arg(m_apiUrl));
+    request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
 
@@ -235,6 +242,7 @@ void CConnection::set_cameras(QJsonArray const j_cameras, std::function<void(boo
 void CConnection::set_camera_enabled(int camera_id, bool enabled, std::function<void(bool succeeded)> callback)
 {
     QNetworkRequest request(QString("%1/api/cameras/%2/enabled").arg(m_apiUrl).arg(camera_id));
+    request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
 
@@ -255,6 +263,7 @@ void CConnection::set_camera_enabled(int camera_id, bool enabled, std::function<
 void CConnection::get_camera_alerts(int camera_id, std::function<void(QJsonObject const&)> callback)
 {
     QNetworkRequest request(QString("%1/api/cameras/%2/alerts/").arg(m_apiUrl).arg(camera_id));
+    request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
 
     auto ctx = std::make_shared<RequestContext>(
@@ -277,6 +286,7 @@ void CConnection::post_camera_alert(int camera_id, QJsonObject const & j_alert, 
     qDebug() << __FUNCTION__;
 
     QNetworkRequest request(QString("%1/api/cameras/%2/alerts/").arg(m_apiUrl).arg(camera_id));
+    request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
 
@@ -306,6 +316,7 @@ void CConnection::delete_camera_alert(int camera_id, QString alert_id,
                             .arg(m_apiUrl)
                             .arg(camera_id)
                             .arg(alert_id));
+    request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
 
     auto ctx = std::make_shared<RequestContext>(
@@ -329,6 +340,7 @@ void CConnection::update_camera_alert(int camera_id, QString alert_id, QJsonObje
     qDebug() << __FUNCTION__;
 
     QNetworkRequest request(QString("%1/api/cameras/%2/alerts/%3/").arg(m_apiUrl).arg(camera_id).arg(alert_id));
+    request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
 

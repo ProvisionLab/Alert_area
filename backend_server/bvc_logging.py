@@ -6,7 +6,7 @@ logging.config.dictConfig({
     'disable_existing_loggers': False,
     'formatters': {
         'simple': {
-            'format': '%(asctime)s %(message)s',
+            'format': '%(asctime)s %(name)s: %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'
         },
         'detail': {
@@ -52,6 +52,24 @@ logging.config.dictConfig({
 
     'loggers': {
         'werkzeug': {
+            'level': 'INFO',
+            'handlers': ['access'],
+            'propagate': False
+        },
+
+        'gunicorn': {
+            'level': 'INFO',
+            'handlers': [],
+            'propagate': True
+        },
+
+        'gunicorn.error': {
+            'level': 'INFO',
+            'handlers': [],
+            'propagate': True
+        },
+
+        'gunicorn.access': {
             'level': 'INFO',
             'handlers': ['access'],
             'propagate': False
