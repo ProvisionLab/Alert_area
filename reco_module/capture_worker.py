@@ -46,7 +46,7 @@ class CaptureWorker(threading.Thread):
 
         CaptureWorker.thread_count += 1
 
-        threading.Thread.__init__(self)
+        super().__init__()
 
     def stop(self):
         logging.debug("signal to stop capture camera [%d]", self.camera['id'])

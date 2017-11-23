@@ -69,8 +69,7 @@ cd ../../
 
 sudo pip3 install -r dependencies.txt
 
-sudo pip3 install matplotlib
-sudo apt-get install -y python3-tk
+sudo apt install -y python3-tk
 
 # install tensorflow
 

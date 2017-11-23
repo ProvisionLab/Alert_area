@@ -136,7 +136,7 @@ class PeopleDetectorGraph(tf.Graph):
 
 class PeopleDetector2(object):
     """
-    save as PeopleDetector
+    same as PeopleDetector
     but use one instance of tf.Graph
     """
     

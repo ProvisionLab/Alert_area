@@ -16,15 +16,9 @@ if reco_config.show_dbg_window:
 
 
 if reco_config.use_gpu:
-
     config = tf.ConfigProto()
-
 else:
-
-    config = tf.ConfigProto(
-        device_count={'CPU': 1, 'GPU': 0},
-        allow_soft_placement = True
-        )
+    config = tf.ConfigProto(device_count={'CPU': 1, 'GPU': 0}, allow_soft_placement = True)
         
 #config.gpu_options.per_process_gpu_memory_fraction = 0.1
 config.gpu_options.allow_growth = True
@@ -67,7 +61,7 @@ class FrameWorker(threading.Thread):
         self.frame_time = time.time()
 
         FrameWorker.thread_count += 1
-        threading.Thread.__init__(self)
+        super().__init__()
         pass
 
     @classmethod
@@ -169,8 +163,6 @@ class FrameWorker(threading.Thread):
         pdetector =  PeopleDetector(config)
 
         with pdetector.as_default():
-
-            #pdetector.session = tf_session
 
             while not self.bStop:
                 
