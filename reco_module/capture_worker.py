@@ -120,7 +120,9 @@ class CaptureWorker(threading.Thread):
 
         if not self.alert_areas:
             logging.info("camera %s has no alerts, resetting...", camera_name)
-            return False
+            CaptureWorker.thread_count -= 1
+            self.bExit = True
+            return
 
         # open stream by url
         cap = cv2.VideoCapture(camera_url)
@@ -149,8 +151,9 @@ class CaptureWorker(threading.Thread):
    
             logging.error("camera [%d] \'%s\' not opened", camera_id, self.camera['name'])
 
+        CaptureWorker.thread_count -= 1
+
         logging.info('end capture of camera [%d] \'%s\', workers left: %d', camera_id, camera_name, CaptureWorker.thread_count)
 
-        CaptureWorker.thread_count -= 1
         self.bExit = True
         pass

@@ -22,7 +22,7 @@ if reco_config.use_gpu:
 else:
 
     config = tf.ConfigProto(
-        device_count={'CPU' : 1, 'GPU' : 0},
+        device_count={'CPU': 1, 'GPU': 0},
         allow_soft_placement = True
         )
         
@@ -110,13 +110,13 @@ class FrameWorker(threading.Thread):
 
                 logging.info("configure detector for GPU")
 
-                self.run_detector(config)
+                self.run_detector1(config)
 
             else:
 
                 logging.info("configure detector for CPU")
                 with tf.device('/cpu:0'):
-                    self.run_detector(config)
+                    self.run_detector1(config)
 
         finally:
             FrameWorker.thread_count -= 1            
@@ -160,6 +160,9 @@ class FrameWorker(threading.Thread):
     ##########################################
 
     def run_detector1(self, config):
+        """
+        use PeopleDetector
+        """
     
         motion_detector = MotionDetector(self.md_min_area)
 
@@ -196,7 +199,10 @@ class FrameWorker(threading.Thread):
             pass # with
         
 
-    def run_detector(self, config):
+    def run_detector2(self, config):
+        """
+        use PeopleDetector2 ( shared graph )
+        """
         
         motion_detector = MotionDetector(self.md_min_area)
 

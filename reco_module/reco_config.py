@@ -6,7 +6,7 @@ show_dbg_window = False
 enable_motion_detector = False
 enable_people_detector = True
 
-use_gpu = False
+use_gpu = True
 
 # list of camera names
 # to capture all cameras use empty list
