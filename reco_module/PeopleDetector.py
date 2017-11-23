@@ -183,15 +183,17 @@ class PeopleDetector2(object):
     def __enter__(self):
         self.graph = PeopleDetector2.aquire_graph(); 
         self.grath_context = self.graph.as_default()
+        self.grath_context.__enter__()
         self.session = tf.Session(graph=self.graph, config=self.config)
+        self.session.__enter__()
         return self
 
     def __exit__(self, type, value, traceback):
 
-        self.session.close()
+        self.session.__exit__(type, value, traceback)
         self.session = None
 
-        self.grath_context.close()
+        self.grath_context.__exit__(type, value, traceback)
         self.grath_context = None
 
         PeopleDetector2.release_graph(self.graph)
