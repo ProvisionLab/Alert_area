@@ -1,6 +1,6 @@
 
 DEBUG = False
-show_dbg_window = True
+show_dbg_window = False
 
 # if False, detection if turned off
 enable_detector = True
@@ -24,13 +24,13 @@ filter_cameras = [
 #    'Dog Play',
 #    'Island House',
 #    'Bench',
-'H1',
-'H2',
-'H3',
+#   'H1',
+#   'H2',
+#   'H3',
 ]
 
-#api_url = 'http://127.0.0.1:5000'
-api_url = 'http://52.32.99.45:5000'
+api_url = 'http://127.0.0.1:5000'
+#api_url = 'http://52.32.99.45:5000'
 api_username = 'reco1'
 api_password = 'reco1passwd'
 
