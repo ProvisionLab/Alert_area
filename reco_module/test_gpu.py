@@ -55,10 +55,14 @@ if __name__ == "__main__":
 
     threads.append(threading.Thread(target=run, args=(1, 1000,)))
     threads.append(threading.Thread(target=run, args=(2, 1000,)))
+    threads.append(threading.Thread(target=run, args=(3, 1000,)))
+    threads.append(threading.Thread(target=run, args=(4, 1000,)))
 
     signal.signal(signal.SIGINT, stop_execution)    
 
     total_fps = 0
+
+    print("press Ctrl-C to stop")
 
     for t in threads:
         t.start()
