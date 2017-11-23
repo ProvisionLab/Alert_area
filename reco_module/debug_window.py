@@ -13,19 +13,15 @@ class DebugWindow:
 
     tracker = None
 
-    connection = None
-
-    def __init__(self, camera, tracker, connection):
+    def __init__(self, camera, tracker, alert_areas):
         
-        self.connection = connection
-
         camera_id = camera['id']
 
         self.wname = camera['name']
         cv2.namedWindow(self.wname, cv2.WINDOW_AUTOSIZE) #cv2.WINDOW_NORMAL)
         cv2.setMouseCallback(self.wname, self.on_mouse)
 
-        self.zones = connection.get_camera_alerts(camera_id)
+        self.zones = alert_areas
 
         self.tracker = tracker
 

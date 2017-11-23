@@ -79,7 +79,6 @@ bvc_db.drop()
 
 for camera in cameras:
     camera['name'] = "{0} [{1}]".format(camera['name'], camera['id'])
+    camera['enabled'] = False
     bvc_db.append_camera(camera)
-    bvc_db.append_camera_alert(camera['id'], {
-                               'type': 'VW', 'direction': 'B', 'points': [[0.0, 0.5], [1.0, 0.5]]
-                               })
+    bvc_db.append_camera_alert(camera['id'], {'type': 'VW', 'direction': 'B', 'points': [[0.0, 0.5], [1.0, 0.5]]})

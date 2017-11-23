@@ -41,7 +41,10 @@ logging.config.dictConfig({
     'loggers': {
         'paramiko': {
             'level': 'ERROR',
-        }    
+        },
+        'requests.packages.urllib3.connectionpool' : {
+            'level': 'ERROR',
+        },
     },
 
     'root': {

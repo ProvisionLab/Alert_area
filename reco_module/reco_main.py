@@ -4,7 +4,7 @@ main module
 import time
 import signal
 import requests, requests.utils
-from reco_thread import RecoThread
+from capture_worker import CaptureWorker
 from rog_client import RogClient
 from alert_object import AlertObject
 import reco_config
@@ -39,6 +39,10 @@ class RecoClient(object):
         self.bStop = True
 
         logging.info("SIGINT reseived, stop all recognitions")
+
+        if len(self.alerts)>4:
+            logging.warning("there are many alerts in queue: %d, reseting them", len(self.alerts))
+            self.alerts = []
 
         for t in self.threads:
             t.stop()
@@ -149,20 +153,32 @@ class RecoClient(object):
 
         self.threads = new_threads
 
+        total_fps = 0
+        total_fps2 = 0
+        total_fps_cam = 0
+
         # update alert areas
         for t in self.threads:
             camera_id = t.camera['id']
             for c in cameras:
                 if c['id'] == camera_id:
                     t.camera = c
-                    t.update_areas(c['areas'])   
+                    c_areas = c['areas']
+                    fps, fps2 = t.get_fps()
+                    total_fps += fps
+                    total_fps2 += fps2
+                    total_fps_cam += 1
+                    logging.info("camera [%d] \'%s\' FPS: %d/%d, areas: %d", c['id'], c['name'], int(fps), int(fps2), len(c_areas))
+                    t.update_areas(c_areas)
+
+        logging.info("total FPS: %d/%d for %d cameras", int(total_fps), int(total_fps2), total_fps_cam)
 
         # add new camera threads
         add_cameras = [c for c in cameras if c['id'] not in del_ids and c['id'] not in old_ids]
 
         for c in add_cameras:
             logging.info("start recognition of camera: [%d] \'%s\'", c['id'], c['name'])
-            t = RecoThread(self, c, c['areas'])
+            t = CaptureWorker(self, c)
             self.threads.append(t)
             t.start()
             
@@ -248,6 +264,10 @@ class RecoClient(object):
 
         while self.alerts:
             alerts.append(self.alerts.pop(0))
+
+        if len(alerts) > reco_config.max_alert_queue_size:
+            logging.warning('alerts queue too long (%d), droping', len(alerts))
+            alerts = alerts[:reco_config.max_alert_queue_size]
 
         for alert in alerts:
 

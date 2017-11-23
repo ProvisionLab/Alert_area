@@ -1,6 +1,9 @@
 
 DEBUG = False
-show_dbg_window = False
+show_dbg_window = True
+
+# if False, detection if turned off
+enable_detector = True
 
 # list of camera names
 # to capture all cameras use empty list
@@ -21,6 +24,9 @@ filter_cameras = [
 #    'Dog Play',
 #    'Island House',
 #    'Bench',
+'H1',
+'H2',
+'H3',
 ]
 
 #api_url = 'http://127.0.0.1:5000'
@@ -29,6 +35,7 @@ api_username = 'reco1'
 api_password = 'reco1passwd'
 
 update_interval = 60  # seconds
+max_alert_queue_size = 50
 
 send_alerts_to_rog = True
 send_image_to_sftp = True

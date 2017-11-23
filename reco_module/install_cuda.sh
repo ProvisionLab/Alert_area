@@ -2,7 +2,7 @@
 
 #lspci -nnk | grep -i nvidia
 
-sudo apt-get install -y wget python3 python3-pip
+sudo apt install -y wget python3 python3-pip
 
 
 CUDA_VER=8.0
@@ -16,8 +16,8 @@ if [ ! -f /usr/local/cuda/version.txt ]; then
 
     wget "http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.61-1_amd64.deb" || exit
     sudo dpkg -i cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
-    sudo apt-get update
-    sudo apt-get install -y --no-install-recommends cuda-$CUDA_VER
+    sudo apt update
+    sudo apt install -y --no-install-recommends cuda-$CUDA_VER
 fi
 
 # Install CUDNN

@@ -2,8 +2,8 @@
 
 USE_CUDA=1
 
-sudo apt-get update
-sudo apt-get install -y git wget unzip python3  python3-pip
+sudo apt update
+sudo apt install -y git wget unzip python3  python3-pip
 sudo pip3 install --upgrade pip
 
 chmod +x install_cuda.sh
@@ -36,14 +36,14 @@ cd build/
 
 if [ ! -f ./CMakeCache.txt ]; then
 
-    sudo apt-get install --assume-yes build-essential cmake git
-    sudo apt-get install --assume-yes pkg-config unzip ffmpeg python-dev python-numpy python3-dev python3-numpy 
+    sudo apt install --assume-yes build-essential cmake git
+    sudo apt install --assume-yes pkg-config unzip ffmpeg python-dev python-numpy python3-dev python3-numpy 
 
-    sudo apt-get install --assume-yes libdc1394-22 libdc1394-22-dev libjpeg-dev libpng12-dev libtiff5-dev libjasper-dev
-    sudo apt-get install --assume-yes libavcodec-dev libavformat-dev libswscale-dev libxine2-dev 
-    sudo apt-get install --assume-yes libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev
+    sudo apt install --assume-yes libdc1394-22 libdc1394-22-dev libjpeg-dev libpng12-dev libtiff5-dev libjasper-dev
+    sudo apt install --assume-yes libavcodec-dev libavformat-dev libswscale-dev libxine2-dev 
+    sudo apt install --assume-yes libgstreamer0.10-dev libgstreamer-plugins-base0.10-dev
 
-    sudo apt-get install --assume-yes install x264
+    sudo apt install --assume-yes install x264
 
     echo buildind opencv ...
 
