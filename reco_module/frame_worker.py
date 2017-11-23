@@ -4,14 +4,31 @@ import reco_config
 import logging
 
 from MotionDetector import MotionDetector
-from PeopleDetector import PeopleDetector
+from PeopleDetector import PeopleDetector, PeopleDetector2
 import tensorflow as tf
 
 from trk_analyzer2 import TrackAnalyzer2
+from trk_object import TrackObject
 from alert_object import AlertObject
 
 if reco_config.show_dbg_window:
     from debug_window import DebugWindow
+
+
+if reco_config.use_gpu:
+
+    config = tf.ConfigProto()
+
+else:
+
+    config = tf.ConfigProto(
+        device_count={'CPU' : 1, 'GPU' : 0},
+        allow_soft_placement = True
+        )
+        
+#config.gpu_options.per_process_gpu_memory_fraction = 0.1
+config.gpu_options.allow_growth = True
+#config.log_device_placement = True
 
 def boxes_to_track_objects(boxes):
     objects = dict([(TrackObject(1+i, (b[1] + b[3]) / 2, b[2], b[3] - b[1], b[2] - b[0]), 1+i) for i, b in enumerate(boxes)])
@@ -73,6 +90,7 @@ class FrameWorker(threading.Thread):
         pass
 
     def run(self):
+        
         """
         thread main loop
         """
@@ -86,44 +104,19 @@ class FrameWorker(threading.Thread):
         self.analyzer = TrackAnalyzer2(self.alert_areas)
         self.analyzer.on_alert = self.on_alert
 
-        motion_detector = MotionDetector(self.md_min_area)
-
-        detector = PeopleDetector()
-
-        config = tf.ConfigProto()
-        config.gpu_options.per_process_gpu_memory_fraction = 0.7
-
         try:
 
-            with detector.detection_graph.as_default(), \
-                tf.Session(graph=detector.detection_graph, config=config) as tf_session:
+            if reco_config.use_gpu:
 
-                while not self.bStop:
-                    
-                    with self.lock:
-                        self.lock.wait(0.1)
+                logging.info("configure detector for GPU")
 
-                        frame = self.frame
-                        self.frame = None
+                self.run_detector(config)
 
-                    if frame is None:
-                        continue
+            else:
 
-                    self.current_frame = frame
-
-                    self.recognize(frame, motion_detector, detector, tf_session)       
-
-                    self.frame_count2 += 1
-
-                    objects = []
-
-                    if self.dbg and self.dbg.draw_frame(frame, objects):
-                        logging.info("stop signal from debug window [%d]", camera_id)
-                        break
-
-                    self.current_frame = None
-
-                pass # with
+                logging.info("configure detector for CPU")
+                with tf.device('/cpu:0'):
+                    self.run_detector(config)
 
         finally:
             FrameWorker.thread_count -= 1            
@@ -166,7 +159,78 @@ class FrameWorker(threading.Thread):
 
     ##########################################
 
+    def run_detector1(self, config):
+    
+        motion_detector = MotionDetector(self.md_min_area)
+
+        pdetector =  PeopleDetector(config)
+
+        with pdetector.as_default():
+
+            #pdetector.session = tf_session
+
+            while not self.bStop:
+                
+                with self.lock:
+                    self.lock.wait(0.2)
+
+                    frame = self.frame
+                    self.frame = None
+
+                if frame is None:
+                    continue
+
+                self.current_frame = frame
+
+                self.recognize(frame, motion_detector, pdetector)       
+
+                self.frame_count2 += 1
+
+                objects = []
+
+                if self.dbg and self.dbg.draw_frame(frame, objects):
+                    logging.info("stop signal from debug window [%d]", self.camera['id'])
+                    break
+
+                self.current_frame = None
+            pass # with
+        
+
+    def run_detector(self, config):
+        
+        motion_detector = MotionDetector(self.md_min_area)
+
+        with PeopleDetector2(config) as pdetector:
+
+            while not self.bStop:
+                
+                with self.lock:
+                    self.lock.wait(0.2)
+
+                    frame = self.frame
+                    self.frame = None
+
+                if frame is None:
+                    continue
+
+                self.current_frame = frame
+
+                self.recognize(frame, motion_detector, pdetector)       
+
+                self.frame_count2 += 1
+
+                objects = []
+
+                if self.dbg and self.dbg.draw_frame(frame, objects):
+                    logging.info("stop signal from debug window [%d]", self.camera['id'])
+                    break
+
+                self.current_frame = None
+            pass # with
+        pass        
+
     def on_alert(self, alert: AlertObject, is_enter: bool, pos):
+        
         camera_id = self.camera['id']
         if self.dbg: self.dbg.add_alert(pos, is_enter)
 
@@ -177,15 +241,15 @@ class FrameWorker(threading.Thread):
 
         alert.set_image(self.current_frame)
 
-        if self.self.post_new_alert:
+        if self.post_new_alert:
             self.post_new_alert(alert)
 
-    def recognize(self, frame, motion_detector, detector, tf_session):
+    def recognize(self, frame, motion_detector, people_detector):
         
-        if not motion_detector.isMotion(frame):
+        if reco_config.enable_motion_detector and not motion_detector.isMotion(frame):
             return
 
-        boxes = detector.process_frame(frame, tf_session) if reco_config.enable_detector else []
+        boxes = people_detector.process_frame(frame) if reco_config.enable_people_detector else []
         
         h, w = frame.shape[:2]
             

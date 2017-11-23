@@ -95,32 +95,11 @@ class CaptureWorker(threading.Thread):
 
         return camera_url
 
-    def run(self):
+    def run_capture(self, cap):
         
         camera_id = self.camera['id']
         camera_name = self.camera['name']
-        camera_url = self.get_camera_url(self.camera)
 
-        if not self.alert_areas:
-            logging.info("camera %s has no alerts, resetting...", self.camera['name'])
-            return False
-
-        # open stream by url
-        cap = cv2.VideoCapture(camera_url)
-
-        if not cap.isOpened():
-            logging.error("camera [%d] \'%s\' not opened", camera_id, self.camera['name'])
-            return False
-
-        cap_fps = int(cap.get(cv2.CAP_PROP_FPS))
-        cap_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        cap_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-        logging.info('begin capture of camera: \'%s\', url: \'%s\', fps: %d, [%d x %d]', camera_name, camera_url, cap_fps, cap_w, cap_h)
-
-        self.worker = FrameWorker(self.camera, cap_w, cap_h, self.connection.post_reco_alert)
-        self.worker.start()
-   
         while not self.bStop:
     
             res, frame = cap.read()
@@ -133,15 +112,45 @@ class CaptureWorker(threading.Thread):
 
         logging.debug('capture loop end of camera [%d] \'%s\'', camera_id, camera_name)
 
-        cap.release()
-
-        self.worker.stop()
-        self.worker.join()
-        self.worker = None
+    def run(self):
         
-        CaptureWorker.thread_count -= 1
+        camera_id = self.camera['id']
+        camera_name = self.camera['name']
+        camera_url = self.get_camera_url(self.camera)
+
+        if not self.alert_areas:
+            logging.info("camera %s has no alerts, resetting...", camera_name)
+            return False
+
+        # open stream by url
+        cap = cv2.VideoCapture(camera_url)
+
+        if cap.isOpened():
+    
+            cap_fps = int(cap.get(cv2.CAP_PROP_FPS))
+            cap_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            cap_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+            logging.info('begin capture of camera: \'%s\', url: \'%s\', fps: %d, [%d x %d]', 
+                camera_name, camera_url, cap_fps, cap_w, cap_h)
+    
+            self.worker = FrameWorker(self.camera, cap_w, cap_h, self.connection.post_reco_alert)
+            self.worker.start()
+
+            self.run_capture(cap)
+    
+            self.worker.stop()
+            self.worker.join()
+            self.worker = None
+
+            cap.release()
+    
+        else:
+   
+            logging.error("camera [%d] \'%s\' not opened", camera_id, self.camera['name'])
 
         logging.info('end capture of camera [%d] \'%s\', workers left: %d', camera_id, camera_name, CaptureWorker.thread_count)
 
+        CaptureWorker.thread_count -= 1
         self.bExit = True
         pass

@@ -2,8 +2,11 @@
 DEBUG = False
 show_dbg_window = False
 
-# if False, detection if turned off
-enable_detector = True
+# if False, detection is turned off
+enable_motion_detector = False
+enable_people_detector = True
+
+use_gpu = False
 
 # list of camera names
 # to capture all cameras use empty list
@@ -29,8 +32,8 @@ filter_cameras = [
 #   'H3',
 ]
 
-api_url = 'http://127.0.0.1:5000'
-#api_url = 'http://52.32.99.45:5000'
+#api_url = 'http://127.0.0.1:5000'
+api_url = 'http://52.32.99.45:5000'
 api_username = 'reco1'
 api_password = 'reco1passwd'
 

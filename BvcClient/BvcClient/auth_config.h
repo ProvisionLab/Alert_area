@@ -1,8 +1,8 @@
 #pragma once
 
-#define BVCAPI_URL      "http://52.32.99.45:5000"
-//#define BVCAPI_URL      "http://54.69.83.153:5000"  // EC2 instance (g3.4xlarge)
-//#define BVCAPI_URL      "http://34.214.218.163:5000"  // 3
+#define BVCAPI_URL      "http://52.32.99.45:5000"   // server #1
+//#define BVCAPI_URL      "http://54.69.83.153:5000"  // server #2 EC2 instance (g3.4xlarge)
+//#define BVCAPI_URL      "http://34.214.218.163:5000"  // server #3
 //#define BVCAPI_URL      "http://localhost:5000"
 //#define BVCAPI_URL      "http://192.168.88.247:5000"
 
