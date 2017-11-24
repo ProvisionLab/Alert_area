@@ -1,30 +1,83 @@
-#!/bin/sh
+#!/bin/bash
 
-#lspci -nnk | grep -i nvidia
+LSBRELEASE=`lsb_release -r -s`
+ARCH=`uname -p`
 
-sudo apt install -y wget python3 python3-pip
+NVIDIACARD=`lspci -mm | grep -i nvidia | xargs printf "%s|" | cut -d "|" -f4`
 
+if [ -z $NVIDIACARD ]; then
+    echo no NVIDIA card found
+    exit 1
+fi
 
-CUDA_VER=8.0
-CUDNN_VER=v6.0
+echo $NVIDIACARD
 
 # Install CUDA
 
-if [ ! -f /usr/local/cuda/version.txt ]; then
+#if [ ! -f /usr/local/cuda/version.txt ]; then
 
-    echo Installing CUDA
+if [ "$ARCH" == "x86_64" -a "$LSBRELEASE" == "16.04" ]; then
 
-    wget "http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_8.0.61-1_amd64.deb" || exit
-    sudo dpkg -i cuda-repo-ubuntu1604_8.0.61-1_amd64.deb
+    echo Ubuntu $LSBRELEASE, Installing CUDA $CUDA_VER2
+
+    CUDA_VER=8.0
+    CUDA_VER2=8.0.61
+    CUDNN_VER=v6.0
+
+    sudo apt install -y wget
+
+    DEB_NAME=cuda-repo-ubuntu1604_$CUDA_VER2-1_amd64.deb
+
+    wget "http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/$DEB_NAME" || exit 1
+
+    sudo dpkg -i $DEB_NAME
+
     sudo apt update
     sudo apt install -y --no-install-recommends cuda-$CUDA_VER
-fi
+
+elif [ "$ARCH" == "x86_64" -a "$LSBRELEASE" == "17.04" -o "$LSBRELEASE" == "17.10" ]; then
+
+    echo Ubuntu $LSBRELEASE, Installing CUDA $CUDA_VER2
+
+    CUDA_VER=9.0
+    CUDA_VER2=9.0.176
+    CUDNN_VER=v6.0
+
+    sudo apt install -y wget
+
+    DEB_NAME=cuda-repo-ubuntu1704_$CUDA_VER2-1_amd64.deb
+
+    wget "http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1704/x86_64/$DEB_NAME" || exit 1
+
+    sudo dpkg -i $DEB_NAME
+    sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1704/x86_64/7fa2af80.pub
+
+    sudo apt update
+    sudo apt install -y --no-install-recommends cuda-$CUDA_VER
+
+else
+
+    echo Unsupported Linux version
+    exit 1
+
+fi # ubuntu release
+
+#else
+#    echo `cat /usr/local/cuda/version.txt` already installed
+#fi # cuda version
 
 # Install CUDNN
+
+if [ -z "`cat /usr/local/cuda/version.txt | grep $CUDA_VER`" ]; then
+    echo CUDNN require CUDA $CUDA_VER
+    exit 1
+fi
 
 if [ -d /usr/local/cuda -a ! -f /usr/local/cuda/lib64/libcudnn.so ]; then
 
     echo installing CUDNN
+
+    sudo apt install -y wget
 
     CUDNN_NAME=cudnn-$CUDA_VER-linux-x64-$CUDNN_VER.tgz
 
