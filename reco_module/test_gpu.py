@@ -20,10 +20,10 @@ if use_gpu:
     config = tf.ConfigProto()
     #config = tf.ConfigProto(device_count={'CPU': 1, 'GPU': 1}, allow_soft_placement = True)
 else:
-    config = tf.ConfigProto(device_count={'CPU': 1, 'GPU': 0}, allow_soft_placement = True)
+    config = tf.ConfigProto(device_count={'GPU': 0}, allow_soft_placement = False)
 
 config.gpu_options.allow_growth = True
-#config.log_device_placement = True
+config.log_device_placement = True
 
 bStop = False
 
@@ -39,7 +39,10 @@ def detect(index, max_count, fps_list: dict):
 
     fps = 0
 
-    with pdetector.as_default():
+#    with pdetector.as_default():
+
+    with pdetector.detection_graph.as_default(), tf.Session(graph=pdetector.detection_graph, config=config) as tf_session:
+        pdetector.session = tf_session
 
         frame_count = 0
         frame_time = time.time()
@@ -61,10 +64,10 @@ def detect(index, max_count, fps_list: dict):
 def run(index, max_count, fps_list: dict):
     
     if use_gpu:
-        #with tf.device('/device:CPU:0'):
+        with tf.device('/device:GPU:0'):
             detect(index, max_count, fps_list)    
     else:
-        with tf.device('/CPU:0'):
+        with tf.device('/device:CPU:0'):
             detect(index, max_count, fps_list)    
 
 def stop_execution(signum, taskfrm):
@@ -87,6 +90,8 @@ def run_detects(count):
         t.start()
 
     print()
+
+    total_fps = 0.0
 
     while not bStop:
 

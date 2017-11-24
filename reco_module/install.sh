@@ -1,10 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
 USE_CUDA=1
 
 sudo apt update
 sudo apt install -y git wget unzip python3  python3-pip
-sudo pip3 install --upgrade pip
+sudo -H pip3 install --upgrade pip
 
 chmod +x install_cuda.sh
 
@@ -13,6 +13,21 @@ if [ "$USE_CUDA" = "1" ]; then
     ./install_cuda.sh || exit
 
 fi
+
+python3 -c "import cv2" > /dev/null
+
+if [ ! $? ]; then
+
+    echo no python3 opencv installed. try install
+
+    sudo apt install -y python3-opencv || echo failed to install python3-opencv
+fi
+
+python3 -c "import cv2" > /dev/null
+
+if [ ! $? ]; then
+
+    echo no python3 opencv installed. try build
 
 # build opencv
 
@@ -64,10 +79,11 @@ sudo ldconfig
 
 cd ../../
 
+fi # build opencv
 
 # Install python dependencies
 
-sudo pip3 install -r dependencies.txt
+sudo -H pip3 install -r dependencies.txt
 
 sudo apt install -y python3-tk
 
@@ -76,7 +92,7 @@ sudo apt install -y python3-tk
 if [ "$USE_CUDA" = "1" ]; then
     sudo -H pip3 install tensorflow-gpu
 else
-    sudo pip3 install tensorflow
+    sudo -H pip3 install tensorflow
 fi
 
 # download tensorflow models
