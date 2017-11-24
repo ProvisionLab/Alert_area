@@ -31,6 +31,10 @@ def detect(index, max_count, fps_list: dict):
     
     frame = cv2.imread("test_image01.jpg")
 
+    if frame is None:
+        print("image test_image01.jpg not loaded")
+        return
+
     pdetector =  PeopleDetector(config)
 
     fps = 0
