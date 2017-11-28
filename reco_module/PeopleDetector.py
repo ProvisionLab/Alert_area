@@ -20,8 +20,6 @@ class PeopleDetector:
     
     detection_graph = None
 
-    session = None
-    
     def __init__(self, config):
         
         self.config = config
@@ -55,6 +53,7 @@ class PeopleDetector:
             self.classes = detection_graph.get_tensor_by_name('detection_classes:0')
             self.num_detections = detection_graph.get_tensor_by_name('num_detections:0')        
 
+        detection_graph.finalize()
         return detection_graph
 
     def process_frame(self, frame):
@@ -64,7 +63,9 @@ class PeopleDetector:
         image_np_expanded = np.expand_dims(frame_scaled, axis=0)
 
         # Actual detection.
-        (boxes, scores, classes, num_detections) = self.session.run(
+
+        session = tf.get_default_session()
+        (boxes, scores, classes, num_detections) = session.run(
            [self.boxes, self.scores, self.classes, self.num_detections],
            feed_dict={self.image_tensor: image_np_expanded})
 
@@ -75,12 +76,23 @@ class PeopleDetector:
 
         return people_boxes
 
-    def as_default(self):
+    def __enter__(self):
         
-        gcx = self.detection_graph.as_default()
+        self.gctx = self.detection_graph.as_default()
+        self.gctx.__enter__()
+        
         self.session = tf.Session(graph=self.detection_graph, config=self.config)
-        return gcx
+        self.session.__enter__()
+        return self
 
+    def __exit__(self, type, value, traceback):
+
+        self.session.__exit__(type, value, traceback)
+        self.session = None
+
+        self.gctx.__exit__(type, value, traceback)
+        self.gctx = None
+        pass    
 
 class PeopleDetectorGraph(tf.Graph):
     
@@ -95,7 +107,6 @@ class PeopleDetectorGraph(tf.Graph):
         PATH_TO_CKPT = os.path.join(CWD_PATH, 'object_detection', MODEL_NAME, 'frozen_inference_graph.pb')
         
         with self.as_default():
-            #sess = tf.Session(graph=self.detection_graph)
 
             od_graph_def = tf.GraphDef()
             with tf.gfile.GFile(PATH_TO_CKPT, 'rb') as fid:
@@ -113,7 +124,8 @@ class PeopleDetectorGraph(tf.Graph):
             self.scores = self.get_tensor_by_name('detection_scores:0')
             self.classes = self.get_tensor_by_name('detection_classes:0')
             self.num_detections = self.get_tensor_by_name('num_detections:0')
-            pass
+
+        self.finalize()
 
     def process_frame(self, frame, tf_session):
         
@@ -133,6 +145,8 @@ class PeopleDetectorGraph(tf.Graph):
            for b, s, c in zip(boxes[0], scores[0], classes[0]) if s > min_score_thresh and c == 1.0]
 
         return people_boxes        
+
+
 
 class PeopleDetector2(object):
     """
@@ -175,13 +189,13 @@ class PeopleDetector2(object):
                 del cls.detection_graph
 
     def as_default(self):
-        self.graph = PeopleDetector2.aquire_graph(); 
+        self.graph = self.aquire_graph(); 
         gcx = self.graph.as_default()
         self.session = tf.Session(graph=self.graph, config=self.config)
         return gcx
 
     def __enter__(self):
-        self.graph = PeopleDetector2.aquire_graph(); 
+        self.graph = self.aquire_graph(); 
         self.grath_context = self.graph.as_default()
         self.grath_context.__enter__()
         self.session = tf.Session(graph=self.graph, config=self.config)
@@ -207,8 +221,11 @@ class PeopleDetector2(object):
         # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
         image_np_expanded = np.expand_dims(frame_scaled, axis=0)
 
+        session = tf.get_default_session()
+
         # Actual detection.
-        (boxes, scores, classes, num_detections) = self.session.run(
+
+        (boxes, scores, classes, num_detections) = session.run(
            [self.graph.boxes, self.graph.scores, self.graph.classes, self.graph.num_detections],
            feed_dict={self.graph.image_tensor: image_np_expanded})
 

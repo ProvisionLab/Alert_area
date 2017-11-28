@@ -3,14 +3,14 @@
 USE_CUDA=1
 
 sudo apt update
-sudo apt install -y git wget unzip python3  python3-pip
-sudo -H pip3 install --upgrade pip
+sudo apt install -y git wget unzip python3 python3-pip
+sudo pip3 install --upgrade pip
 
 chmod +x install_cuda.sh
 
 if [ "$USE_CUDA" = "1" ]; then
 
-    ./install_cuda.sh || exit
+    ./install_cuda.sh || exit 1
 
 fi
 
@@ -18,7 +18,7 @@ python3 -c "import cv2" > /dev/null
 
 if [ ! $? ]; then
 
-    echo no python3 opencv installed. try install
+    echo python3 opencv not installed. try install
 
     sudo apt install -y python3-opencv || echo failed to install python3-opencv
 fi
@@ -27,7 +27,7 @@ python3 -c "import cv2" > /dev/null
 
 if [ ! $? ]; then
 
-    echo no python3 opencv installed. try build
+    echo python3 opencv not installed. try build
 
 # build opencv
 
@@ -37,7 +37,7 @@ if [ ! -d ./opencv-$OPENCV_VER ]; then
 
     echo downloading opencv $OPENCV_VER...
 
-    wget https://github.com/opencv/opencv/archive/$OPENCV_VER.zip || exit
+    wget https://github.com/opencv/opencv/archive/$OPENCV_VER.zip || exit 1
 
     unzip $OPENCV_VER.zip
     rm $OPENCV_VER.zip
@@ -66,9 +66,9 @@ if [ ! -f ./CMakeCache.txt ]; then
         -DCMAKE_INSTALL_PREFIX=/usr/local \
         -DWITH_FFMPEG=YES \
         -DWITH_CUDA=OFF \
-        .. || exit
+        .. || exit 1
 
-    make -j $(($(nproc) + 1)) || exit
+    make -j $(($(nproc) + 1)) || exit 1
 
 fi
 
@@ -83,29 +83,62 @@ fi # build opencv
 
 # Install python dependencies
 
-sudo -H pip3 install -r dependencies.txt
-
-sudo apt install -y python3-tk
+sudo -H pip3 install --upgrade -r dependencies.txt
 
 # install tensorflow
 
 if [ "$USE_CUDA" = "1" ]; then
-    sudo -H pip3 install tensorflow-gpu
+
+    echo Installing Tensorflow, GPU
+
+    PYTHON_REV=$(python3 -V | cut -d ' ' -f2)
+
+    if [ "${PYTHON_REV:0:3}" = "3.5" ]; then
+
+        echo "tensorflow for python 3.5"
+
+        TF_GPU_URL=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-1.4.0-cp35-cp35m-linux_x86_64.whl
+
+        sudo pip3 install --upgrade $TF_GPU_URL
+
+        sudo pip3 install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/protobuf-3.1.0-cp35-none-linux_x86_64.whl
+
+    elif [ "${PYTHON_REV:0:3}" = "3.6" ]; then
+
+        echo "tensorflow for python 3.6"
+
+        TF_GPU_URL=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-1.4.0-cp36-cp36m-linux_x86_64.whl
+
+        sudo pip3 install --upgrade $TF_GPU_URL
+
+        sudo pip3 install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/protobuf-3.1.0-cp36-none-linux_x86_64.whl
+
+    else
+        sudo pip3 install tensorflow-gpu
+    fi
+
 else
-    sudo -H pip3 install tensorflow
+
+    echo Installing Tensorflow, CPU
+
+    sudo pip3 install tensorflow
 fi
 
 # download tensorflow models
 
 cd object_detection/
 
-if [ ! -d ./ssd_mobilenet_v1_coco_11_06_2017 ]; then
+MODELNAME=ssd_mobilenet_v1_coco_11_06_2017
 
-    wget http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_11_06_2017.tar.gz || exit
-    tar -xf ssd_mobilenet_v1_coco_11_06_2017.tar.gz && rm ssd_mobilenet_v1_coco_11_06_2017.tar.gz
+if [ ! -d ./$MODELNAME ]; then
+
+    wget http://download.tensorflow.org/models/object_detection/$MODELNAME.tar.gz || exit 1
+    tar -xf $MODELNAME.tar.gz && rm $MODELNAME.tar.gz
 
 fi
 
 cd ..
 
 chmod +x start.sh
+
+exit 0

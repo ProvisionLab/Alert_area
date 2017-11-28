@@ -6,24 +6,21 @@ import threading
 import signal
 import tensorflow as tf
 import cv2
-from PeopleDetector import PeopleDetector
+from PeopleDetector import PeopleDetector, PeopleDetector2
 from tensorflow.python.client import device_lib
 
-use_gpu = True
+use_cpu = False
 
-def show_available_gpus():
-    local_device_protos = device_lib.list_local_devices()
-    for i in local_device_protos:
-        print("{0}, memory_limit: {1}".format(i.name, i.memory_limit))
-
-if use_gpu:
-    config = tf.ConfigProto()
-    #config = tf.ConfigProto(device_count={'CPU': 1, 'GPU': 1}, allow_soft_placement = True)
-else:
+if use_cpu:
     config = tf.ConfigProto(device_count={'GPU': 0}, allow_soft_placement = False)
+else:
+    config = tf.ConfigProto(allow_soft_placement = True)
+    #config = tf.ConfigProto(device_count={'CPU': 1, 'GPU': 1}, allow_soft_placement = True)
 
-config.gpu_options.allow_growth = True
-config.log_device_placement = True
+config.gpu_options.per_process_gpu_memory_fraction = 0.1
+config.gpu_options.allow_growth = False
+
+config.log_device_placement = False
 
 bStop = False
 
@@ -35,14 +32,15 @@ def detect(index, max_count, fps_list: dict):
         print("image test_image01.jpg not loaded")
         return
 
-    pdetector =  PeopleDetector(config)
 
     fps = 0
 
-#    with pdetector.as_default():
+    pdetector =  PeopleDetector(config)
+    with pdetector.detection_graph.as_default(), \
+        tf.Session(graph=pdetector.detection_graph, config=config):
 
-    with pdetector.detection_graph.as_default(), tf.Session(graph=pdetector.detection_graph, config=config) as tf_session:
-        pdetector.session = tf_session
+
+#    with PeopleDetector2(config) as pdetector:
 
         frame_count = 0
         frame_time = time.time()
@@ -58,16 +56,15 @@ def detect(index, max_count, fps_list: dict):
                 fps = frame_count / d
                 frame_count = 0
                 frame_time = now
-                #print("[{0}] FPS {1:.2f}".format(index, fps))
                 fps_list[index] = fps
 
 def run(index, max_count, fps_list: dict):
     
-    if use_gpu:
-        with tf.device('/device:GPU:0'):
+    if use_cpu:
+        with tf.device('/cpu:0'):
             detect(index, max_count, fps_list)    
     else:
-        with tf.device('/device:CPU:0'):
+        #with tf.device('/gpu:0'):
             detect(index, max_count, fps_list)    
 
 def stop_execution(signum, taskfrm):
@@ -111,6 +108,11 @@ def run_detects(count):
         t.join()
 
     print("Total FPS {0:.2f}".format(total_fps))
+
+def show_available_gpus():
+    local_device_protos = device_lib.list_local_devices()
+    for i in local_device_protos:
+        print("{0}, memory_limit: {1}".format(i.name, i.memory_limit))
 
 if __name__ == "__main__":
 

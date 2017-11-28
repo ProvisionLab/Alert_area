@@ -120,24 +120,26 @@ class TrackAnalyzer2(object):
 
         pass
 
-    def on_area_enter(self, area):
+    def on_area_enter(self, area, box):
         pos = area.get_pos()
         pos = (int(pos[0] * self.frame_w), int(pos[1] * self.frame_h))
-        self.on_alert(AlertObject(area.type), True, pos)
+        self.on_alert(AlertObject(area.type), True, box)
         pass
 
     def on_area_leave(self, area):
         pos = area.get_pos()
         pos = (int(pos[0] * self.frame_w), int(pos[1] * self.frame_h))
-        self.on_alert(AlertObject(area.type), False, pos)
+        self.on_alert(AlertObject(area.type), False, None)
         pass
 
     def check_area_RA(self, area, objects):
         
         area_empty = True
+        box = None
         for o in objects:
             if self.area_contains_object(area, o):
                 area_empty = False
+                box = o
                 break
 
         if (area.timer1 is None) and not area_empty:
@@ -150,7 +152,7 @@ class TrackAnalyzer2(object):
                     is_enter = False
 
             if is_enter:
-                self.on_area_enter(area)
+                self.on_area_enter(area, box)
                 area.timer1 = time.time()
             else:
                 area.timer1 = area.timer3
@@ -178,9 +180,11 @@ class TrackAnalyzer2(object):
     def check_area_LD(self, area, objects):
         
         area_empty = True
+        box = None
         for o in objects:
             if self.area_contains_object(area, o):
                 area_empty = False
+                box = o
                 break
 
         if (area.timer1 is None) and not area_empty:
@@ -212,7 +216,7 @@ class TrackAnalyzer2(object):
             delta = time.time() - area.timer1
             if delta >= area.duration:
                 area.LD_enter = True
-                self.on_area_enter(area)
+                self.on_area_enter(area, box)
 
         if (area.timer1 is None) and (area.timer2 is not None) and area.LD_enter:
             delta = time.time() - area.timer2
@@ -229,16 +233,18 @@ class TrackAnalyzer2(object):
         p2 = np.array(points[1])
 
         area_empty = True
+        box = None
         for o in objects:
             if self.line_cross_object(p1, p2, o):
                 area_empty = False
+                box = o
                 break
 
         if (area.timer1 is None) and not area_empty:
             # enter event
             area.timer1 = time.time()
             area.timer2 = None
-            self.on_area_enter(area)
+            self.on_area_enter(area, box)
             pass
 
         elif (area.timer1 is not None) and area_empty:

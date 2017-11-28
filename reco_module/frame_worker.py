@@ -160,9 +160,10 @@ class FrameWorker(threading.Thread):
     
         motion_detector = MotionDetector(self.md_min_area)
 
-        pdetector =  PeopleDetector(config)
+#        pdetector =  PeopleDetector(config)
+#        with pdetector.as_default():
 
-        with pdetector.as_default():
+        with PeopleDetector(config) as pdetector:
 
             while not self.bStop:
                 
@@ -227,20 +228,28 @@ class FrameWorker(threading.Thread):
             pass # with
         pass        
 
-    def on_alert(self, alert: AlertObject, is_enter: bool, pos):
+    def on_alert(self, alert: AlertObject, is_enter: bool, box: TrackObject):
         
         camera_id = self.camera['id']
-        if self.dbg: self.dbg.add_alert(pos, is_enter)
+
+        if isinstance(box, TrackObject):
+            pos = box.get_pos()
+            if self.dbg: self.dbg.add_alert(pos, is_enter)
 
         alert.camera_id = camera_id
         alert.camera_name = self.camera['name']
 
-        logging.debug("new alert: %s", alert)
+        if is_enter:
 
-        alert.set_image(self.current_frame)
+            logging.debug("new alert: %s", alert)
 
-        if self.post_new_alert:
-            self.post_new_alert(alert)
+            alert.set_image(self.current_frame, box)
+
+            if self.post_new_alert:
+                self.post_new_alert(alert)
+
+        else:
+            pass
 
     def recognize(self, frame, motion_detector, people_detector):
         

@@ -16,7 +16,7 @@ echo $NVIDIACARD
 
 if [ ! -f /usr/local/cuda/version.txt ]; then
 
-if [ "$ARCH" == "x86_64" -a "$LSBRELEASE" == "16.04" ]; then
+if [ "$ARCH" = "x86_64" -a "$LSBRELEASE" = "16.04" ]; then
 
     CUDA_VER=8.0
     CUDA_VER2=8.0.61
@@ -38,7 +38,7 @@ if [ "$ARCH" == "x86_64" -a "$LSBRELEASE" == "16.04" ]; then
     sudo apt update
     sudo apt install -y --no-install-recommends cuda-$CUDA_VER
 
-elif [ "$ARCH" == "x86_64" -a "$LSBRELEASE" == "17.04" -o "$LSBRELEASE" == "17.10" ]; then
+elif [ "$ARCH" = "x86_64" -a "$LSBRELEASE" = "17.04" -o "$LSBRELEASE" = "17.10" ]; then
 
 # cuda 8
     CUDA_VER=8.0

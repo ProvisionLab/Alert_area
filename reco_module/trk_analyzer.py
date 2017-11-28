@@ -145,12 +145,12 @@ class TrackAnalyzer(object):
         direction = area['direction']
 
         if direction == 'B' or (cross_L and direction == 'L') or (cross_R and direction == 'R'):
-            self.on_alert(AlertObject(area['type']), True, obj.get_pos())      
+            self.on_alert(AlertObject(area['type']), True, obj)      
         pass
 
     def check_alert_RA(self, area, obj: TrackObject, objs: AnalyzerState):
         if self.check_area_enter(area, objs) == 1: # enter
-            self.on_alert(AlertObject(area['type']), True, obj.get_pos())      
+            self.on_alert(AlertObject(area['type']), True, obj)      
 
     def check_alert_LD(self, area, obj: TrackObject, objs: AnalyzerState):
         
@@ -166,7 +166,7 @@ class TrackAnalyzer(object):
             delta = time.time() - objs.duration
             if delta >= area['duration']:
                 objs.duration = None
-                self.on_alert(AlertObject(area['type']), True, obj.get_pos())      
+                self.on_alert(AlertObject(area['type']), True, obj)      
         pass
 
     def process_object(self, obj: TrackObject, objs: AnalyzerState):
