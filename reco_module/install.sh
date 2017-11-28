@@ -14,18 +14,18 @@ if [ "$USE_CUDA" = "1" ]; then
 
 fi
 
-python3 -c "import cv2" > /dev/null
+python3 -c "import cv2" 2> /dev/null
 
-if [ ! $? ]; then
+if [ $? ]; then
 
     echo python3 opencv not installed. try install
 
     sudo apt install -y python3-opencv || echo failed to install python3-opencv
 fi
 
-python3 -c "import cv2" > /dev/null
+python3 -c "import cv2" 2> /dev/null
 
-if [ ! $? ]; then
+if [ $? ]; then
 
     echo python3 opencv not installed. try build
 
