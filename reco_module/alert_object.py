@@ -19,12 +19,43 @@ def encode_cvimage(image):
     else:
         return None
 
+def encode_cvimage2(image, prefix):
+
+    if image is None:
+        return None
+
+    if reco_config.send_image_to_sftp:
+        
+        #print(prefix, image)
+        
+        data = encode_cvimage(image)
+        fname = prefix + str(uuid.uuid4()) + '.jpg'
+        
+        if rog_sftp.sftp_upload(reco_config.sftp_path + fname, data):
+            return fname
+        else:
+            return None
+
+    else:
+
+        image = cv2.resize(image, (320,200), interpolation=cv2.INTER_AREA)
+        data = encode_cvimage(image)
+
+        if data is not None:
+            return str(base64.b64encode(data))
+        else:
+            return None
+        pass
+    pass
+
 class AlertObject(object):
     
     camera_id = None
     camera_name = None
 
     cvimage = None
+    cvimage1 = None
+    cvimage2 = None
 
     def __init__(self, alert_type: str):
         self.camera_id = None
@@ -37,35 +68,18 @@ class AlertObject(object):
         self.image = None
         pass
 
+
     def encode_image(self):
 
-        image = self.cvimage
+        self.image = encode_cvimage2(self.cvimage, "T_")
 
-        if image is None:
-            self.image = 'noimage'
-            return
-
-        if reco_config.send_image_to_sftp:
-            
-            data = encode_cvimage(image)
-            fname = str(uuid.uuid4()) + '.jpg'
-            
-            if rog_sftp.sftp_upload(reco_config.sftp_path + fname, data):
-                self.image = fname
-            else:
-                self.image = 'noimage'
-
+        if self.image:
+            self.image1 = encode_cvimage2(self.cvimage1, "T-1_")
+            self.image2 = encode_cvimage2(self.cvimage2, "T-2_")
         else:
+            self.image1 = None
+            self.image2 = None
 
-            image = cv2.resize(image, (320,200), interpolation=cv2.INTER_AREA)
-            data = encode_cvimage(image)
-
-            if data is not None:
-                self.image = str(base64.b64encode(data))
-            else:
-                self.image = None
-            pass
-       
     def set_image(self, image, box: TrackObject):
         
         if image is not None and isinstance(box, TrackObject):
@@ -76,14 +90,33 @@ class AlertObject(object):
             #cv2.imwrite("image{0:04d}.jpg".format(image_index), image)
         
         self.cvimage = image
+
+    def set_image1(self, image):
+        self.cvimage1 = image
+
+    def set_image2(self, image):
+        self.cvimage2 = image
         
     def as_dict(self):
+
+        images = []
+
+        if self.image:
+            images.append(self.image)
+
+        if self.image1:
+            images.append(self.image1)
+
+        if self.image2:
+            images.append(self.image2)
+        
 
         payload = { 
             'camera_id': self.camera_id, 
             'alert_type_id': self.alert_type, 
             'timestamp': self.timestamp, 
-            'image' : self.image if self.image else "noimage"
+#            'image' : self.image if self.image else "noimage"
+            'images' : images
         }
 
         return payload

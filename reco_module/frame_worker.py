@@ -44,6 +44,12 @@ class FrameWorker(threading.Thread):
 
     bStop = False
 
+    frame = None        # current frame
+    frame_time = None
+
+    frame1 = None       # frame T-1
+    frame2 = None       # frame T-2
+
     def __init__(self, camera, cap_w, cap_h, post_new_alert):
         
         self.camera = camera
@@ -53,8 +59,12 @@ class FrameWorker(threading.Thread):
 
         self.md_min_area = (cap_w * cap_h) / 600
         
-        self.frame = None
         self.lock = threading.Condition()
+
+        self.frames1 = []
+        self.frames2 = []
+        
+        self.frame = None
 
         self.frame_count = 0
         self.frame_count2 = 0
@@ -78,8 +88,28 @@ class FrameWorker(threading.Thread):
         """
         
         with self.lock:
+
+            now = time.time()
+
             self.frame = frame
             self.frame_count += 1
+
+            self.frames1.append((frame, now))
+
+            while len(self.frames1) > 0:
+                _,t = self.frames1[0]
+                if (now-t) > 1.0:
+                    self.frames2.append(self.frames1.pop(0))
+                else:
+                    break
+
+            while len(self.frames2) > 0:
+                _,t = self.frames2[0]
+                if (now-t) > 2.0:
+                    self.frames2.pop(0)
+                else:
+                    break
+
             self.lock.notify()
         pass
 
@@ -173,6 +203,9 @@ class FrameWorker(threading.Thread):
                     frame = self.frame
                     self.frame = None
 
+                    self.frame1, _ = self.frames1[0] if self.frames1 else (None, None)
+                    self.frame2, _ = self.frames2[0] if self.frames2 else (None, None)
+
                 if frame is None:
                     continue
 
@@ -209,6 +242,9 @@ class FrameWorker(threading.Thread):
                     frame = self.frame
                     self.frame = None
 
+                    self.frame1, _ = self.frames1[0] if self.frames1 else (None, None)
+                    self.frame2, _ = self.frames2[0] if self.frames2 else (None, None)
+
                 if frame is None:
                     continue
 
@@ -244,6 +280,8 @@ class FrameWorker(threading.Thread):
             logging.debug("new alert: %s", alert)
 
             alert.set_image(self.current_frame, box)
+            alert.set_image1(self.frame1)
+            alert.set_image2(self.frame2)
 
             if self.post_new_alert:
                 self.post_new_alert(alert)

@@ -77,5 +77,6 @@ class RogClient(object):
 
         if not self.is_request_succeeded(r.status_code):
             logging.error("rog post alert failed, camera: [%d], status: %d", alert.camera_id, r.status_code)
+            #print(alert.as_dict())
 
         return r.status_code
