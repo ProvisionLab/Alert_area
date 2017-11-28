@@ -32,8 +32,8 @@ filter_cameras = [
 #   'H3',
 ]
 
-#api_url = 'http://127.0.0.1:5000'
-api_url = 'http://52.32.99.45:5000'
+api_url = 'http://127.0.0.1:5000'
+#api_url = 'http://52.32.99.45:5000'
 api_username = 'reco1'
 api_password = 'reco1passwd'
 
