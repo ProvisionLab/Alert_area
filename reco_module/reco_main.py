@@ -271,7 +271,7 @@ class RecoClient(object):
 
         for alert in alerts:
 
-            alert.encode_image()
+            alert.encode_images()
 
             if reco_config.send_alerts_to_rog:
                 self.rogapi.post_alert(alert)

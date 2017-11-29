@@ -31,8 +31,15 @@ class RogClient(object):
                 if not self.is_request_succeeded(res):
                     return False
 
-            logging.info('rog post alert, type: %s, camera: [%d] \'%s\'',
-                        alert.alert_type, alert.camera_id, alert.camera_name)
+            if alert.alert_type:
+
+                logging.info('rog post alert, type: %s, camera: [%d] \'%s\', alert_id: \'%s\'',
+                            alert.alert_type, alert.camera_id, alert.camera_name, alert.alert_id)
+
+            else:
+
+                logging.info('rog post TA alert, camera: [%d] \'%s\', image: %s, alert_id: \'%s\'',
+                            alert.camera_id, alert.camera_name, alert.images[0][:4], alert.alert_id)
 
             return True
 
@@ -77,6 +84,6 @@ class RogClient(object):
 
         if not self.is_request_succeeded(r.status_code):
             logging.error("rog post alert failed, camera: [%d], status: %d", alert.camera_id, r.status_code)
-            #print(alert.as_dict())
+            logging.error("%s", alert.as_dict())
 
         return r.status_code

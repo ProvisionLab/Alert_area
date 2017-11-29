@@ -15,10 +15,10 @@ if reco_config.show_dbg_window:
     from debug_window import DebugWindow
 
 
-if reco_config.use_gpu:
-    config = tf.ConfigProto()
-else:
+if reco_config.use_cpu:
     config = tf.ConfigProto(device_count={'CPU': 1, 'GPU': 0}, allow_soft_placement = True)
+else:
+    config = tf.ConfigProto()
         
 #config.gpu_options.per_process_gpu_memory_fraction = 0.1
 config.gpu_options.allow_growth = True
@@ -27,6 +27,22 @@ config.gpu_options.allow_growth = True
 def boxes_to_track_objects(boxes):
     objects = dict([(TrackObject(1+i, (b[1] + b[3]) / 2, b[2], b[3] - b[1], b[2] - b[0]), 1+i) for i, b in enumerate(boxes)])
     return objects
+
+class AlertTAState(object):
+    """
+    contains state of alert for 12 sec after alert creation
+    """
+
+    def __init__(self, camera_id: int, alert_id: str):
+        
+        self.camera_id = camera_id
+        self.alert_id = alert_id
+
+        self.timestamp = time.time()
+
+        self.count = 0
+
+    pass
 
 class FrameWorker(threading.Thread):
     
@@ -50,6 +66,8 @@ class FrameWorker(threading.Thread):
     frame1 = None       # frame T-1
     frame2 = None       # frame T-2
 
+    alerts_ta = None    # list of AlertTAState. 
+
     def __init__(self, camera, cap_w, cap_h, post_new_alert):
         
         self.camera = camera
@@ -70,6 +88,8 @@ class FrameWorker(threading.Thread):
         self.frame_count2 = 0
         self.frame_time = time.time()
 
+        self.alerts_ta = []
+
         FrameWorker.thread_count += 1
         super().__init__()
         pass
@@ -81,6 +101,35 @@ class FrameWorker(threading.Thread):
     def stop(self):
         logging.debug("signal to stop camera [%d] worker", self.camera['id'])
         self.bStop = True
+
+    def _process_ta_frames(self, frame):
+        
+        now = time.time()
+
+        new_list = []
+
+        for ta in self.alerts_ta:
+
+            d = now - ta.timestamp
+            n = int(d)
+
+            #print("1 {0} {1}, time: T{2:.2f}, n: {3}".format(ta.alert_id, ta.count, d, n))
+
+            if n <= reco_config.send_ta_images and n > ta.count:
+                self._on_ta_alert(ta.alert_id, "T{0}".format(n), frame)
+                ta.count = n
+
+            if n < reco_config.send_ta_images:
+                new_list.append(ta)
+                
+            pass
+
+        self.alerts_ta = new_list
+
+        #for ta in self.alerts_ta:
+        #    print("2 {0} T{1}".format(ta.alert_id, ta.count))
+
+        pass
 
     def process_frame(self, frame):
         """
@@ -110,6 +159,10 @@ class FrameWorker(threading.Thread):
                 else:
                     break
 
+            if self.alerts_ta:
+                self._process_ta_frames(frame)
+                pass                
+
             self.lock.notify()
         pass
 
@@ -130,17 +183,17 @@ class FrameWorker(threading.Thread):
 
         try:
 
-            if reco_config.use_gpu:
-
-                logging.info("configure detector for GPU")
-
-                self.run_detector1(config)
-
-            else:
+            if reco_config.use_cpu:
 
                 logging.info("configure detector for CPU")
                 with tf.device('/cpu:0'):
                     self.run_detector1(config)
+
+            else:
+
+                logging.info("configure detector for GPU")
+
+                self.run_detector1(config)
 
         finally:
             FrameWorker.thread_count -= 1            
@@ -264,6 +317,22 @@ class FrameWorker(threading.Thread):
             pass # with
         pass        
 
+    def _on_ta_alert(self, alert_id:str, prefix: str, frame):
+
+        camera_id = self.camera['id']
+
+        alert = AlertObject(camera_id, alert_id, None)
+        alert.camera_name = self.camera['name']
+
+        logging.debug("new %s alert: %s", prefix, alert_id)
+        
+        alert.set_image(prefix, frame)
+
+        if self.post_new_alert:
+            self.post_new_alert(alert)
+        
+        pass
+
     def on_alert(self, alert: AlertObject, is_enter: bool, box: TrackObject):
         
         camera_id = self.camera['id']
@@ -279,11 +348,18 @@ class FrameWorker(threading.Thread):
 
             logging.debug("new alert: %s", alert)
 
-            alert.set_image(self.current_frame, box)
-            alert.set_image1(self.frame1)
-            alert.set_image2(self.frame2)
-
             if self.post_new_alert:
+                
+                alert.set_image("T", self.current_frame, box)
+
+                if reco_config.send_tb_images:
+                    alert.set_image("T-1", self.frame1)
+                    alert.set_image("T-2", self.frame2)
+
+                if reco_config.send_ta_images > 0:
+                    with self.lock:
+                        self.alerts_ta.append(AlertTAState(camera_id, alert.alert_id))
+
                 self.post_new_alert(alert)
 
         else:

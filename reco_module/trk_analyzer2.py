@@ -123,13 +123,13 @@ class TrackAnalyzer2(object):
     def on_area_enter(self, area, box):
         pos = area.get_pos()
         pos = (int(pos[0] * self.frame_w), int(pos[1] * self.frame_h))
-        self.on_alert(AlertObject(area.type), True, box)
+        self.on_alert(AlertObject(None, None, area.type), True, box)
         pass
 
     def on_area_leave(self, area):
         pos = area.get_pos()
         pos = (int(pos[0] * self.frame_w), int(pos[1] * self.frame_h))
-        self.on_alert(AlertObject(area.type), False, None)
+        self.on_alert(AlertObject(None, None, area.type), False, None)
         pass
 
     def check_area_RA(self, area, objects):

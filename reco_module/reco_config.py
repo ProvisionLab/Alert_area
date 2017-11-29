@@ -6,7 +6,7 @@ show_dbg_window = False
 enable_motion_detector = False
 enable_people_detector = True
 
-use_gpu = True
+use_cpu = False
 
 # list of camera names
 # to capture all cameras use empty list
@@ -44,6 +44,10 @@ max_alert_queue_size = 50
 
 send_alerts_to_rog = True
 send_image_to_sftp = True
+
+send_tb_images = True   # bool: include T-1 and T-2 images into alert
+send_ta_images = 4     # int:  count of posts of alerts with T1-T12 images.
+
 
 # upstream settings
 
