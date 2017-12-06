@@ -1,7 +1,6 @@
-# 2do: check for exceptions
-
 from pymongo import MongoClient
 from bson.objectid import ObjectId 
+import logging
 
 import bvc_config
 
@@ -30,13 +29,7 @@ def get_cameras():
 
 def append_camera( camera : dict ):
     
-    alerts = camera.get('alerts')
-    
-    if alerts is not None:
-        for alert in alerts:
-            alert['id'] = str(ObjectId())
-    
-    result = db.cameras.insert_one(camera)
+    return set_camera(camera)
 
 def update_cameras(cameras : list):
 
@@ -45,6 +38,8 @@ def update_cameras(cameras : list):
 
         new_ids = [c['id'] for c in cameras]
         del_ids = [c['id'] for c in old_cameras if not c.get('id') is None and c.get('id') not in new_ids]
+
+        logging.info('update cameras: %s', str(new_ids))
 
         for c in cameras:
             set_camera(c)
@@ -61,7 +56,7 @@ def delete_cameras(ids : list):
     if len(ids) == 0:
         return
 
-    print('delete cameras: ', ids)
+    logging.warning('delete cameras: %s', str(ids))
 
     result = db.cameras.remove({'id': {'$in': ids }})
     pass
@@ -76,8 +71,15 @@ def set_camera( camera : dict ):
       
     try:  
 
+        alerts = camera.get('alerts')
+        
+        if alerts is not None:
+            for alert in alerts:
+                alert['id'] = str(ObjectId())
+
         if db.cameras.find_one({'id': camera['id']}, {'alerts': False }) is None:
             # create new
+            logging.info('new camera created: %s', str(camera))
             result = db.cameras.insert_one(camera)
         else:
             # update one
