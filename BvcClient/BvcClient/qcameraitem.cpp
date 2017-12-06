@@ -50,6 +50,8 @@ QCameraItem::QCameraItem(QJsonObject const & json)
 
 void QCameraItem::update_state(QJsonObject const & json)
 {
+    qDebug() << __FUNCTION__ << ", camera_id: " << m_Id;
+
     if (json.contains("enabled"))
         m_enabled = json["enabled"].toBool();
     else

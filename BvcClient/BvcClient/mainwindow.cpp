@@ -24,6 +24,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    m_bBlockBackendUpdate = false;
+
     ui->setupUi(this);
 
     ui->m_editPanel->hide();
@@ -170,7 +172,6 @@ void MainWindow::on_rog_get_cameras(QJsonArray const & cameras)
 
             m_conn.get_cameras([this](QJsonObject const & json)
             {
-                qDebug() << "get_cameras: " << json;
                 on_get_cameras(json["cameras"].toArray());
             });
         }
@@ -184,9 +185,16 @@ void MainWindow::on_rog_get_cameras(QJsonArray const & cameras)
 
 void MainWindow::on_get_cameras(QJsonArray const & cameras)
 {
-    qDebug() << __FUNCTION__;
+    qDebug() << __FUNCTION__ << ", cameras count: " << cameras.size();
+
+    for (auto && x : cameras)
+    {
+        qDebug() << x;
+    }
 
     bool append_cameras = ui->m_cameraListView->count() == 0;
+
+    m_bBlockBackendUpdate = true;
 
     for (auto && x : cameras)
     {
@@ -214,6 +222,8 @@ void MainWindow::on_get_cameras(QJsonArray const & cameras)
            }
        }
     }
+
+    m_bBlockBackendUpdate = false;
 }
 
 void MainWindow::on_camera_select()
@@ -258,17 +268,22 @@ void MainWindow::on_camera_select()
 
 void MainWindow::on_camera_checked(QListWidgetItem *item)
 {
-    qDebug() << __FUNCTION__ << ", checked: " << item->checkState();
-
     auto * camera = static_cast<QCameraItem*>(item);
 
-    camera->m_enabled = camera->checkState() == Qt::Checked;
-
     if (camera)
-        m_conn.set_camera_enabled(camera->m_Id, camera->m_enabled, [this, camera](bool succeeded)
     {
-        qDebug() << "set_camera_enabled: succeeded: " << succeeded;
-    });
+        qDebug() << __FUNCTION__ << "camera: " << camera->m_Id << ", checked: " << item->checkState();
+
+        camera->m_enabled = camera->checkState() == Qt::Checked;
+
+        if (!m_bBlockBackendUpdate)
+        {
+            m_conn.set_camera_enabled(camera->m_Id, camera->m_enabled, [this, camera](bool succeeded)
+            {
+                qDebug() << "set_camera_enabled: succeeded: " << succeeded;
+            });
+        }
+    }
 }
 
 void MainWindow::on_alert_select()

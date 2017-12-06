@@ -70,6 +70,8 @@ private:
     QString             m_cap_username;
     QString             m_cap_password;
     QCvVideoCapure      m_capture;
+
+    bool m_bBlockBackendUpdate;
 };
 
 #endif // MAINWINDOW_H
