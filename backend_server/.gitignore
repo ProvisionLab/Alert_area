@@ -1,1 +1,2 @@
-bvc_server.log
+*.log
+test_set_cameras*
