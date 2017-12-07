@@ -55,6 +55,8 @@ CConnection::CConnection()
     m_apiUrl = BVCAPI_URL;
     m_api_username = BVCAPI_USERNAME;
     m_api_password = BVCAPI_PASSWORD;
+
+    m_nUserId = 0;
 }
 
 void CConnection::Open()
@@ -62,7 +64,7 @@ void CConnection::Open()
 
 }
 
-void CConnection::rog_auth(QString username, QString password, std::function<void(QString auth_token)> callback)
+void CConnection::rog_auth(QString username, QString password, std::function<void(int user_id, QString auth_token)> callback)
 {
     QNetworkRequest request(QString("%1/api/v2/sessions").arg(ROGAPI_URL));
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
@@ -83,6 +85,7 @@ void CConnection::rog_auth(QString username, QString password, std::function<voi
     QObject::connect(ctx->m_reply, &QNetworkReply::finished, [this, ctx, callback]()
     {
         QString token;
+        int user_id = 0;
         if (ctx->m_reply->error() != QNetworkReply::NoError)
         {
             qDebug() << "rog auth failed: " << ctx->m_reply->error();
@@ -96,9 +99,12 @@ void CConnection::rog_auth(QString username, QString password, std::function<voi
 
                 qDebug() << "rog auth reply: " << j;
 
-                if (j.contains("jwt"))
+                if (j.contains("jwt") && j.contains("user"))
                 {
                     token = j["jwt"].toString();
+
+                    auto && j_user = j["user"].toObject();
+                    user_id = j_user["id"].toInt();
                 }
                 else
                 {
@@ -111,7 +117,7 @@ void CConnection::rog_auth(QString username, QString password, std::function<voi
             }
         }
 
-        callback(token);
+        callback(user_id, token);
 
         ctx->m_reply->deleteLater();
     });
@@ -194,7 +200,9 @@ void CConnection::auth(std::function<void(bool succeeded)> callback)
 
 void CConnection::get_cameras(std::function<void(QJsonObject const&)> callback)
 {
-    QNetworkRequest request(QString("%1/api/cameras/all/").arg(m_apiUrl));
+    QNetworkRequest request(QString("%1/api/user/%2/cameras")
+                            .arg(m_apiUrl)
+                            .arg(m_nUserId));
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
 
@@ -220,7 +228,9 @@ void CConnection::get_cameras(std::function<void(QJsonObject const&)> callback)
 
 void CConnection::set_cameras(QJsonArray const j_cameras, std::function<void(bool succeeded)> callback)
 {
-    QNetworkRequest request(QString("%1/api/cameras/").arg(m_apiUrl));
+    QNetworkRequest request(QString("%1/api/user/%2/cameras")
+                            .arg(m_apiUrl)
+                            .arg(m_nUserId));
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
@@ -262,7 +272,7 @@ void CConnection::set_camera_enabled(int camera_id, bool enabled, std::function<
 
 void CConnection::get_camera_alerts(int camera_id, std::function<void(QJsonObject const&)> callback)
 {
-    QNetworkRequest request(QString("%1/api/cameras/%2/alerts/").arg(m_apiUrl).arg(camera_id));
+    QNetworkRequest request(QString("%1/api/cameras/%2/alerts").arg(m_apiUrl).arg(camera_id));
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
 
@@ -285,7 +295,7 @@ void CConnection::post_camera_alert(int camera_id, QJsonObject const & j_alert, 
 {
     qDebug() << __FUNCTION__;
 
-    QNetworkRequest request(QString("%1/api/cameras/%2/alerts/").arg(m_apiUrl).arg(camera_id));
+    QNetworkRequest request(QString("%1/api/cameras/%2/alerts").arg(m_apiUrl).arg(camera_id));
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
@@ -312,7 +322,7 @@ void CConnection::post_camera_alert(int camera_id, QJsonObject const & j_alert, 
 void CConnection::delete_camera_alert(int camera_id, QString alert_id,
     std::function<void(QJsonObject const&)> callback)
 {
-    QNetworkRequest request(QString("%1/api/cameras/%2/alerts/%3/")
+    QNetworkRequest request(QString("%1/api/cameras/%2/alerts/%3")
                             .arg(m_apiUrl)
                             .arg(camera_id)
                             .arg(alert_id));
@@ -339,7 +349,10 @@ void CConnection::update_camera_alert(int camera_id, QString alert_id, QJsonObje
 {
     qDebug() << __FUNCTION__;
 
-    QNetworkRequest request(QString("%1/api/cameras/%2/alerts/%3/").arg(m_apiUrl).arg(camera_id).arg(alert_id));
+    QNetworkRequest request(QString("%1/api/cameras/%2/alerts/%3")
+                            .arg(m_apiUrl)
+                            .arg(camera_id)
+                            .arg(alert_id));
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());

@@ -15,7 +15,7 @@ public:
 
     void Open();
 
-    void rog_auth(QString username, QString password, std::function<void(QString rog_token)> callback);
+    void rog_auth(QString username, QString password, std::function<void(int user_id, QString rog_token)> callback);
     void rog_get_cameras(QString const & rog_token, std::function<void(QJsonObject const&)> callback);
 
     void auth(std::function<void(bool succeeded)> callback);
@@ -36,6 +36,8 @@ public:
     QString     m_apiUrl;
     QString     m_api_username;
     QString     m_api_password;
+
+    int         m_nUserId;
 
 protected:
 

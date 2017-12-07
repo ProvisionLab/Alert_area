@@ -1,7 +1,8 @@
 import bvc_db
 
+user_id = 22
 
-cameras = bvc_db.get_cameras()
+cameras = bvc_db.get_cameras(user_id)
 
 for c in cameras:
 

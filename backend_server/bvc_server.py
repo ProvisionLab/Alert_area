@@ -58,23 +58,33 @@ def page_not_found(e):
 def internal_error(e):
   return error_response(500, "server error")
 
-@app.route('/api/cameras/all/', methods=["GET"])
+@app.route('/api/cameras/enabled', methods=["GET"])
 @jwt_required()
-def api_cameras_get_all():
+def api_cameras_get_enabled():
 
-    logging.info('get all cameras')
+    logging.info('get all enabled cameras')
 
-    cameras = bvc_db.get_cameras()
+    cameras = bvc_db.get_enabled_cameras()
 
     return flask.jsonify({'cameras': cameras})
 
-@app.route('/api/cameras/', methods=["POST"])
+@app.route('/api/user/<int:user_id>/cameras', methods=["GET"])
 @jwt_required()
-def api_camera_set_all():
+def api_cameras_get_all(user_id:int):
+
+    logging.info('get all cameras, user: %d', user_id)
+
+    cameras = bvc_db.get_cameras(user_id)
+
+    return flask.jsonify({'cameras': cameras})
+
+@app.route('/api/user/<int:user_id>/cameras', methods=["POST"])
+@jwt_required()
+def api_camera_set_all(user_id: int):
 
     if request.method == 'POST':
 
-        logging.info('set all cameras')
+        logging.info('set all cameras, user: %d', user_id)
 
         cameras = request.get_json()
 
@@ -87,15 +97,14 @@ def api_camera_set_all():
 
         #print("set cameras: ", cameras)
 
-        if not bvc_db.update_cameras(cameras):
+        if not bvc_db.update_cameras(user_id, cameras):
             return error_response(404, "failed")
 
         return flask.jsonify({})
 
-
-@app.route('/api/cameras/<int:camera_id>/', methods=["GET"])
+@app.route('/api/cameras/<int:camera_id>', methods=["GET"])
 @jwt_required()
-def api_camera_get(camera_id:str):
+def api_camera_get(camera_id: int):
 
     camera, err = bvc_db.get_camera(camera_id)
 
@@ -105,31 +114,31 @@ def api_camera_get(camera_id:str):
 
     return flask.jsonify({'camera' : camera })
 
-@app.route('/api/cameras/<int:camera_id>/alerts/', methods=["GET", "POST"])
+@app.route('/api/cameras/<int:camera_id>/alerts', methods=["GET", "POST"])
 @jwt_required()
 def api_camera_alerts(camera_id:str):
 
-  if request.method == 'GET':
+    if request.method == 'GET':
+        
+        alerts, err = bvc_db.get_camera_alerts(camera_id)
 
-    alerts, err = bvc_db.get_camera_alerts(camera_id)
+        if alerts is None:
+            logging.error(err)
+            return error_response(404, err)
 
-    if alerts is None:
-        logging.error(err)
-        return error_response(404, err)
+        return flask.jsonify({ 'alerts' : alerts })
 
-    return flask.jsonify({ 'alerts' : alerts })
+    if request.method == 'POST':
+        
+        alert_id, err = bvc_db.append_camera_alert(camera_id, request.get_json())
 
-  if request.method == 'POST':
+        if alert_id is None:
+            logging.error(err)
+            return error_response(404, err)
 
-    alert_id, err = bvc_db.append_camera_alert(camera_id, request.get_json())
-
-    if alert_id is None:
-        logging.error(err)
-        return error_response(404, err)
-
-    return flask.jsonify({ 'alert' : { 'id' : alert_id } })
-
-@app.route('/api/cameras/<int:camera_id>/alerts/<string:alert_id>/', methods=["DELETE", "PUT", "GET"])
+        return flask.jsonify({ 'alert' : { 'id' : alert_id } })
+    
+@app.route('/api/cameras/<int:camera_id>/alerts/<string:alert_id>', methods=["DELETE", "PUT", "GET"])
 @jwt_required()
 def api_camera_alert_(camera_id:str, alert_id:str):
 
@@ -163,24 +172,6 @@ def api_camera_alert_(camera_id:str, alert_id:str):
 
         return flask.jsonify(res)
 
-@app.route('/api/alerts/', methods=["POST"])
-@jwt_required()
-def api_alerts():
-
-    data = request.get_json()
-
-    camera_id = data.get('camera_id')
-    if camera_id is None:
-        return error_response(400, "invalid arguments")
-
-    alert_type = data.get('alert_type_id')
-    if alert_type is None:
-        return error_response(400, "invalid arguments")
-
-    logging.info("new alert: camera [%d], type: %s", camera_id, alert_type)
-
-    return flask.jsonify({})
-
 @app.route('/api/cameras/<int:camera_id>/enabled', methods=["GET", "PUT"])
 @jwt_required()
 def api_camera_enabled(camera_id: int):
@@ -212,6 +203,23 @@ def api_camera_enabled(camera_id: int):
 
         return flask.jsonify(res)
 
+@app.route('/api/alerts/', methods=["POST"])
+@jwt_required()
+def api_alerts():
+
+    data = request.get_json()
+
+    camera_id = data.get('camera_id')
+    if camera_id is None:
+        return error_response(400, "invalid arguments")
+
+    alert_type = data.get('alert_type_id')
+    if alert_type is None:
+        return error_response(400, "invalid arguments")
+
+    logging.info("new alert: camera [%d], type: %s", camera_id, alert_type)
+
+    return flask.jsonify({})
 
 if __name__ == '__main__':
     #app.run(host="127.0.0.1", port=5000)

@@ -11,14 +11,33 @@ db = client.bvcstorage
 
 
 def drop():
+    db.users.drop()
     db.cameras.drop()
 
+def get_enabled_cameras():
+    
+    cursor = db.cameras.find({}, {'alerts':False})
 
-def get_cameras():
+    cameras = [ camera for camera in cursor if camera.get('enabled', True) and len(camera['users']) > 0]
+
+    for camera in cameras:
+        camera.pop('_id')
+        camera.pop('users')
+    
+    return cameras
+
+def get_cameras(user_id: int):
+
+    user = db.users.find_one({'uid' : user_id})
+
+    if user is None:
+        return []
+
+    cids = user['cameras']
 
     # returns camera list or []
 
-    cursor = db.cameras.find({}, { 'alerts':False })
+    cursor = db.cameras.find({'id': {'$in': cids }}, { 'alerts':False, 'users':False })
 
     cameras = [ camera for camera in cursor ]
 
@@ -27,38 +46,74 @@ def get_cameras():
 
     return cameras
 
-def append_camera( camera : dict ):
+def append_camera(user_id: int, camera: dict):
     
-    return set_camera(camera)
+    return set_camera(user_id, camera)
 
-def update_cameras(cameras : list):
+def update_cameras(user_id: int, cameras: list):
 
     try:
-        old_cameras = get_cameras()
 
         new_ids = [c['id'] for c in cameras]
-        del_ids = [c['id'] for c in old_cameras if not c.get('id') is None and c.get('id') not in new_ids]
 
-        logging.info('update cameras: %s', str(new_ids))
+        logging.info('update cameras: %s, user: %d', str(new_ids), user_id)
 
+        user = db.users.find_one({'uid' : user_id})
+
+        del_ids = []
+
+        if user is None:
+            user = {'uid': user_id, 'cameras': new_ids}
+            db.users.insert_one(user)
+            logging.info('new user created, uid: %d', user_id)
+        else:
+            old_ids = user['cameras']
+            del_ids = [cid for cid in old_ids if cid not in new_ids]
+            db.users.update_one({'uid' : user_id}, { '$set': { 'cameras' : new_ids }})
+        
         for c in cameras:
-            set_camera(c)
+            set_camera(user_id, c)
 
-        delete_cameras(del_ids)
+        delete_cameras(user_id, del_ids)
 
     except:
         return False
     
     return True
 
-def delete_cameras(ids : list):
+def delete_cameras(user_id: int, cids : list):
+    """
+    removes user_id from cameras
+    removes camera if it has no users
 
-    if len(ids) == 0:
+    """
+
+    if len(cids) == 0:
         return
 
-    logging.warning('delete cameras: %s', str(ids))
+    cursor = db.cameras.find({'id': {'$in': cids }}, {'alerts':False})
+    cameras = [c for c in cursor]
 
-    result = db.cameras.remove({'id': {'$in': ids }})
+    del_ids = []
+
+    # update cameras.users
+
+    for camera in cameras:
+        users = camera.get('users', [])
+        assert(isinstance(users,list))
+        new_users = [u for u in users if u != user_id]
+        if len(users) > len(new_users):
+            cid = camera['id']
+            if len(new_users) > 0:
+                db.cameras.update_one({'id': cid}, { '$set': { 'users' : new_users }})
+            else:
+                del_ids.append(camera['id'])
+
+    # delete cameras with no users
+    if len(del_ids) > 0:
+        logging.warning('delete cameras: %s', str(cids))
+        db.cameras.remove({'id': {'$in': del_ids }})
+
     pass
 
 def delete_empty_cameras():
@@ -67,9 +122,11 @@ def delete_empty_cameras():
     db.cameras.remove({'alerts' : {'$exists': True, '$eq': 0}})
     pass
 
-def set_camera( camera : dict ):
-      
-    try:  
+def set_camera(user_id: int, camera: dict):
+    """
+    creates or updates camera
+    """
+    try:
 
         alerts = camera.get('alerts')
         
@@ -77,20 +134,27 @@ def set_camera( camera : dict ):
             for alert in alerts:
                 alert['id'] = str(ObjectId())
 
-        if db.cameras.find_one({'id': camera['id']}, {'alerts': False }) is None:
+        old_camera = db.cameras.find_one({'id': camera['id']}, {'alerts': False })
+
+        if old_camera is None:
             # create new
             logging.info('new camera created: %s', str(camera))
+            camera['users'] = [user_id]
             result = db.cameras.insert_one(camera)
         else:
             # update one
-            result = db.cameras.update_one({'id': camera['id'] }, { '$set': camera})
+            users = old_camera.get('users', [])
+            if user_id not in users:
+                users.append(user_id)
+            camera['users'] = users
+            result = db.cameras.update_one({'id': camera['id'] }, {'$set': camera})
     
     except:
         return False
       
     return True
 
-def set_camera_by_name( camera : dict ):
+def set_camera_by_name(camera : dict):
       
     try:  
 

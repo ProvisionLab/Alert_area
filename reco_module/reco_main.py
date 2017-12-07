@@ -202,20 +202,20 @@ class RecoClient(object):
 
     def do_get_cameras(self):
 
-        r = requests.get('{0}/api/cameras/all/'.format(self.api_url),
+        r = requests.get('{0}/api/cameras/enabled'.format(self.api_url),
                             headers={'Authorization': 'JWT {0}'.format(self.access_token)})
 
         logging.debug("backend get_cameras status: %d", r.status_code)
 
         if r.status_code != 200:
-            logging.error("backend get_cameras failed, status: %d", r.status_code)
+            logging.error("backend get_enabled_cameras failed, status: %d", r.status_code)
             return None
         
         return r.json()['cameras']
 
     def get_camera_alerts(self, camera_id: str):
 
-        r = requests.get('{0}/api/cameras/{1}/alerts/'.format(self.api_url, camera_id),
+        r = requests.get('{0}/api/cameras/{1}/alerts'.format(self.api_url, camera_id),
                         headers={'Authorization': 'JWT {0}'.format(self.access_token)})
 
         logging.debug("backend get_camera_alerts, camera: [%d], status: %d", camera_id, r.status_code)

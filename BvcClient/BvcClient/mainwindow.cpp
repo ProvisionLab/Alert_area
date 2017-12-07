@@ -78,10 +78,11 @@ void MainWindow::auth()
     m_cap_username = dlg.m_username;
     m_cap_password = dlg.m_password;
 
-    m_conn.rog_auth(dlg.m_username, dlg.m_password, [this](QString const & rog_token)
+    m_conn.rog_auth(dlg.m_username, dlg.m_password, [this](int user_id, QString const & rog_token)
     {
         if (!rog_token.isEmpty())
         {
+            m_conn.m_nUserId = user_id;
             m_conn.rog_get_cameras(rog_token, [this](QJsonObject const & json)
             {
                 qDebug() << "rog get_cameras: " << json;
