@@ -104,14 +104,19 @@ class AlertObject(object):
                 'alert_id': self.alert_id, 
                 'alert_type_id': self.alert_type, 
                 'timestamp': self.timestamp, 
-                'images' : self.images
             }
 
         else:
             
             payload = { 
                 'alert_id': self.alert_id, 
-                'images' : self.images
             }
+
+        if reco_config.send_tb_images or reco_config.send_ta_images > 0:
+            payload['images'] = self.images
+        elif len(self.images) == 1:
+            payload['image'] = self.images[0]
+        else:
+            payload['image'] = 'noimage'
 
         return payload
