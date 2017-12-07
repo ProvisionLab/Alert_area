@@ -199,7 +199,7 @@ void MainWindow::on_get_cameras(QJsonArray const & cameras)
         qDebug() << x;
     }
 
-    bool append_cameras = ui->m_cameraListView->count() == 0;
+    bool append_cameras = false;//ui->m_cameraListView->count() == 0;
 
     m_bBlockBackendUpdate = true;
 
