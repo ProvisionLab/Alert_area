@@ -18,11 +18,10 @@ def get_enabled_cameras():
     
     cursor = db.cameras.find({}, {'alerts':False})
 
-    cameras = [ camera for camera in cursor if camera.get('enabled', True) and len(camera['users']) > 0]
+    cameras = [ camera for camera in cursor if camera.get('enabled', True) and len(camera.get('users',[])) > 0]
 
     for camera in cameras:
         camera.pop('_id')
-        camera.pop('users')
     
     return cameras
 

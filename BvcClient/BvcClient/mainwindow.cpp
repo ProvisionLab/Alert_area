@@ -149,6 +149,12 @@ void MainWindow::post_cameras()
     m_conn.set_cameras(j_cameras, [this](bool succeeded)
     {
         qDebug() << "set_cameras: " << succeeded;
+
+        if (!succeeded)
+        {
+            QMessageBox::critical(this, "", "Connection failed!");
+            close();
+        }
     });
 }
 
@@ -165,7 +171,7 @@ void MainWindow::on_rog_get_cameras(QJsonArray const & cameras)
     {
         if (succeeded)
         {
-            if (ui->m_cameraListView->count() > 0)
+            //if (ui->m_cameraListView->count() > 0)
             {
                 // update backend cameras list
                 post_cameras();

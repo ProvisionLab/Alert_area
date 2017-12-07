@@ -16,7 +16,8 @@ camera: {
     'url': str, 
     'enabled': bool     optional, default True
     'areas' : [...]     alert areas
-}
+    'users' : [...]     users subscribed
+    }
 """
 
 class CaptureWorker(threading.Thread):

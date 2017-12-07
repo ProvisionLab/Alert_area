@@ -168,7 +168,7 @@ class RecoClient(object):
                     total_fps += fps
                     total_fps2 += fps2
                     total_fps_cam += 1
-                    logging.info("camera [%d] \'%s\' FPS: %d/%d, areas: %d", c['id'], c['name'], int(fps), int(fps2), len(c_areas))
+                    logging.info("camera [%d] \'%s\' FPS: %d/%d, areas: %d, users: %s", c['id'], c['name'], int(fps), int(fps2), len(c_areas), str(c.get('users',[])))
                     t.update_areas(c_areas)
 
         logging.info("total FPS: %d/%d for %d cameras", int(total_fps), int(total_fps2), total_fps_cam)
@@ -177,7 +177,7 @@ class RecoClient(object):
         add_cameras = [c for c in cameras if c['id'] not in del_ids and c['id'] not in old_ids]
 
         for c in add_cameras:
-            logging.info("start recognition of camera: [%d] \'%s\'", c['id'], c['name'])
+            logging.info("start recognition of camera: [%d] \'%s\', users: %s", c['id'], c['name'], str(c.get('users',[])))
             t = CaptureWorker(self, c)
             self.threads.append(t)
             t.start()
