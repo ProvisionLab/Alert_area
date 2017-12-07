@@ -25,7 +25,7 @@ public:
 protected:
 
     void on_rog_get_cameras(QJsonArray const & cameras);
-    void on_get_cameras(QJsonArray const & cameras);
+    void on_get_cameras(QJsonArray const & cameras, bool bAppendItems);
 
     void post_cameras();
 

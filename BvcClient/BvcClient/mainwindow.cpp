@@ -165,7 +165,7 @@ void MainWindow::on_rog_get_cameras(QJsonArray const & cameras)
     ui->m_cameraListView->clear();
     ui->m_bnAddAlert->hide();
 
-    on_get_cameras(cameras);
+    on_get_cameras(cameras, true);
 
     m_conn.auth([this](bool succeeded)
     {
@@ -179,7 +179,7 @@ void MainWindow::on_rog_get_cameras(QJsonArray const & cameras)
 
             m_conn.get_cameras([this](QJsonObject const & json)
             {
-                on_get_cameras(json["cameras"].toArray());
+                on_get_cameras(json["cameras"].toArray(), false);
             });
         }
         else
@@ -190,7 +190,7 @@ void MainWindow::on_rog_get_cameras(QJsonArray const & cameras)
     });
 }
 
-void MainWindow::on_get_cameras(QJsonArray const & cameras)
+void MainWindow::on_get_cameras(QJsonArray const & cameras, bool bAppendItems)
 {
     qDebug() << __FUNCTION__ << ", cameras count: " << cameras.size();
 
@@ -199,7 +199,7 @@ void MainWindow::on_get_cameras(QJsonArray const & cameras)
         qDebug() << x;
     }
 
-    bool append_cameras = false;//ui->m_cameraListView->count() == 0;
+    bool append_cameras = bAppendItems;//ui->m_cameraListView->count() == 0;
 
     m_bBlockBackendUpdate = true;
 
