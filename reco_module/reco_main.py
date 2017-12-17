@@ -130,7 +130,8 @@ class RecoClient(object):
             areas = self.get_camera_alerts(c['id'])
             c['areas'] = areas;
             if not areas:
-                logging.warning("camera [%d] \'%s\' has no alerts configured", c['id'], c['name'])
+                logging.warning("camera [%d] \'%s\' has no alerts configured, users: %s", 
+                    c['id'], c['name'], str(c.get('users',[])))
 
         # remove cameras with no alert areas
         cameras = [c for c in cameras if c['areas']]

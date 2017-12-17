@@ -66,6 +66,7 @@ if [ ! -f ./CMakeCache.txt ]; then
         -DCMAKE_INSTALL_PREFIX=/usr/local \
         -DWITH_FFMPEG=YES \
         -DWITH_CUDA=OFF \
+        -DWITH_JPEG=YES \
         .. || exit 1
 
     make -j $(($(nproc) + 1)) || exit 1

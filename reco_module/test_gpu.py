@@ -17,8 +17,11 @@ else:
     config = tf.ConfigProto(allow_soft_placement = True)
     #config = tf.ConfigProto(device_count={'CPU': 1, 'GPU': 1}, allow_soft_placement = True)
 
+#config.intra_op_parallelism_threads = 10
+#config.inter_op_parallelism_threads = 10
+#config.use_per_session_threads = False
 config.gpu_options.per_process_gpu_memory_fraction = 0.1
-config.gpu_options.allow_growth = False
+config.gpu_options.allow_growth = True
 
 config.log_device_placement = False
 
