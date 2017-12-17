@@ -134,3 +134,23 @@ class AlertObject(object):
             payload['image'] = 'noimage'
 
         return payload
+
+    def as_debug(self):
+
+        d = self.as_dict()
+
+        if reco_config.send_tb_images:
+            if d.get('image_3', None):
+                d['image_1'] = d['image_1'][:32]
+                d['image_2'] = d['image_2'][:32]        
+                d['image_3'] = d['image_3'][:32]
+
+        if reco_config.send_ta_images > 0:
+            for p in ['image_T1', 'image_T2', 'image_T3', 'image_T4', 'image_T5', 'image_T6', 'image_T7', 'image_T8', 'image_T9']:
+                v = d.get(p, None)
+                if v is not None:
+                    d[p] = v[:32]
+            pass
+           
+        return d
+   
