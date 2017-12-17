@@ -37,7 +37,7 @@ def convert_image(image, prefix: str, id: str):
 
     else:
 
-        image = cv2.resize(image, (320,200), interpolation=cv2.INTER_AREA)
+        #image = cv2.resize(image, (320,200), interpolation=cv2.INTER_AREA)
         data = encode_cvimage(image)
 
         if data is not None:
@@ -76,9 +76,16 @@ class AlertObject(object):
         self.images = []
         
         for prefix, image in self.cvimages:
-            name = convert_image(image, prefix, self.alert_id)
-            if name:
-                self.images.append(name)
+            data = convert_image(image, prefix, self.alert_id)
+            if data:
+                if prefix=='T-2':
+                    self.images.append(("image_1", data))
+                elif prefix=='T-1':
+                    self.images.append(("image_2", data))
+                elif prefix=='T':
+                    self.images.append(("image_3", data))
+                else:
+                    self.images.append(("image_"+prefix, data))
 
     def set_image(self, prefix: str, image, box = None):
         
@@ -113,9 +120,16 @@ class AlertObject(object):
             }
 
         if reco_config.send_tb_images or reco_config.send_ta_images > 0:
-            payload['images'] = self.images
+            
+            payload['image_1'] = 'noimage'
+            payload['image_2'] = 'noimage'
+            payload['image_3'] = 'noimage'
+
+            for n, d in self.images:
+                payload[n] = d
+
         elif len(self.images) == 1:
-            payload['image'] = self.images[0]
+            payload[self.images[0][0]] = self.images[0][1]
         else:
             payload['image'] = 'noimage'
 
