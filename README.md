@@ -4,12 +4,13 @@ The BVC software is composed of two parts, a client side and a server side. The 
 
 On the client side, the user logs in with their ROG Monitor webapp credentials. The client sents a POST request to the ROG API's /api/v2/sessions endpoint and on successful login, sends a GET request to the ROG API's /api/v2/me/cameras endpoint to retrieve the RTSP URLs for the user's IP cameras.
 
-On the server side, when a threat is first detected a POST request to the ROG API's /api/v2/bvc_alert endpoit is sent with the following data:
+On the server side, when a threat is first detected a POST request to the ROG API's /api/v2/bvc_alert endpoint is sent with the following data:
 
 ```
 {
   alert_id: <string>,
-  camera_id: <int>,
+  camera_id: <integer>,
+  alert_type_id: <string>,
   timestamp: <ISO:Extended:Z>,
   image_1: <file>,
   image_2: <file>,
@@ -17,7 +18,16 @@ On the server side, when a threat is first detected a POST request to the ROG AP
 }
 ```
 
-where alert_id is the unique identifier for this alert, camera_id is the ROG API identifier for the camera, timestamp is the timestamp at which the threat was detected, image_1 is an image of the camera stream at timestamp - 2 seconds, image_2 at timestamp - seconds, and image_3 at timestamp.
+where alert_id is the unique identifier for this alert, camera_id is the ROG API identifier for the camera, alert_type_id is the BVC identifier for the alert type, timestamp is the timestamp at which the threat was detected, image_1 is an image of the camera stream at timestamp - 2 seconds, image_2 at timestamp - seconds, and image_3 at timestamp.
+
+Subsequent POST requests of more images for the same alert images include the following data:
+
+```
+{
+  alert_id: <string>,
+  image: <file>
+}
+``` 
 
 ## Installation
 
