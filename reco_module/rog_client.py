@@ -41,6 +41,8 @@ class RogClient(object):
                 logging.info('rog post TA alert, camera: [%d] \'%s\', image: %s, alert_id: \'%s\'',
                             alert.camera_id, alert.camera_name, alert.images[0][:4], alert.alert_id)
 
+            #logging.info("details: %s", alert.as_debug())
+
             return True
 
         except:
