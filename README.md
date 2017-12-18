@@ -2,9 +2,9 @@
 
 The BVC software is composed of two parts, a client side and a server side. The client side allows a user to add/remove threat detection modules (Virtual Wall, Restricted Area, etc.) to their IP cameras by drawing them on the live camera feed. The server side receives the threat detection module parameters from the client and applies them. If a threat is detected, the server sends the alert data in POST requests to the ROG API.
 
-On the client side, the user logs in with their ROG Monitor webapp credentials. The client sents a POST request to the ROG API's /api/v1/sessions endpoint and on successful login, sends another POST request, this time to the ROG API's /api/v2/cameras endpoint, to retrieve the RTSP URLs for the user's IP cameras.
+On the client side, the user logs in with their ROG Monitor webapp credentials. The client sents a POST request to the ROG API's /api/v2/sessions endpoint and on successful login, sends a GET request to the ROG API's /api/v2/me/cameras endpoint to retrieve the RTSP URLs for the user's IP cameras.
 
-On the server side, when a threat is first detected a POST request to the ROG API's /api/v1/bvc_alert endpoit is sent with the following data:
+On the server side, when a threat is first detected a POST request to the ROG API's /api/v2/bvc_alert endpoit is sent with the following data:
 
 ```
 {
