@@ -51,8 +51,6 @@ send_ta_images = 0 #4     # int:  count of posts of alerts with T1-T12 images.
 # upstream settings
 
 rogapi_url = 'https://morning-lake-10802.herokuapp.com'
-rogapi_username = 'nabus@test.com'
-rogapi_password = 'password123'
 
 sftp_host = '54.67.96.88'
 sftp_path = 'ftp/bvc/'

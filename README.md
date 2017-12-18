@@ -1,164 +1,94 @@
 # Description
 
-Server and client parts
+The BVC software is composed of two parts, a client side and a server side. The client side allows a user to add/remove threat detection modules (Virtual Wall, Restricted Area, etc.) to their IP cameras by drawing them on the live camera feed. The server side receives the threat detection module parameters from the client and applies them. If a threat is detected, the server sends the alert data in POST requests to the ROG API.
 
-## Getting started
+On the client side, the user logs in with their ROG Monitor webapp credentials. The client sents a POST request to the ROG API's /api/v1/sessions endpoint and on successful login, sends another POST request, this time to the ROG API's /api/v2/cameras endpoint, to retrieve the RTSP URLs for the user's IP cameras.
 
-Deploy on Ubuntu 16.04
+On the server side, when a threat is first detected a POST request to the ROG API's /api/v1/bvc_alert endpoit is sent with the following data:
+
+```
+{
+  alert_id: <string>,
+  camera_id: <int>,
+  timestamp: <ISO:Extended:Z>,
+  image_1: <file>,
+  image_2: <file>,
+  image_3: <file>
+}
+```
+
+where alert_id is the unique identifier for this alert, camera_id is the ROG API identifier for the camera, timestamp is the timestamp at which the threat was detected, image_1 is an image of the camera stream at timestamp - 2 seconds, image_2 at timestamp - seconds, and image_3 at timestamp.
+
+## Installation
 
 ### Prerequisites
 
+* Ubuntu 16.04
 * MongoDB
 * Python3
 * OpenCV3.x
 * tensorflow-gpu
 * gunicorn
 
-Download and untar to object_detection folder of
-reco_module http://download.tensorflow.org/models/object_detection/ssd_mobilenet_v1_coco_11_06_2017.tar.gz
+### Server installation
 
-Install Gunicorn:
+Clone the repository: https://github.com/ROG-Security/BVC then:
+
+```
 sudo apt-get install gunicorn3
-
-
-### Installing of server
-
-Download project from git or else to folder ~/BVC
-
-Install backend server
-
-```
-cd ~/BVC/backend_server
+cd /path/to/BVC/backend_server
+chmod +x install.sh
+./install.sh
+cd /paht/to/BVC/reco_module
 chmod +x install.sh
 ./install.sh
 ```
 
-Install recognition service
+Update the configuration:
 
 ```
-cd ~/BVC/reco_module
-chmod +x install.sh
-./install.sh
+Open /path/to/BVC/backend_server/bvc_config.py and change the rogapi_url to the appropriate value for development or production.
+
+Development rogapi_url should be https://rog-api-dev.herokuapp.com
 ```
 
-Start services
+```
+Open /path/to/BVC/reco_module/reco_config.py and change the rogapi_url to the appropriate value for development or production.
+
+Development rogapi_url should be https://rog-api-dev.herokuapp.com
+```
+
+Start the services:
 
 ```
-cd ~/BVC/backend_server
+cd /path/to/BVC/backend_server
 ./start.sh
 
-cd ~/BVC/reco_module
+cd /path/to/BVC/reco_module
 ./start.sh
 ```
 
+### Client installation
 
 ### Build
 #### OpenCV3.3
 
 Download [Opencv3.3](https://github.com/opencv/opencv/archive/3.3.0.tar.gz)
-And install in /usr/local via [tutorial](https://docs.opencv.org/3.0-beta/doc/tutorials/introduction/linux_install/linux_install.html)
+And install in /usr/local via [tutorial](https://docs.opencv.org/3.0-beta/doc/tutorials/introduction/linux_install/linux_install.html)`
 
-#### MongoDB
+#### Download and install Qt (5.8+)
 
-Install mongoDB via [tutorial](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/)
+### Install OpenVC (3.2+)
 
-
-#### Client's part
-
-#install Qt 5.8+
-#install opencv  (3.2+)
+```
 sudo apt-get install pkgconfig libopencv-dev
-
-build solution 
-```
-BvcClient/BvcClient/BvcClient.pro
-```
-run
-```
-./path_to__build/BvcClient
 ```
 
-#### Server's part
+### Build solution 
 
-install dependencies 
-
-```
-backend_server/dependencies.txt
-```
-
-
-### Configurations
-
-#### MongoDB
-
-run local instance of mongoDB
-
-after that
+Open /path/to/BVC/BvcClient/BvcClient/BvcClient.pro in QT and build. Once built, run the executable:
 
 ```
-python3 ./backend_server/create_test_db.py
-```
-
-#### Client's part
-
-Users for test
-```
-User(1, 'reco1', 'reco1passwd')
-User(2, 'user1', 'qwerty1')   
-User(3, 'user2', 'qwerty2')
-```
-
-### Run
-
-1. Run mongoDB instance (with created test database)
-2. Run 
-```
-python3 backend_server/bvc_server.py
-```
-3. Run
-```
-./path_to_build/BvcClient
-```
-
-Now you can connect to testing database with test users.
-
-
-Deploy on MacOS
-
-### Build
-
-#### Client's part
-
-1. install Xcode
-
-2. install Xcode commandline tools
-```
-sudo xcode-select --install
-```
-
-3. install homebrew
-```
-http://brew.sh/
-```
-
-4. install Qt 5.8+
-
-5. install opencv  (3.2+)
-
-```
-brew install pkg-config
-brew install opencv3
-```
-
-```
-https://www.learnopencv.com/configuring-qt-for-opencv-on-osx/
-```
-
-build solution 
-```
-BvcClient/BvcClient/BvcClient.pro
-```
-run
-```
-./path_to__build/BvcClient
+cd /path/to/build/
+./BvcClient
 ```
