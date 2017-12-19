@@ -1,6 +1,7 @@
 """
 main module
 """
+import os
 import time
 import signal
 import requests, requests.utils
@@ -21,7 +22,10 @@ class RecoClient(object):
 
     bStop = False
 
-    def __init__(self):
+    def __init__(self, reco_id: int, reco_count: int):
+
+        self.reco_id = reco_id - 1
+        self.reco_count = reco_count
 
         self.threads = []
         self.alerts = []
@@ -125,6 +129,9 @@ class RecoClient(object):
         # remove stoped threads
         self.remove_stoped_threads()
 
+        # filter cameras by reco_id
+        cameras = [c for c in cameras if (c['id'] % self.reco_count) == self.reco_id]
+
         # get new cameras alerts
         for c in cameras:
             areas = self.get_camera_alerts(c['id'])
@@ -135,7 +142,7 @@ class RecoClient(object):
 
         # remove cameras with no alert areas
         cameras = [c for c in cameras if c['areas']]
-      
+
         #
         old_cameras = [t.camera for t in self.threads]
 
@@ -169,10 +176,10 @@ class RecoClient(object):
                     total_fps += fps
                     total_fps2 += fps2
                     total_fps_cam += 1
-                    logging.info("camera [%d] \'%s\' FPS: %d/%d, areas: %d, users: %s", c['id'], c['name'], int(fps), int(fps2), len(c_areas), str(c.get('users',[])))
+                    logging.info("camera [%d] \'%s\' FPS: %.1f/%.1f, areas: %d, users: %s", c['id'], c['name'], fps, fps2, len(c_areas), str(c.get('users',[])))
                     t.update_areas(c_areas)
 
-        logging.info("total FPS: %d/%d for %d cameras", int(total_fps), int(total_fps2), total_fps_cam)
+        logging.info("total FPS: %.1f/%.2f for %d cameras", total_fps, total_fps2, total_fps_cam)
 
         # add new camera threads
         add_cameras = [c for c in cameras if c['id'] not in del_ids and c['id'] not in old_ids]
@@ -279,13 +286,27 @@ class RecoClient(object):
             else:
                 self.post_alert_internal(alert)
 
-
 def get_user_agent(name="BVC reco_module"):
     return name
+
+pid = None
+pid_fname = None
+
 
 if __name__ == '__main__':
     
     requests.utils.default_user_agent = get_user_agent
 
-    app = RecoClient()
+    global pid, pid_fname
+
+    reco_id = int(os.environ.get('RECO_PROC_ID', '1'))
+    reco_count = int(os.environ.get('RECO_TOTAL_PROCS', '1'))
+
+    pid = str(os.getpid())
+    pid_fname = 'reco_proc_'+str(reco_id)+'.pid'
+    f = open(pid_fname, 'w')
+    f.write(pid)
+    f.close()
+
+    app = RecoClient(reco_id, reco_count)
     app.run()
