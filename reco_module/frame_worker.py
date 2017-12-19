@@ -14,15 +14,18 @@ from alert_object import AlertObject
 if reco_config.show_dbg_window:
     from debug_window import DebugWindow
 
+def get_tf_config(use_cpu: bool):
+    
+    if use_cpu:
+        config = tf.ConfigProto(device_count={'CPU': 1, 'GPU': 0}, allow_soft_placement = False)
+    else:
+        config = tf.ConfigProto()
+            
+    #config.gpu_options.per_process_gpu_memory_fraction = 0.1
+    config.gpu_options.allow_growth = True
+    #config.log_device_placement = True
 
-if reco_config.use_cpu:
-    config = tf.ConfigProto(device_count={'CPU': 1, 'GPU': 0}, allow_soft_placement = True)
-else:
-    config = tf.ConfigProto()
-        
-#config.gpu_options.per_process_gpu_memory_fraction = 0.1
-config.gpu_options.allow_growth = True
-#config.log_device_placement = True
+    return config
 
 def boxes_to_track_objects(boxes):
     objects = dict([(TrackObject(1+i, (b[1] + b[3]) / 2, b[2], b[3] - b[1], b[2] - b[0]), 1+i) for i, b in enumerate(boxes)])
@@ -67,6 +70,8 @@ class FrameWorker(threading.Thread):
     frame2 = None       # frame T-2
 
     alerts_ta = None    # list of AlertTAState. 
+
+    use_cpu = reco_config.use_cpu
 
     def __init__(self, camera, cap_w, cap_h, post_new_alert):
         
@@ -182,6 +187,8 @@ class FrameWorker(threading.Thread):
         self.analyzer.on_alert = self.on_alert
 
         try:
+
+            config = get_tf_config(self.use_cpu)
 
             if reco_config.use_cpu:
 

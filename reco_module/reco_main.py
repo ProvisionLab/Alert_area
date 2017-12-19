@@ -22,6 +22,8 @@ class RecoClient(object):
 
     bStop = False
 
+    use_cpu = reco_config.use_cpu
+
     def __init__(self, reco_id: int, reco_count: int):
 
         self.reco_id = reco_id - 1
@@ -186,7 +188,10 @@ class RecoClient(object):
 
         for c in add_cameras:
             logging.info("start recognition of camera: [%d] \'%s\', users: %s", c['id'], c['name'], str(c.get('users',[])))
+
             t = CaptureWorker(self, c)
+            t.use_cpu = self.use_cpu
+
             self.threads.append(t)
             t.start()
             
@@ -309,4 +314,5 @@ if __name__ == '__main__':
     f.close()
 
     app = RecoClient(reco_id, reco_count)
+    #app.use_cpu = reco_count > 1 and reco_id == reco_count
     app.run()

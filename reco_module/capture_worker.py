@@ -34,6 +34,8 @@ class CaptureWorker(threading.Thread):
 
     worker = None
 
+    use_cpu = reco_config.use_cpu
+
     @classmethod
     def exist_any_recognition(cls):
         return cls.thread_count > 0
@@ -138,6 +140,8 @@ class CaptureWorker(threading.Thread):
                 camera_name, camera_url, cap_fps, cap_w, cap_h)
     
             self.worker = FrameWorker(self.camera, cap_w, cap_h, self.connection.post_reco_alert)
+            self.worker.use_cpu = self.use_cpu
+
             self.worker.start()
 
             self.run_capture(cap)
