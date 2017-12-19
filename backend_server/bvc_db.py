@@ -45,6 +45,28 @@ def get_cameras(user_id: int):
 
     return cameras
 
+def delete_camera(camera_id):
+    """
+    @return True oon success, False if not found
+    """
+    
+    camera = db.cameras.find_one({'id': camera_id}, {'users': True })
+
+    if camera is None:
+        return False
+
+    users = camera.get('users', [])
+
+    for uid in users:
+        user = db.users.find_one({'uid': uid}, {'cameras':True})
+        if user:
+            u_cameras = user.get('cameras', [])
+            u_cameras = [cid for cid in u_cameras if cid != camera_id]
+            db.users.update_one({'uid': uid}, { '$set': { 'cameras' : u_cameras }})
+        
+    db.cameras.remove({'id': camera_id})
+    return True
+
 def append_camera(user_id: int, camera: dict):
     
     return set_camera(user_id, camera)

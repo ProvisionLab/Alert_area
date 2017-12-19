@@ -52,11 +52,11 @@ def error_response(status:int, message:str):
 
 @app.errorhandler(404)
 def page_not_found(e):
-   return error_response(404, "resource not found")
+    return error_response(404, "resource not found")
 
 @app.errorhandler(500)
 def internal_error(e):
-  return error_response(500, "server error")
+    return error_response(500, "server error")
 
 @app.route('/api/cameras/enabled', methods=["GET"])
 @jwt_required()
@@ -67,6 +67,18 @@ def api_cameras_get_enabled():
     cameras = bvc_db.get_enabled_cameras()
 
     return flask.jsonify({'cameras': cameras})
+
+@app.route('/api/cameras/<int:camera_id>', methods=["DELETE"])
+@jwt_required()
+def api_cameras_delete(camera_id):
+
+    logging.info('detete camera: %d', camera_id)
+
+    if not bvc_db.delete_camera(camera_id):
+        return error_response(404, "not found")
+        
+    return flask.jsonify({}), 204
+
 
 @app.route('/api/user/<int:user_id>/cameras', methods=["GET"])
 @jwt_required()
