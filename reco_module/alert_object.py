@@ -85,7 +85,7 @@ class AlertObject(object):
                 elif prefix=='T':
                     self.images.append(("image_3", data))
                 else:
-                    self.images.append(("image_"+prefix, data))
+                    self.images.append(("image", data))
 
     def set_image(self, prefix: str, image, box = None):
         
@@ -121,17 +121,11 @@ class AlertObject(object):
 
         if reco_config.send_tb_images or reco_config.send_ta_images > 0:
             
-            payload['image_1'] = 'noimage'
-            payload['image_2'] = 'noimage'
-            payload['image_3'] = 'noimage'
-
             for n, d in self.images:
                 payload[n] = d
 
         elif len(self.images) == 1:
             payload[self.images[0][0]] = self.images[0][1]
-        else:
-            payload['image'] = 'noimage'
 
         return payload
 
@@ -139,18 +133,9 @@ class AlertObject(object):
 
         d = self.as_dict()
 
-        if reco_config.send_tb_images:
-            if d.get('image_3', None):
-                d['image_1'] = d['image_1'][:32]
-                d['image_2'] = d['image_2'][:32]        
-                d['image_3'] = d['image_3'][:32]
-
-        if reco_config.send_ta_images > 0:
-            for p in ['image_T1', 'image_T2', 'image_T3', 'image_T4', 'image_T5', 'image_T6', 'image_T7', 'image_T8', 'image_T9']:
-                v = d.get(p, None)
-                if v is not None:
-                    d[p] = v[:32]
-            pass
-           
+        for k,v in d.items():
+            if k[:5] == 'image' and v is not None:
+                if isinstance(v,str):
+                    d[k] = v[:32]
+                
         return d
-   

@@ -38,8 +38,8 @@ class RogClient(object):
 
             else:
 
-                logging.info('rog post TA alert, camera: [%d] \'%s\', image: %s, alert_id: \'%s\'',
-                            alert.camera_id, alert.camera_name, alert.images[0][:4], alert.alert_id)
+                logging.info('rog post TA alert, camera: [%d] \'%s\', alert_id: \'%s\'',
+                            alert.camera_id, alert.camera_name, alert.alert_id)
 
             #logging.info("details: %s", alert.as_debug())
 
@@ -80,10 +80,24 @@ class RogClient(object):
         #print('do_post: ', payload)
         #return 200
 
-        r = requests.post('{0}/api/v2/bvc_alert'.format(reco_config.rogapi_url),
-                        headers={'Authorization': '{0}'.format(self.access_token)},
-                        json=alert.as_dict())
+        data = alert.as_dict()
 
+        if data.get('camera_id', None):
+            
+            # post first alert { 'camera_id', 'alert_type', ... }
+
+            r = requests.post('{0}/api/v2/bvc_alert'.format(reco_config.rogapi_url),
+                            headers={'Authorization': '{0}'.format(self.access_token)},
+                            json=alert.as_dict())
+
+        else:
+
+            # post after alerts { 'alert_id', 'image' }
+
+            r = requests.post('{0}/api/v2/bvc_alert_image'.format(reco_config.rogapi_url),
+                            headers={'Authorization': '{0}'.format(self.access_token)},
+                            json=alert.as_dict())
+            
         if not self.is_request_succeeded(r.status_code):
             logging.error("rog post alert failed, camera: [%d], status: %d", alert.camera_id, r.status_code)
             logging.error("%s", alert.as_debug())

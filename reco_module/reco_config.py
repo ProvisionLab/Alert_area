@@ -46,7 +46,7 @@ send_alerts_to_rog = True
 send_image_to_sftp = False
 
 send_tb_images = True   # bool: include T-1 and T-2 images into alert
-send_ta_images = 0 #4     # int:  count of posts of alerts with T1-T12 images.
+send_ta_images = 4      # int:  count of posts of alerts with T1-T12 images.
 
 # upstream settings
 
