@@ -13,4 +13,5 @@ users = [
     User(1, 'reco1', 'reco1passwd'),                    # recognizer uses this to auth
     User(2, bvc_config.bvcclient_username, bvc_config.bvcclient_password),   # BvcClient uses this to auth
     User(3, 'user2', 'qwerty2'),
+    User(4, 'rog', 'rogpassword'),
 ]
