@@ -291,6 +291,9 @@ class RecoClient(object):
             else:
                 self.post_alert_internal(alert)
 
+            if self.bStop:
+                break
+
 def get_user_agent(name="BVC reco_module"):
     return name
 
@@ -316,3 +319,5 @@ if __name__ == '__main__':
     app = RecoClient(reco_id, reco_count)
     #app.use_cpu = reco_count > 1 and reco_id == reco_count
     app.run()
+
+    os.remove(pid_fname)

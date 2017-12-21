@@ -1,29 +1,22 @@
 #!/bin/bash
 
-for i in $(ls reco_proc_*.pid) ; do
+for i in $(ls reco_proc_*.pid 2>/dev/null) ; do
 
     echo stopping $i
 
-    kill -HUP `cat $i`
-    sleep 1
-
-    kill `cat $i`
-  
+    kill -SIGINT  `cat $i`
+ 
 done
 
-sleep 1
+echo waiting...
+sleep 2
 
-rm reco_proc_*.pid
+for i in $(ls reco_proc_*.pid 2>/dev/null) ; do
 
-for i in $(ls reco_proc_*.pid) ; do
+    echo force kill $i
 
-    echo waiting $i
-
-    while [ -f $i ]
-    do
-        sleep 1
-    done
-  
 done
+
+rm reco_proc_*.pid 2>/dev/null
 
 exit 0
