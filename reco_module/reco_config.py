@@ -1,4 +1,9 @@
 
+
+reco_name   = 'reco.dev.one'
+reco_key    = '0123456789'
+
+
 DEBUG = False
 show_dbg_window = False
 
@@ -32,12 +37,11 @@ filter_cameras = [
 #   'H3',
 ]
 
-api_url = 'http://127.0.0.1:5000'
-#api_url = 'http://52.32.99.45:5000'  # BVC Prod
-#api_url = 'http://54.69.73.20:5000'  # BVC Dev
+#bvcapi_url = 'http://127.0.0.1:5000'
+#bvcapi_url = 'http://52.32.99.45:5000'  # BVC Prod
+bvcapi_url = 'http://54.69.73.20:5000'  # BVC Dev
 
-api_username = 'reco1'
-api_password = 'reco1passwd'
+bvcapi_key = '0123456789'
 
 update_interval = 60  # seconds
 max_alert_queue_size = 50

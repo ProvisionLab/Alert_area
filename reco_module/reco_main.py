@@ -4,6 +4,7 @@ main module
 import os
 import time
 import signal
+import uuid
 import requests, requests.utils
 from capture_worker import CaptureWorker
 from rog_client import RogClient
@@ -14,7 +15,8 @@ import reco_logging, logging
 
 class RecoClient(object):
     
-    api_url = reco_config.api_url
+    api_url = reco_config.bvcapi_url
+    api_key = reco_config.bvcapi_key
 
     access_token = None
 
@@ -24,9 +26,12 @@ class RecoClient(object):
 
     use_cpu = reco_config.use_cpu
 
-    def __init__(self, reco_id: int, reco_count: int):
+    def __init__(self, reco_num: int, reco_count: int):
+        
+        self.reco_num = reco_num - 1
 
-        self.reco_id = reco_id - 1
+        self.reco_id = '{}:{}'.format(reco_config.reco_name, self.reco_num)
+
         self.reco_count = reco_count
 
         self.threads = []
@@ -41,7 +46,7 @@ class RecoClient(object):
         """
         SIGINT handler
         """
-        print('Ctrl+C was pressed')
+        #print('Ctrl+C was pressed')
         self.bStop = True
 
         logging.info("SIGINT reseived, stop all recognitions")
@@ -60,7 +65,7 @@ class RecoClient(object):
         starts/stops recognition threads
         """
 
-        print("press Ctrl+C to quit")
+        #print("press Ctrl+C to quit")
 
         logging.info("start")
 
@@ -94,7 +99,7 @@ class RecoClient(object):
         updates recognizers
         """
         
-        if not self.do_auth(reco_config.api_username, reco_config.api_password):
+        if not self.do_auth():
             return False
 
         cameras = self.do_get_cameras()
@@ -131,8 +136,8 @@ class RecoClient(object):
         # remove stoped threads
         self.remove_stoped_threads()
 
-        # filter cameras by reco_id
-        cameras = [c for c in cameras if (c['id'] % self.reco_count) == self.reco_id]
+        # filter cameras by reco_num
+        cameras = [c for c in cameras if (c['id'] % self.reco_count) == self.reco_num]
 
         # get new cameras alerts
         for c in cameras:
@@ -198,7 +203,10 @@ class RecoClient(object):
         self.cameras = cameras
         pass
 
-    def do_auth(self, username, password):
+    def do_auth(self):
+        
+        username = 'reco-' + self.reco_id
+        password = self.api_key
 
         r = requests.post(
             self.api_url+'/api/auth',
@@ -207,7 +215,7 @@ class RecoClient(object):
         logging.debug("backend auth status: %d", r.status_code)
 
         if r.status_code != 200:
-            logging.error("backend auth request failed for username %s, status: %d", reco_config.api_username, r.status_code)
+            logging.error("backend auth request failed, status: %d", r.status_code)
             return False
 
         self.access_token = r.json()['access_token']
@@ -257,7 +265,7 @@ class RecoClient(object):
         posts alert to backend
         """
         
-        r = requests.post('{0}/api/alerts/'.format(self.api_url),
+        r = requests.post('{0}/api/alerts'.format(self.api_url),
                         headers={'Authorization': 'JWT {0}'.format(self.access_token)},
                         json=alert.as_dict())
 
@@ -307,17 +315,17 @@ if __name__ == '__main__':
 
     global pid, pid_fname
 
-    reco_id = int(os.environ.get('RECO_PROC_ID', '1'))
+    reco_num = int(os.environ.get('RECO_PROC_ID', '1'))
     reco_count = int(os.environ.get('RECO_TOTAL_PROCS', '1'))
 
     pid = str(os.getpid())
-    pid_fname = 'reco_proc_'+str(reco_id)+'.pid'
+    pid_fname = 'reco_proc_'+str(reco_num)+'.pid'
     f = open(pid_fname, 'w')
     f.write(pid)
     f.close()
 
-    app = RecoClient(reco_id, reco_count)
-    #app.use_cpu = reco_count > 1 and reco_id == reco_count
+    app = RecoClient(reco_num, reco_count)
+    #app.use_cpu = reco_count > 1 and reco_num == reco_count
     app.run()
 
     os.remove(pid_fname)

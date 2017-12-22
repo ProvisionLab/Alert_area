@@ -31,5 +31,5 @@
 
 #endif
 
-#define BVCAPI_USERNAME "user1"
+#define BVCAPI_USERNAME "rogt-1"
 #define BVCAPI_PASSWORD "qwerty1"

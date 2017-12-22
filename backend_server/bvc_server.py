@@ -2,49 +2,48 @@ import bvc_db
 
 from flask import Flask, request
 import flask
-#from flask_restful import Resource, Api
-from flask_jwt import JWT, jwt_required, current_identity
+from flask_jwt import jwt_required, current_identity
 import json
-from datetime import timedelta
 
-import logging
 import flask.logging
 
-import bvc_users
 import bvc_config
-
 import bvc_logging, logging
 
-app = Flask(__name__)
+from bvc_users import BVC_JWT
+from reco_dispatcher import RecoDispatcher
 
-app.config['SECRET_KEY'] = 'bvc-secret'
-app.config['JWT_AUTH_URL_RULE'] = '/api/auth'
-app.config['JWT_EXPIRATION_DELTA'] = timedelta(seconds=24*3600)   # 2do: change in future
+class BVC_Flask(Flask):
+    
+    def __init__(self):
+        
+        super().__init__(__name__);
+   
+        self.jwt = BVC_JWT(self)
+        self.dispatcher = RecoDispatcher()
 
-#####################################################
-## JWT implementation
+    def on_reco_instance_request(self, reco_id):
+        
+        i = reco_id.rfind(':')
+        if i >= 0:
+            instance_id = reco_id[:i]
+            process_id = reco_id[i+1:]
+        else:
+            instance_id = reco_id
+            process_id = '0'
 
-username_table = {u.username: u for u in bvc_users.users}
-userid_table = {u.id: u for u in bvc_users.users}
+        logging.info('on_reco_instance_request, \'%s\', \'%s\'', instance_id, process_id)
+        
+        pass
 
-def authenticate(username, password):
-    user = username_table.get(username, None)
-    if user and user.password.encode('utf-8') == password.encode('utf-8'):
-        return user
-    return None
-
-def identity(payload):
-    user_id = payload['identity']
-    return userid_table.get(user_id, None)
-
-jwt = JWT(app, authenticate, identity)
+app = BVC_Flask()
 
 #####################################################
 ## Flask api implementation
 
 def error_response(status:int, message:str):
 
-  return flask.Response(
+    return flask.Response(
            status=status,
            mimetype="application/json",
            response=json.dumps({'error':{ 'status' : status, 'message' : message}})
@@ -62,7 +61,10 @@ def internal_error(e):
 @jwt_required()
 def api_cameras_get_enabled():
 
-    logging.info('get all enabled cameras')
+    logging.info('get all enabled cameras, %s', current_identity.id)
+
+    if current_identity.id[:5] == 'reco-':
+        app.dispatcher.on_reco_request(current_identity.id[5:])
 
     cameras = bvc_db.get_enabled_cameras()
 
@@ -215,7 +217,7 @@ def api_camera_enabled(camera_id: int):
 
         return flask.jsonify(res)
 
-@app.route('/api/alerts/', methods=["POST"])
+@app.route('/api/alerts', methods=["POST"])
 @jwt_required()
 def api_alerts():
 
