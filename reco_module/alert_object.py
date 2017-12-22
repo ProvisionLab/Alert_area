@@ -21,6 +21,8 @@ alert_type_ids = None
 
 def set_alert_type_ids(data):
     
+    global alert_type_ids
+
     if data is None:
         alert_type_ids = {
             "RA" : 11,
@@ -137,8 +139,10 @@ class AlertObject(object):
     def as_dict(self):
         
         if self.alert_type:
-            
-            alert_type_id = alert_type_ids.get(self.alert_type, 0)
+            if alert_type_ids:
+                alert_type_id = alert_type_ids.get(self.alert_type, 0)
+            else:
+                alert_type_id = 0
 
             payload = { 
                 'camera_id': self.camera_id, 

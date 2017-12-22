@@ -310,12 +310,9 @@ def get_user_agent(name="BVC reco_module"):
 pid = None
 pid_fname = None
 
-
 if __name__ == '__main__':
     
     requests.utils.default_user_agent = get_user_agent
-
-    global pid, pid_fname
 
     reco_num = int(os.environ.get('RECO_PROC_ID', '1'))
     reco_count = int(os.environ.get('RECO_TOTAL_PROCS', '1'))
