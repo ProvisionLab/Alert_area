@@ -66,7 +66,7 @@ void CConnection::Open()
 
 void CConnection::rog_auth(QString username, QString password, std::function<void(int user_id, QString auth_token)> callback)
 {
-    QNetworkRequest request(QString("%1/api/v2/sessions").arg(ROGAPI_URL));
+    QNetworkRequest request(QString("%1/api/v1/sessions").arg(ROGAPI_URL));
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -125,7 +125,7 @@ void CConnection::rog_auth(QString username, QString password, std::function<voi
 
 void CConnection::rog_get_cameras(QString const & rog_token, std::function<void(QJsonObject const&)> callback)
 {
-    QNetworkRequest request(QString("%1/api/v2/me/cameras").arg(ROGAPI_URL));
+    QNetworkRequest request(QString("%1/api/v1/me/cameras").arg(ROGAPI_URL));
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setRawHeader("Authorization", rog_token.toLocal8Bit());
 

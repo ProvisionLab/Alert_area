@@ -8,7 +8,7 @@ import uuid
 import requests, requests.utils
 from capture_worker import CaptureWorker
 from rog_client import RogClient
-from alert_object import AlertObject
+from alert_object import AlertObject, set_alert_type_ids
 import reco_config
 
 import reco_logging, logging
@@ -68,6 +68,8 @@ class RecoClient(object):
         #print("press Ctrl+C to quit")
 
         logging.info("start")
+
+        set_alert_type_ids(self.rogapi.get_alert_ids())
 
         self.updatate_timer = 0 #time.time()
 

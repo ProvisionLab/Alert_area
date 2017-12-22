@@ -5,8 +5,40 @@ import base64
 import rog_sftp
 import reco_config
 from trk_object import TrackObject
+import logging
 
 image_index = 0
+
+
+alert_type_names = {
+    "RA": "Entering Restricted Area",
+    "LD": "Loitering Detected",
+    "VW": "Entry Detected"
+}
+
+alert_type_ids = None
+
+
+def set_alert_type_ids(data):
+    
+    if data is None:
+        alert_type_ids = {
+            "RA" : 11,
+            "VW" : 5,
+            "LD" : 0,
+        }
+        return
+
+    alert_type_ids = {}
+    for i in data:
+        for k in ['RA', 'LD', 'VW']:
+            if i['name'] == alert_type_names[k]:
+                alert_type_ids[k] = i['id']
+        
+
+    logging.info('set_alert_type_ids: %s', str(alert_type_ids))
+    pass
+
 
 def encode_cvimage(image):
     
@@ -105,11 +137,13 @@ class AlertObject(object):
     def as_dict(self):
         
         if self.alert_type:
+            
+            alert_type_id = alert_type_ids.get(self.alert_type, 0)
 
             payload = { 
                 'camera_id': self.camera_id, 
                 'alert_id': self.alert_id, 
-                'alert_type_id': self.alert_type, 
+                'alert_type_id': alert_type_id,
                 'timestamp': self.timestamp, 
             }
 

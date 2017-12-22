@@ -57,7 +57,7 @@ class RogClient(object):
         return status_code == 200 or status_code == 201
 
     def do_auth(self):
-        r = requests.post('{0}/api/v2/sessions'.format(reco_config.rogapi_url),
+        r = requests.post('{0}/api/v1/sessions'.format(reco_config.rogapi_url),
                           json={'session': {
                               'email': reco_config.rogapi_username,
                               'password': reco_config.rogapi_password
@@ -86,7 +86,7 @@ class RogClient(object):
             
             # post first alert { 'camera_id', 'alert_type', ... }
 
-            r = requests.post('{0}/api/v2/bvc_alert'.format(reco_config.rogapi_url),
+            r = requests.post('{0}/api/v1/alert'.format(reco_config.rogapi_url),
                             headers={'Authorization': '{0}'.format(self.access_token)},
                             json=alert.as_dict())
 
@@ -94,7 +94,7 @@ class RogClient(object):
 
             # post after alerts { 'alert_id', 'image' }
 
-            r = requests.post('{0}/api/v2/bvc_alert_image'.format(reco_config.rogapi_url),
+            r = requests.post('{0}/api/v1/add_alert_image'.format(reco_config.rogapi_url),
                             headers={'Authorization': '{0}'.format(self.access_token)},
                             json=alert.as_dict())
             
@@ -103,3 +103,26 @@ class RogClient(object):
             logging.error("%s", alert.as_debug())
 
         return r.status_code
+
+    def get_alert_ids(self):
+
+        if self.access_token is None:
+            self.do_auth()
+
+        if self.access_token is None:
+            return None            
+
+        r = requests.get('{0}/api/v1/alert_types'.format(reco_config.rogapi_url))
+
+        if not self.is_request_succeeded(r.status_code):
+            return None
+
+        data = r.json()
+
+        if data is None:
+            return None
+
+        return data.get("data", None)
+        
+
+      
