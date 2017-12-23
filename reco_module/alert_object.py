@@ -27,7 +27,7 @@ def set_alert_type_ids(data):
         alert_type_ids = {
             "RA" : 11,
             "VW" : 5,
-            "LD" : 0,
+            "LD" : 49,
         }
         return
 
