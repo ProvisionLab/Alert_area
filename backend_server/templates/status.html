@@ -1,0 +1,40 @@
+<html>
+<title>{{ title }}</title>
+<meta http-equiv="refresh" content="2">
+
+<body>
+
+    <div>instances count: {{status.insts|length}}</div>
+    {% for inst in status.insts %}
+    <div>
+        <p>
+            <span>instance: {{inst.id}},</span>
+            <span>cameras: {{inst.cc}},</span>
+            <span>fps: {{'%0.2f' % inst.fps|float}},</span>
+            <span>fpsps: {{'%0.2f' % inst.fpspc|float}},</span>
+            <span>{{inst.comments}},</span>
+        </p>
+
+        <table>
+            {% for proc in inst.procs %}
+            <tr>
+                <td>process: {{proc.id}},</td>
+                <td>cameras: {{proc.cc}},</td>
+                <td>fps: {{'%0.2f' % proc.fps|float}},</td>
+                <td>prev: {{'%0.0f' % proc.prev|float}} s,</td>
+                <td>last: {{'%0.0f' % proc.last|float}} s,</td>
+                <td>cameras: {{proc.cids|string}}.</td>
+                <td>{{proc.comments|string}}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+    </div>
+    {% endfor %}
+
+    <div>active cameras: {{status.active_cameras|string}}</div>
+    <div>free cameras: {{status.free_cameras|string}}</div>
+
+</body>
+
+</html>

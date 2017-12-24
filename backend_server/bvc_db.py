@@ -14,6 +14,44 @@ def drop():
     db.users.drop()
     db.cameras.drop()
 
+def is_camera_active(camera):
+    
+    if not camera.get('enabled', True):
+        return False
+
+    if not bool(camera.get('users')):
+        return False
+
+    if not bool(camera.get('alerts')):
+        return False
+
+    return True
+
+def get_active_cameras():
+    """
+    returns cids of all active cameras
+    """
+    
+    cursor = db.cameras.find({})
+
+    cids = [ c['id'] for c in cursor if is_camera_active(c) ]
+
+    return cids
+
+def get_cameras_by_cids(cids:list):
+    """
+    returns cameras from its ids
+    """
+    
+    cursor = db.cameras.find({'id': {'$in': cids }}, {'alerts':False, 'users':False})
+    
+    cameras = [ camera for camera in cursor if camera.get('enabled', True)]
+
+    for camera in cameras:
+        camera.pop('_id')
+
+    return cameras
+
 def get_enabled_cameras():
     
     cursor = db.cameras.find({}, {'alerts':False})

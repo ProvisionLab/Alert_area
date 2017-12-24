@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export RECO_TOTAL_PROCS=4
-#export RECO_TOTAL_PROCS=2
+#export RECO_TOTAL_PROCS=4
+export RECO_TOTAL_PROCS=2
 
 
 if [ ! -z "$(ls reco_proc_*.pid 2>/dev/null)" ] ; then

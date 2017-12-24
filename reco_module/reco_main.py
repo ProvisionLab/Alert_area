@@ -75,18 +75,28 @@ class RecoClient(object):
 
         while not self.bStop:
             
-            update_delta = time.time() - self.updatate_timer
-            if update_delta >= reco_config.update_interval:
+            try:
+                update_delta = time.time() - self.updatate_timer
+                if update_delta >= reco_config.update_interval:
 
-                if not self.update_cameras():
-                    break
+                    if not self.update_cameras():
+                        break
 
-                self.updatate_timer = time.time()
+                    self.updatate_timer = time.time()
 
-            if self.alerts:
-                self.post_all_alerts()
-            else:
-                time.sleep(2.0)
+                if self.alerts:
+                    self.post_all_alerts()
+                else:
+                    time.sleep(2.0)
+
+            except (requests.exceptions.ConnectionError) as e:
+                logging.error("ConnectionError: %s", str(e))
+                time.sleep(30)
+                pass
+
+            except:
+                logging.exception("exception")
+                
 
         logging.info("stopping... this may take some time")
 
@@ -104,14 +114,17 @@ class RecoClient(object):
         if not self.do_auth():
             return False
 
+        status = self.get_status()
+        self.do_send_status(status)
+
         cameras = self.do_get_cameras()
 
         if cameras is None:
             logging.error("backend cameras request failed, no cameras returned")
             return False
 
-        if reco_config.filter_cameras:
-            cameras = [c for c in cameras if c['name'] in reco_config.filter_cameras]
+        #if reco_config.filter_cameras:
+        #    cameras = [c for c in cameras if c['name'] in reco_config.filter_cameras]
 
         # remove disabled cameras
         cameras = [c for c in cameras if c.get('enabled',True)]
@@ -128,6 +141,30 @@ class RecoClient(object):
         for t in del_threads:
             t.join()
 
+    def get_status(self):
+        
+        total_fps1 = 0.0
+        total_fps = 0.0
+        cameras_count = 0
+        
+        for t in self.threads:
+            fps1, fps2 = t.get_fps()
+            total_fps1 += fps1
+            total_fps += fps2
+
+            if fps1 > 0.0:
+                cameras_count += 1
+
+            logging.info("camera [%d] \'%s\' FPS: %.1f/%.1f, areas: %d, users: %s", 
+                        t.camera['id'], t.camera['name'], 
+                        fps1, fps2, 
+                        len(t.camera['areas']),
+                        str(t.camera.get('users',[])))
+
+        logging.info("total FPS: %.1f/%.2f for %d cameras", total_fps1, total_fps, cameras_count)
+
+        return {'cameras_count' : cameras_count, 'fps' : total_fps}
+
     def set_cameras(self, cameras):
         """
         sets cameras for recognition
@@ -139,7 +176,7 @@ class RecoClient(object):
         self.remove_stoped_threads()
 
         # filter cameras by reco_num
-        cameras = [c for c in cameras if (c['id'] % self.reco_count) == self.reco_num]
+        #cameras = [c for c in cameras if (c['id'] % self.reco_count) == self.reco_num]
 
         # get new cameras alerts
         for c in cameras:
@@ -170,25 +207,13 @@ class RecoClient(object):
 
         self.threads = new_threads
 
-        total_fps = 0
-        total_fps2 = 0
-        total_fps_cam = 0
-
         # update alert areas
         for t in self.threads:
             camera_id = t.camera['id']
             for c in cameras:
                 if c['id'] == camera_id:
-                    t.camera = c
-                    c_areas = c['areas']
-                    fps, fps2 = t.get_fps()
-                    total_fps += fps
-                    total_fps2 += fps2
-                    total_fps_cam += 1
-                    logging.info("camera [%d] \'%s\' FPS: %.1f/%.1f, areas: %d, users: %s", c['id'], c['name'], fps, fps2, len(c_areas), str(c.get('users',[])))
+                    c_areas = t.camera['areas']
                     t.update_areas(c_areas)
-
-        logging.info("total FPS: %.1f/%.2f for %d cameras", total_fps, total_fps2, total_fps_cam)
 
         # add new camera threads
         add_cameras = [c for c in cameras if c['id'] not in del_ids and c['id'] not in old_ids]
@@ -225,7 +250,9 @@ class RecoClient(object):
 
     def do_get_cameras(self):
 
-        r = requests.get('{0}/api/cameras/enabled'.format(self.api_url),
+#        r = requests.get('{0}/api/cameras/enabled'.format(self.api_url),
+#                            headers={'Authorization': 'JWT {0}'.format(self.access_token)})
+        r = requests.get('{0}/api/active_cameras'.format(self.api_url),
                             headers={'Authorization': 'JWT {0}'.format(self.access_token)})
 
         logging.debug("backend get_cameras status: %d", r.status_code)
@@ -235,6 +262,15 @@ class RecoClient(object):
             return None
         
         return r.json()['cameras']
+
+    def do_send_status(self, status):
+        
+        r = requests.post('{0}/api/rs'.format(self.api_url),
+                            headers={'Authorization': 'JWT {0}'.format(self.access_token)},
+                            json=status)
+
+        logging.debug("/api/rs status: %d", r.status_code)
+   
 
     def get_camera_alerts(self, camera_id: str):
 
@@ -292,6 +328,8 @@ class RecoClient(object):
             logging.warning('alerts queue too long (%d), droping', len(alerts))
             alerts = alerts[:reco_config.max_alert_queue_size]
 
+        start_time = time.time()
+
         for alert in alerts:
 
             alert.encode_images()
@@ -300,6 +338,10 @@ class RecoClient(object):
                 self.rogapi.post_alert(alert)
             else:
                 self.post_alert_internal(alert)
+
+            if (time.time() - start_time) > 10.0:
+                self.alerts = alerts + self.alerts
+                break;
 
             if self.bStop:
                 break

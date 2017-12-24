@@ -1,6 +1,6 @@
 import bvc_db
 
-from flask import Flask, request
+from flask import Flask, request, render_template
 import flask
 from flask_jwt import jwt_required, current_identity
 import json
@@ -21,6 +21,8 @@ class BVC_Flask(Flask):
    
         self.jwt = BVC_JWT(self)
         self.dispatcher = RecoDispatcher()
+
+        self.dispatcher.on_cameras_update()
 
     def on_reco_instance_request(self, reco_id):
         
@@ -57,16 +59,18 @@ def page_not_found(e):
 def internal_error(e):
     return error_response(500, "server error")
 
-@app.route('/api/cameras/enabled', methods=["GET"])
+@app.route('/api/active_cameras', methods=["GET"])
 @jwt_required()
 def api_cameras_get_enabled():
 
-    logging.info('get all enabled cameras, %s', current_identity.id)
+    logging.info('get active cameras, %s', current_identity.id)
 
-    if current_identity.id[:5] == 'reco-':
-        app.dispatcher.on_reco_request(current_identity.id[5:])
+    if current_identity.id[:5] != 'reco-':
+        return error_response(403, "")
+        
+    reco_id = current_identity.id[5:]
 
-    cameras = bvc_db.get_enabled_cameras()
+    cameras = app.dispatcher.on_reco_get_cameras(reco_id)
 
     return flask.jsonify({'cameras': cameras})
 
@@ -78,6 +82,8 @@ def api_cameras_delete(camera_id):
 
     if not bvc_db.delete_camera(camera_id):
         return error_response(404, "not found")
+
+    app.dispatcher.on_cameras_update()
         
     return flask.jsonify({}), 204
 
@@ -113,6 +119,8 @@ def api_camera_set_all(user_id: int):
 
         if not bvc_db.update_cameras(user_id, cameras):
             return error_response(404, "failed")
+
+        app.dispatcher.on_cameras_update()
 
         return flask.jsonify({})
 
@@ -215,6 +223,8 @@ def api_camera_enabled(camera_id: int):
 
         logging.info("camera [%d] enabled = %s", camera_id, enabled)
 
+        app.dispatcher.on_cameras_update()
+
         return flask.jsonify(res)
 
 @app.route('/api/alerts', methods=["POST"])
@@ -223,7 +233,7 @@ def api_alerts():
 
     data = request.get_json()
 
-    camera_id = data.get('camera_id')
+    camera_id = data.get('camera_id', None)
     if camera_id is None:
         return error_response(400, "invalid arguments")
 
@@ -234,6 +244,37 @@ def api_alerts():
     logging.info("new alert: camera [%d], type: %s", camera_id, alert_type)
 
     return flask.jsonify({})
+
+@app.route('/api/rs', methods=["POST"])
+@jwt_required()
+def api_rs():
+
+    if current_identity.id[:5] != 'reco-':
+        return error_response(403, "")
+        
+    data = request.get_json()
+
+    reco_id = current_identity.id[5:]
+    logging.info("ps: %s %s", reco_id, str(data))
+
+    if reco_id is None:
+        return error_response(400, "invalid arguments")
+
+    cameras_count = data.get('cameras_count', 0)
+    fps = data.get('fps', 0.0)
+
+    app.dispatcher.on_reco_state(reco_id, cameras_count, fps)
+
+    return flask.jsonify({}), 204
+
+@app.route('/status', methods=["GET"])
+def get_status():
+    
+    return render_template(
+        'status.html',
+        title='Status',
+        status=app.dispatcher.get_status()
+    )
 
 if __name__ == '__main__':
     #app.run(host="127.0.0.1", port=5000)

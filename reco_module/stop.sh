@@ -9,11 +9,13 @@ for i in $(ls reco_proc_*.pid 2>/dev/null) ; do
 done
 
 echo waiting...
-sleep 2
+sleep 4
 
 for i in $(ls reco_proc_*.pid 2>/dev/null) ; do
 
     echo force kill $i
+
+    kill -SIGTERM `cat $i`
 
 done
 

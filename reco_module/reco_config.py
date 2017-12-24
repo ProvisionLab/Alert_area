@@ -1,6 +1,6 @@
 
 
-reco_name   = 'reco.dev.one'
+reco_name   = 'reco.dev.two'
 reco_key    = '0123456789'
 
 
