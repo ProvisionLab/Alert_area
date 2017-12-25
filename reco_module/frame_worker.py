@@ -89,7 +89,7 @@ class FrameWorker(threading.Thread):
         
         self.frame = None
 
-        self.frame_count = 0
+        self.frame_count1 = 0
         self.frame_count2 = 0
         self.frame_time = time.time()
 
@@ -146,7 +146,7 @@ class FrameWorker(threading.Thread):
             now = time.time()
 
             self.frame = frame
-            self.frame_count += 1
+            self.frame_count1 += 1
 
             self.frames1.append((frame, now))
 
@@ -211,7 +211,7 @@ class FrameWorker(threading.Thread):
 
         pass
 
-    def get_fps(self):
+    def get_fps(self, reset=True):
         """
         @return (fps,fps2)  input FPS and output FPS
         """
@@ -222,14 +222,16 @@ class FrameWorker(threading.Thread):
         if d < 1.0:
             return 0,0
 
-        fps = self.frame_count / d
+        fps1 = self.frame_count1 / d
         fps2 = self.frame_count2 / d
 
-        self.frame_time = now
-        self.frame_count = 0
-        self.frame_count2 = 0
+        if reset:
 
-        return fps, fps2
+            self.frame_time = now
+            self.frame_count1 = 0
+            self.frame_count2 = 0
+
+        return fps1, fps2
 
     def update_areas(self, areas):
         

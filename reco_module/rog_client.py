@@ -16,7 +16,7 @@ class RogClient(object):
 
         try:
 
-            res = self.do_post(alert)
+            res, rog_alert_id = self.do_post(alert)
 
             if not self.is_request_succeeded(res):
 
@@ -32,7 +32,7 @@ class RogClient(object):
                     return False
 
             if alert.alert_type:
-
+                
                 logging.info('rog post alert, type: %s, camera: [%d] \'%s\', alert_id: \'%s\'',
                             alert.alert_type, alert.camera_id, alert.camera_name, alert.alert_id)
 
@@ -57,6 +57,7 @@ class RogClient(object):
         return status_code == 200 or status_code == 201
 
     def do_auth(self):
+        
         r = requests.post('{0}/api/v1/sessions'.format(reco_config.rogapi_url),
                           json={'session': {
                               'email': reco_config.rogapi_username,
@@ -64,13 +65,51 @@ class RogClient(object):
                           }})
 
         if not self.is_request_succeeded(r.status_code):
-            logging.error("rog auth failed, status: %d", r.status_code)
+            logging.error("rog auth failed, status: %d %s", r.status_code, str(r.text))
             return False
 
         auth = r.json()
 
         self.access_token = auth['jwt']
         return True
+
+    def do_post_alert(self, alert):
+
+        if self.access_token is None:
+            return 401  # auth required
+        
+        data = alert.as_dict()
+
+        r = requests.post('{0}/api/v1/alert'.format(reco_config.rogapi_url),
+                        headers={'Authorization': '{0}'.format(self.access_token)},
+                        json=data)
+
+        if self.is_request_succeeded(r.status_code):
+            resp = r.json()
+            logging.info("rog post alert response: %s", str(resp))
+
+        else:
+            logging.error("rog post alert failed, camera: [%d], status: %d", alert.camera_id, r.status_code)
+            logging.error("%s", alert.as_debug())
+        
+        return r.status_code, None
+
+    def do_post_alert_image(self, alert):
+        
+        if self.access_token is None:
+            return 401  # auth required
+        
+        data = alert.as_dict()
+
+        r = requests.post('{0}/api/v1/add_alert_image'.format(reco_config.rogapi_url),
+                        headers={'Authorization': '{0}'.format(self.access_token)},
+                        json=data)
+
+        if not self.is_request_succeeded(r.status_code):
+            logging.error("rog post alert failed, camera: [%d], status: %d", alert.camera_id, r.status_code)
+            logging.error("%s", alert.as_debug())
+        
+        return r.status_code, None
 
     def do_post(self, alert: AlertObject):
 
@@ -88,7 +127,11 @@ class RogClient(object):
 
             r = requests.post('{0}/api/v1/alert'.format(reco_config.rogapi_url),
                             headers={'Authorization': '{0}'.format(self.access_token)},
-                            json=alert.as_dict())
+                            json=data)
+
+            if self.is_request_succeeded(r.status_code):
+                resp = r.json()
+                logging.info("rog post alert response: %s", str(resp))
 
         else:
 
@@ -96,13 +139,13 @@ class RogClient(object):
 
             r = requests.post('{0}/api/v1/add_alert_image'.format(reco_config.rogapi_url),
                             headers={'Authorization': '{0}'.format(self.access_token)},
-                            json=alert.as_dict())
+                            json=data)
             
         if not self.is_request_succeeded(r.status_code):
             logging.error("rog post alert failed, camera: [%d], status: %d", alert.camera_id, r.status_code)
             logging.error("%s", alert.as_debug())
 
-        return r.status_code
+        return r.status_code, None
 
     def get_alert_ids(self):
 

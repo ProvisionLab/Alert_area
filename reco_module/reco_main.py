@@ -10,6 +10,7 @@ from capture_worker import CaptureWorker
 from rog_client import RogClient
 from alert_object import AlertObject, set_alert_type_ids
 import reco_config
+from collections import deque
 
 import reco_logging, logging
 
@@ -35,7 +36,7 @@ class RecoClient(object):
         self.reco_count = reco_count
 
         self.threads = []
-        self.alerts = []
+        self.alerts_queue = deque()
 
         self.rogapi = RogClient()
 
@@ -51,9 +52,9 @@ class RecoClient(object):
 
         logging.info("SIGINT reseived, stop all recognitions")
 
-        if len(self.alerts)>4:
-            logging.warning("there are many alerts in queue: %d, reseting them", len(self.alerts))
-            self.alerts = []
+        if len(self.alerts_queue)>4:
+            logging.warning("there are many alerts in queue: %d, reseting them", len(self.alerts_queue))
+            self.alerts_queue.clear()
 
         for t in self.threads:
             t.stop()
@@ -84,7 +85,7 @@ class RecoClient(object):
 
                     self.updatate_timer = time.time()
 
-                if self.alerts:
+                if self.alerts_queue:
                     self.post_all_alerts()
                 else:
                     time.sleep(2.0)
@@ -144,13 +145,15 @@ class RecoClient(object):
     def get_status(self):
         
         total_fps1 = 0.0
-        total_fps = 0.0
+        total_fps2 = 0.0
         cameras_count = 0
         
         for t in self.threads:
             fps1, fps2 = t.get_fps()
             total_fps1 += fps1
-            total_fps += fps2
+            total_fps2 += fps2
+
+            logging.info("FPS: %.1f/%.1f", fps1, fps2)
 
             if fps1 > 0.0:
                 cameras_count += 1
@@ -161,9 +164,9 @@ class RecoClient(object):
                         len(t.camera['areas']),
                         str(t.camera.get('users',[])))
 
-        logging.info("total FPS: %.1f/%.2f for %d cameras", total_fps1, total_fps, cameras_count)
+        logging.info("total FPS: %.1f/%.2f for %d cameras", total_fps1, total_fps2, cameras_count)
 
-        return {'cameras_count' : cameras_count, 'fps' : total_fps}
+        return {'cameras_count' : cameras_count, 'fps' : total_fps2}
 
     def set_cameras(self, cameras):
         """
@@ -296,7 +299,7 @@ class RecoClient(object):
         appends alert to alerts queue
         """
 
-        self.alerts.append(alert)
+        self.alerts_queue.append(alert)
 
     def post_alert_internal(self, alert):
         """
@@ -319,28 +322,24 @@ class RecoClient(object):
         posts all alerts from queue
         """
 
-        alerts = []
-
-        while self.alerts:
-            alerts.append(self.alerts.pop(0))
-
-        if len(alerts) > reco_config.max_alert_queue_size:
-            logging.warning('alerts queue too long (%d), droping', len(alerts))
-            alerts = alerts[:reco_config.max_alert_queue_size]
+        if len(self.alerts_queue) > reco_config.max_alert_queue_size:
+            logging.warning('alerts queue too long (%d), droping', len(self.alerts_queue))
+            self.alerts_queue = deque(self.alerts_queue, reco_config.max_alert_queue_size)
 
         start_time = time.time()
 
-        for alert in alerts:
+        while self.alerts_queue:
+            
+            alert = self.alerts_queue.popleft()
 
             alert.encode_images()
 
             if reco_config.send_alerts_to_rog:
-                self.rogapi.post_alert(alert)
+                rog_alert_id = self.rogapi.post_alert(alert)
             else:
                 self.post_alert_internal(alert)
 
             if (time.time() - start_time) > 10.0:
-                self.alerts = alerts + self.alerts
                 break;
 
             if self.bStop:

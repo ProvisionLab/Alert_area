@@ -1,10 +1,13 @@
 import time
 import logging
 import bvc_db
+from threading import Lock
 
-purge_timeout = 600  # seconds
+purge_timeout = 200  # seconds
 
-stable_timeot = 2*60
+fix_timeot = 120
+not_fixed_fps = 10
+fix_window = 300
 
 def split_recoid(reco_id):
     i = reco_id.rfind(':')
@@ -68,12 +71,12 @@ class RecoInstance(object):
         self.id = id
 
         self.status_cc = 0
-        self.status_fps = 0.0
+        self.fixfps = None
+        self.fps_last = time.time()
+        self.fix_start = None
 
         self.procs = {}
 
-        self.fps = None
-        self.stable_start = None
         pass
 
     def set_status(self, proc_id, cc, fps):
@@ -98,15 +101,20 @@ class RecoInstance(object):
             status_fps += p.status_fps
             
         self.status_cc = status_cc
+
+        if self.fix_start:
+            if (now - self.fix_start) >= fix_timeot and self.status_cc > 0 and self.status_fps > 0.0:
+                self.fix_start = None
+
+        if self.fixfps is None:
+           self.fix_start = now 
+           self.fixfps = 0.0
+
+        d = now - self.fps_last
+        self.fixfps = (self.fixfps * fix_window + status_fps * d) / (fix_window + d)
+        self.fps_last = now
+
         self.status_fps = status_fps
-
-        if self.stable_start:
-            if (now - self.stable_start) >= stable_timeot and self.status_cc > 0 and self.status_fps > 0.0:
-                self.fps = self.status_fps    
-                self.stable_start = None
-
-        if self.fps is not None:
-            self.fps = self.status_fps
 
         logging.info('instance set_status: %d %.2f', self.status_cc, self.status_fps)
         return new_proc
@@ -128,8 +136,8 @@ class RecoInstance(object):
     def is_purged(self):
         return not self.procs
 
-    def is_stable(self):
-        return self.fps is not None
+    def is_fixed(self):
+        return self.fixfps is not None and self.fix_start is None
 
     def _get_maxcam_proc(self):
 
@@ -164,7 +172,7 @@ class RecoInstance(object):
         if min_p is None:
             return False
 
-        if self.fps is None and ic == 0:
+        if self.fixfps is None and ic == 0:
             self.stable_start = time.time()        
 
         min_p.cameras.add(cid)
@@ -181,10 +189,14 @@ class RecoInstance(object):
 
     def get_fpspc(self):
         
-        if self.status_cc == 0:
-            return 0.0
+        cc = self.get_cameras_count()
+        if cc == 0:
+            cc += 1
 
-        return self.status_fps / self.get_cameras_count()
+        if self.fixfps is None:
+            return not_fixed_fps / cc
+        
+        return self.fixfps / cc
 
 class RecoDispatcher(object):
 
@@ -194,49 +206,54 @@ class RecoDispatcher(object):
 
         self.free_cameras = {}
 
+        self.lock = Lock()
+
         pass
 
     def on_reco_state(self, reco_id, cameras_count, fps):
         """
         /api/rs handler
         """
+
+        with self.lock:
         
-        inst_id, proc_id = split_recoid(reco_id)
+            inst_id, proc_id = split_recoid(reco_id)
 
-        instance = self.instances.get(inst_id)
+            instance = self.instances.get(inst_id)
 
-        if instance is None:
-            instance = RecoInstance(inst_id)
-            self.instances[inst_id] = instance
+            if instance is None:
+                instance = RecoInstance(inst_id)
+                self.instances[inst_id] = instance
 
-        new_proc = instance.set_status(proc_id, cameras_count, fps)
+            new_proc = instance.set_status(proc_id, cameras_count, fps)
 
-        new_free = self.purge()
+            new_free = self.purge()
 
-        if new_proc or new_free:
-            pass
+            if new_proc or new_free:
+                pass
 
-        self.redistribute()
+            self.redistribute()
         
     def on_reco_get_cameras(self, reco_id):
         """
         GET /api/active_cameras handler
         """
         
-        inst_id, proc_id = split_recoid(reco_id)
+        with self.lock:
+            inst_id, proc_id = split_recoid(reco_id)
 
-        proc = self._get_proc(inst_id, proc_id)
+            proc = self._get_proc(inst_id, proc_id)
 
-        if not proc:
-            return []
+            if not proc:
+                return []
 
-        cids = proc.cameras
+            cids = proc.cameras
 
-        cameras = bvc_db.get_cameras_by_cids(list(cids))
+            cameras = bvc_db.get_cameras_by_cids(list(cids))
 
-        #logging.info('on_reco_get_cameras: %s %s', str(cids), str(cameras))
+            #logging.info('on_reco_get_cameras: %s %s', str(cids), str(cameras))
 
-        return cameras
+            return cameras
 
     def on_cameras_update(self):
         """
@@ -245,64 +262,65 @@ class RecoDispatcher(object):
         DELETE /api/cameras/xx
         """
 
-        cs = set(bvc_db.get_active_cameras())
+        with self.lock:
+            cs = set(bvc_db.get_active_cameras())
 
-        self._update_proc_cameras(cs)
+            self._update_proc_cameras(cs)
 
-        self.free_cameras = cs
+            self.free_cameras = cs
 
-        self.redistribute()
+            self.redistribute()
 
-        pass
+            pass
        
     def get_status(self):
         
-        if self.purge():
-            self.redistribute()
-        
-        status = []
+        with self.lock:
 
-        now = time.time()
+            status = []
 
-        for iid,inst in self.instances.items():
-            procs = []
-            for p in inst.procs.values():
-                
+            now = time.time()
+
+            for iid,inst in self.instances.items():
+                procs = []
+                for p in inst.procs.values():
+                    
+                    comments = ''
+
+                    procs.append({
+                        'id': p.id, 
+                        'cc': p.status_cc, 
+                        'fps': p.status_fps, 
+                        'prev': p.period,
+                        'last': now - p.status_time,
+                        'cids': p.cameras,
+                        'comments': comments
+                    })
+
+                procs = sorted(procs, key=lambda p: p['id'])
+
                 comments = ''
 
-                procs.append({
-                    'id': p.id, 
-                    'cc': p.status_cc, 
-                    'fps': p.status_fps, 
-                    'prev': p.period,
-                    'last': now - p.status_time,
-                    'cids': p.cameras,
-                    'comments': comments
-                })
+                if not inst.is_fixed():
+                    comments += ', not fixed'
 
-            procs = sorted(procs, key=lambda p: p['id'])
-
-            comments = ''
-
-            if not inst.is_stable():
-                comments += ', not stable'
-
-            status.append({
-                'id': iid, 
-                'cc':inst.status_cc, 
-                'fps':inst.status_fps, 
-                'fpspc':inst.get_fpspc(), 
-                'comments' : comments,
-                'procs':procs})
+                status.append({
+                    'id': iid, 
+                    'cc':inst.status_cc, 
+                    'fps': inst.status_fps, 
+                    'fixfps': inst.fixfps if inst.fixfps else 0.0, 
+                    'fpspc':inst.get_fpspc(), 
+                    'comments' : comments,
+                    'procs':procs})
 
 
-        status = { 
-            'insts': sorted(status, key=lambda i: i['id']),
-            'active_cameras': sorted(bvc_db.get_active_cameras()),
-            'free_cameras': self.free_cameras
-        }
+            status = { 
+                'insts': sorted(status, key=lambda i: i['id']),
+                'active_cameras': sorted(bvc_db.get_active_cameras()),
+                'free_cameras': self.free_cameras
+            }
 
-        return status
+            return status
    
     def purge(self):
         
@@ -347,6 +365,7 @@ class RecoDispatcher(object):
         
         for inst in self.instances.values():
             for p in inst.procs.values():
+
                 if len(p.cameras)==0:
                     ps.append(p)
 
@@ -454,11 +473,7 @@ class RecoDispatcher(object):
                 self.free_cameras.discard(c)
 
 
-        # if there is not stable instance then skip
-
-        for inst in self.instances.values():
-            if not inst.is_stable():
-                return
+        # assign rest of free cameras
 
         while self.free_cameras:
 
@@ -468,6 +483,8 @@ class RecoDispatcher(object):
                 break
 
             inst.add_camera(self.free_cameras.pop())
+
+        # move cameras from low fps to high
                 
         min_i, max_i = self.check_camera_moving()
 
