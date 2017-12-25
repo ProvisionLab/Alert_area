@@ -54,7 +54,7 @@ send_ta_images = 4      # int:  count of posts of alerts with T1-T12 images.
 
 # upstream settings
 
-#rogapi_url = 'https://morning-lake-10802.herokuapp.com'
+#rogapi_url = 'https://rog-api-prod.herokuapp.com'
 #rogapi_username = 'nabus@test.com'
 #rogapi_password = 'password123'
 

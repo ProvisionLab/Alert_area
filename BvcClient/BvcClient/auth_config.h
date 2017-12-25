@@ -22,11 +22,13 @@
 
     #define BVCAPI_URL      "http://52.32.99.45:5000"   // BVC Prod
 
-    #define ROGAPI_URL      "https://morning-lake-10802.herokuapp.com"
+    #define ROGAPI_URL      "https://rog-api-prod.herokuapp.com"
 
     #ifdef _DEBUG
-        #define ROGAPI_USERNAME "nabus@test.com"
-        #define ROGAPI_PASSWORD "password123"
+#define ROGAPI_USERNAME "bvc-dev@gorog.co"
+#define ROGAPI_PASSWORD "password123!!!"
+//        #define ROGAPI_USERNAME "nabus@test.com"
+//        #define ROGAPI_PASSWORD "password123"
     #endif
 
 #endif
