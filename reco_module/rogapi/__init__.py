@@ -10,7 +10,7 @@ class ROG_Client(object):
         self.password = password
         self.jwt_token = None
 
-    def rog_auth(func):
+    def do_auth(func):
         """
         decorator to auth if need
         """
@@ -69,7 +69,7 @@ class ROG_Client(object):
     
         return self.jwt_token is not None
 
-    @rog_auth
+    @do_auth
     def get_cameras(self):
         
         """
@@ -105,7 +105,7 @@ class ROG_Client(object):
 
         return r.status_code, res.get("data", None)
     
-    @rog_auth
+    @do_auth
     def post_alert(self, alert):
         """
         @alert  {
@@ -148,7 +148,7 @@ class ROG_Client(object):
 
         return r.status_code, None
 
-    @rog_auth
+    @do_auth
     def add_alert_image(self, alert_id, image):
         """
         @alert_id: str

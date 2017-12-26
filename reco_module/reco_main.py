@@ -16,13 +16,10 @@ from rogapi.alerts import ROG_Alert, ROG_AlertImage
 
 import reco_logging, logging
 
-class RecoClient(object):
+from bvcapi import BVC_Client
+
+class RecoApp(object):
     
-    api_url = reco_config.bvcapi_url
-    api_key = reco_config.bvcapi_key
-
-    access_token = None
-
     alerts = None
 
     bStop = False
@@ -31,7 +28,7 @@ class RecoClient(object):
 
     def __init__(self, reco_num: int, reco_count: int):
         
-        self.reco_num = reco_num - 1
+        self.reco_num = reco_num
 
         self.reco_id = '{}:{}'.format(reco_config.reco_name, self.reco_num)
 
@@ -40,6 +37,7 @@ class RecoClient(object):
         self.threads = []
         self.alerts_queue = deque()
 
+        self.bvcapi = BVC_Client(reco_config.bvcapi_url, 'reco-' + self.reco_id, reco_config.bvcapi_key)
         self.rogapi = ROG_Client(reco_config.rogapi_url, reco_config.rogapi_username, reco_config.rogapi_password)
 
         signal.signal(signal.SIGINT, self.stop_execution)
@@ -72,34 +70,42 @@ class RecoClient(object):
 
         logging.info("start")
 
-        set_alert_type_ids(self.rogapi.get_alert_ids())
+        try:
 
-        self.updatate_timer = 0 #time.time()
+            set_alert_type_ids(self.rogapi.get_alert_ids())
 
-        while not self.bStop:
-            
-            try:
-                update_delta = time.time() - self.updatate_timer
-                if update_delta >= reco_config.update_interval:
+            self.updatate_timer = 0
 
-                    if not self.update_cameras():
-                        break
-
-                    self.updatate_timer = time.time()
-
-                if self.alerts_queue:
-                    self.post_all_alerts()
-                else:
-                    time.sleep(2.0)
-
-            except (requests.exceptions.ConnectionError) as e:
-                logging.error("ConnectionError: %s", str(e))
-                time.sleep(30)
-                pass
-
-            except:
-                logging.exception("exception")
+            while not self.bStop:
                 
+                try:
+
+                    now = time.time()
+
+                    if (now - self.updatate_timer) >= reco_config.update_interval:
+
+                        if not self.update_cameras():
+                            break
+
+                        self.updatate_timer = now
+
+                    if self.alerts_queue:
+
+                        self.post_all_alerts()
+
+                    else:
+                        time.sleep(2.0)
+
+                except (requests.exceptions.ConnectionError) as e:
+
+                    logging.error("ConnectionError: %s", str(e))
+                    time.sleep(30)
+                    pass
+
+        except:
+
+            logging.exception("exception")
+            pass                    
 
         logging.info("stopping... this may take some time")
 
@@ -113,14 +119,15 @@ class RecoClient(object):
         gets cameras from backend
         updates recognizers
         """
-        
-        if not self.do_auth():
+
+        if not self.bvcapi.auth():
             return False
-
+        
         status = self.get_status()
-        self.do_send_status(status)
 
-        cameras = self.do_get_cameras()
+        self.bvcapi.post_status(status)
+
+        cameras = self.bvcapi.get_cameras()
 
         if cameras is None:
             logging.error("backend cameras request failed, no cameras returned")
@@ -185,7 +192,7 @@ class RecoClient(object):
 
         # get new cameras alerts
         for c in cameras:
-            areas = self.get_camera_alerts(c['id'])
+            areas = self.bvcapi.get_camera_alerts(c['id'])
             c['areas'] = areas;
             if not areas:
                 logging.warning("camera [%d] \'%s\' has no alerts configured, users: %s", 
@@ -235,63 +242,6 @@ class RecoClient(object):
         self.cameras = cameras
         pass
 
-    def do_auth(self):
-        
-        username = 'reco-' + self.reco_id
-        password = self.api_key
-
-        r = requests.post(
-            self.api_url+'/api/auth',
-            json={'username':username, 'password':password})
-
-        logging.debug("backend auth status: %d", r.status_code)
-
-        if r.status_code != 200:
-            logging.error("backend auth request failed, status: %d", r.status_code)
-            return False
-
-        self.access_token = r.json()['access_token']
-        return True
-
-    def do_get_cameras(self):
-
-        r = requests.get('{0}/api/active_cameras'.format(self.api_url),
-                            headers={'Authorization': 'JWT {0}'.format(self.access_token)})
-
-        logging.debug("bvcapi get_cameras status: %d", r.status_code)
-
-        if r.status_code != 200:
-            logging.error("bvcapi get_active_cameras failed, status: %d", r.status_code)
-            return None
-        
-        return r.json()['cameras']
-
-    def do_send_status(self, status):
-        
-        r = requests.post('{0}/api/rs'.format(self.api_url),
-                            headers={'Authorization': 'JWT {0}'.format(self.access_token)},
-                            json=status)
-
-        logging.debug("/api/rs status: %d", r.status_code)
-
-    def get_camera_alerts(self, camera_id: str):
-
-        r = requests.get('{0}/api/cameras/{1}/alerts'.format(self.api_url, camera_id),
-                        headers={'Authorization': 'JWT {0}'.format(self.access_token)})
-
-        logging.debug("bvcapi get_camera_alerts, camera: [%d], status: %d", camera_id, r.status_code)
-
-        if r.status_code != 200:
-            logging.error("bvcapi get_camera_alerts failed, camera: [%d], status: %d", camera_id, r.status_code)
-            return None
-
-        alerts = r.json()['alerts']
-
-        if not isinstance(alerts,list):
-            logging.error("bvcapi get_camera_alerts invalid result, camera: [%d], %s", camera_id, alerts)
-            return None
-
-        return alerts
 
     def post_reco_alert(self, alert: AlertObject):
         """
@@ -300,21 +250,6 @@ class RecoClient(object):
 
         self.alerts_queue.append(alert)
 
-    def post_alert_internal(self, alert):
-        """
-        posts alert to backend
-        """
-        
-        r = requests.post('{0}/api/alerts'.format(self.api_url),
-                        headers={'Authorization': 'JWT {0}'.format(self.access_token)},
-                        json=alert.as_dict())
-
-        logging.debug("bvcapi post_alert, alert: %s, status: %d", alert, r.status_code)
-
-        if r.status_code == 200:
-            logging.info('post alert {2} / {0} \'{1}\''.format(alert.camera_id, alert.camera_name, alert.alert_type))
-        else:
-            logging.error('bvcapi: failed to post alert, status: %d', r.status_code)
 
     def post_all_alerts(self):
         """
@@ -362,7 +297,7 @@ class RecoClient(object):
     
   
             else:
-                self.post_alert_internal(alert)
+                self.bvcapi.post_alert(alert)
 
             if (time.time() - start_time) > 10.0:
                 break;
@@ -389,7 +324,7 @@ if __name__ == '__main__':
     f.write(pid)
     f.close()
 
-    app = RecoClient(reco_num, reco_count)
+    app = RecoApp(reco_num-1, reco_count)
     #app.use_cpu = reco_count > 1 and reco_num == reco_count
     app.run()
 

@@ -43,7 +43,7 @@ bvcapi_url = 'http://54.69.73.20:5000'  # BVC Dev
 
 bvcapi_key = '0123456789'
 
-update_interval = 60  # seconds
+update_interval = 30  # seconds
 max_alert_queue_size = 50
 
 send_alerts_to_rog = True

@@ -243,7 +243,7 @@ def api_alerts():
 
     logging.info("new alert: camera [%d], type: %s", camera_id, alert_type)
 
-    return flask.jsonify({})
+    return flask.jsonify({}), 201
 
 @app.route('/api/rs', methods=["POST"])
 @jwt_required()
