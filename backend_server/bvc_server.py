@@ -276,6 +276,15 @@ def get_status():
         status=app.dispatcher.get_status()
     )
 
+@app.route('/subs', methods=["GET"])
+def get_subs():
+    
+    return render_template(
+        'subs.html',
+        title='Subscribes',
+        subs=bvc_db.get_subscribes()
+    )
+
 if __name__ == '__main__':
     #app.run(host="127.0.0.1", port=5000)
     app.run(host="0.0.0.0", port=5000, threaded=True, debug=False)

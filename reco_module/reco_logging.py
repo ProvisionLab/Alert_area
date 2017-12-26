@@ -56,6 +56,6 @@ logging.config.dictConfig({
 
     'root': {
         'level': 'INFO',
-        'handlers': ['infos', 'errors'],
+        'handlers': ['console', 'infos', 'errors'],
     }
 })

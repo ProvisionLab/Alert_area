@@ -198,6 +198,20 @@ class RecoInstance(object):
         
         return self.fixfps / cc
 
+    def redistribute(self):
+        
+        min_p = None
+        max_p = None
+        for p in self.procs.values():
+            if not min_p or len(p.cameras) < len(min_p.cameras):
+                min_p = p
+            if not max_p or len(p.cameras) > len(max_p.cameras):
+                max_p = p
+
+        if min_p and max_p and len(min_p.cameras)+1 < len(max_p.cameras):
+            c = max_p.cameras.pop()
+            min_p.cameras.add(c)
+
 class RecoDispatcher(object):
 
     def __init__(self):
@@ -491,5 +505,10 @@ class RecoDispatcher(object):
         if min_i and max_i:
             cid = min_i.remove_camera()
             max_i.add_camera(cid)
+
+        # redistribute cameras inside of instance
+
+        for inst in self.instances.values():
+            inst.redistribute()
 
         pass

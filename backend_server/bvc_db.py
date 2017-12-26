@@ -14,6 +14,30 @@ def drop():
     db.users.drop()
     db.cameras.drop()
 
+def get_subs_users():
+    
+    users = [ {'id':u['uid'], 'cameras': u['cameras'] } for u in db.users.find({})]
+
+    return users
+
+def get_subs_cameras():
+    
+    cameras = [ {
+        'id':c['id'], 
+        'users': c['users'],
+        'enabled': 'enabled' if c.get('enabled', True) else 'disabled',
+        'alerts': len(c.get('alerts',[]))
+        } for c in db.cameras.find({})]
+
+    return cameras
+    
+def get_subscribes():
+    
+    return {
+        'users': get_subs_users(),
+        'cameras': get_subs_cameras(),
+    }
+
 def is_camera_active(camera):
     
     if not camera.get('enabled', True):

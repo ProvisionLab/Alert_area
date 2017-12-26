@@ -50,11 +50,11 @@ send_alerts_to_rog = True
 send_image_to_sftp = False
 
 send_tb_images = True   # bool: include T-1 and T-2 images into alert
-send_ta_images = 4      # int:  count of posts of alerts with T1-T12 images.
+send_ta_images = 2      # int:  count of posts of alerts with T1-T12 images.
 
 # upstream settings
 
-#rogapi_url = 'https://morning-lake-10802.herokuapp.com'
+#rogapi_url = 'https://rog-api-prod.herokuapp.com'
 #rogapi_username = 'nabus@test.com'
 #rogapi_password = 'password123'
 

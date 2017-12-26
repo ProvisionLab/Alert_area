@@ -1,8 +1,13 @@
 <html>
-<title>{{ title }}</title>
-<meta http-equiv="refresh" content="2">
+
+<head>
+    <title>{{ title }}</title>
+    <meta http-equiv="refresh" content="2">
+</head>
 
 <body>
+
+    <a href="/subs">Subs</a>
 
     <div>instances count: {{status.insts|length}}</div>
     {% for inst in status.insts %}

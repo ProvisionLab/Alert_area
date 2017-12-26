@@ -7,10 +7,12 @@ import signal
 import uuid
 import requests, requests.utils
 from capture_worker import CaptureWorker
-from rog_client import RogClient
 from alert_object import AlertObject, set_alert_type_ids
 import reco_config
 from collections import deque
+
+from rogapi import ROG_Client
+from rogapi.alerts import ROG_Alert, ROG_AlertImage
 
 import reco_logging, logging
 
@@ -38,7 +40,7 @@ class RecoClient(object):
         self.threads = []
         self.alerts_queue = deque()
 
-        self.rogapi = RogClient()
+        self.rogapi = ROG_Client(reco_config.rogapi_url, reco_config.rogapi_username, reco_config.rogapi_password)
 
         signal.signal(signal.SIGINT, self.stop_execution)
         pass
@@ -253,15 +255,13 @@ class RecoClient(object):
 
     def do_get_cameras(self):
 
-#        r = requests.get('{0}/api/cameras/enabled'.format(self.api_url),
-#                            headers={'Authorization': 'JWT {0}'.format(self.access_token)})
         r = requests.get('{0}/api/active_cameras'.format(self.api_url),
                             headers={'Authorization': 'JWT {0}'.format(self.access_token)})
 
-        logging.debug("backend get_cameras status: %d", r.status_code)
+        logging.debug("bvcapi get_cameras status: %d", r.status_code)
 
         if r.status_code != 200:
-            logging.error("backend get_enabled_cameras failed, status: %d", r.status_code)
+            logging.error("bvcapi get_active_cameras failed, status: %d", r.status_code)
             return None
         
         return r.json()['cameras']
@@ -273,23 +273,22 @@ class RecoClient(object):
                             json=status)
 
         logging.debug("/api/rs status: %d", r.status_code)
-   
 
     def get_camera_alerts(self, camera_id: str):
 
         r = requests.get('{0}/api/cameras/{1}/alerts'.format(self.api_url, camera_id),
                         headers={'Authorization': 'JWT {0}'.format(self.access_token)})
 
-        logging.debug("backend get_camera_alerts, camera: [%d], status: %d", camera_id, r.status_code)
+        logging.debug("bvcapi get_camera_alerts, camera: [%d], status: %d", camera_id, r.status_code)
 
         if r.status_code != 200:
-            logging.error("backend get_camera_alerts failed, camera: [%d], status: %d", camera_id, r.status_code)
+            logging.error("bvcapi get_camera_alerts failed, camera: [%d], status: %d", camera_id, r.status_code)
             return None
 
         alerts = r.json()['alerts']
 
         if not isinstance(alerts,list):
-            logging.error("backend get_camera_alerts invalid result, camera: [%d], %s", camera_id, alerts)
+            logging.error("bvcapi get_camera_alerts invalid result, camera: [%d], %s", camera_id, alerts)
             return None
 
         return alerts
@@ -310,12 +309,12 @@ class RecoClient(object):
                         headers={'Authorization': 'JWT {0}'.format(self.access_token)},
                         json=alert.as_dict())
 
-        logging.debug("backend post_alert, alert: %s, status: %d", alert, r.status_code)
+        logging.debug("bvcapi post_alert, alert: %s, status: %d", alert, r.status_code)
 
         if r.status_code == 200:
             logging.info('post alert {2} / {0} \'{1}\''.format(alert.camera_id, alert.camera_name, alert.alert_type))
         else:
-            logging.error('backend: failed to post alert, status: %d', r.status_code)
+            logging.error('bvcapi: failed to post alert, status: %d', r.status_code)
 
     def post_all_alerts(self):
         """
@@ -332,10 +331,36 @@ class RecoClient(object):
             
             alert = self.alerts_queue.popleft()
 
-            alert.encode_images()
-
             if reco_config.send_alerts_to_rog:
-                rog_alert_id = self.rogapi.post_alert(alert)
+
+                if isinstance(alert, ROG_Alert):
+
+                    rog_alert_id = self.rogapi.post_alert(alert.get_data())
+
+                    if rog_alert_id:
+                        logging.info("alert [%d] is send: %s, %d left", alert.camera_id, rog_alert_id, len(self.alerts_queue))
+                    else:
+                        logging.warning("alert [%d] not sent: %d, %d left", alert.camera_id, alert.alert_id, len(self.alerts_queue))
+
+                    if rog_alert_id and alert.obj:
+                        alert.obj.rog_alert_id = rog_alert_id
+                
+                elif isinstance(alert, ROG_AlertImage):
+
+                    if alert.obj:
+                        alert.rog_alert_id = alert.obj.rog_alert_id
+
+                    if alert.rog_alert_id:
+                        self.rogapi.add_alert_image(alert.rog_alert_id, alert.image.get_data())
+                    else:
+                        logging.warning("alert TA id not defined, %s", alert.alert_id)
+
+                else:
+                    
+                    logging.warning("invalid alert type: %s", type(alert))
+                    pass
+    
+  
             else:
                 self.post_alert_internal(alert)
 

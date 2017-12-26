@@ -18,7 +18,6 @@ alert_type_names = {
 
 alert_type_ids = None
 
-
 def set_alert_type_ids(data):
     
     global alert_type_ids
@@ -41,6 +40,13 @@ def set_alert_type_ids(data):
     logging.info('set_alert_type_ids: %s', str(alert_type_ids))
     pass
 
+def get_alert_type_id(alert_type):
+
+    if alert_type_ids:
+        return alert_type_ids.get(alert_type, 0)
+    else:
+        return 0
+            
 
 def encode_cvimage(image):
     
@@ -81,6 +87,24 @@ def convert_image(image, prefix: str, id: str):
         pass
     pass
 
+
+def add_box_to_image(image, box):
+    
+    if isinstance(box, TrackObject):
+
+        image = image.copy()
+
+        cv2.rectangle(image, (int(box.x1),int(box.y1)), (int(box.x2),int(box.y2)), (0,0,255), thickness=2);
+        #global image_index
+        #image_index += 1
+        #cv2.imwrite("image_{0}_{1:04d}.jpg".format(prefix, image_index), image)
+
+        return image
+
+    else:
+       
+        return image
+        
 class AlertObject(object):
     
     camera_id = None
@@ -94,7 +118,12 @@ class AlertObject(object):
         """
         self.camera_id = camera_id
         self.alert_id = alert_id if alert_id else str(uuid.uuid4())
+
         self.alert_type = alert_type
+        self.alert_type_id = get_alert_type_id(self.alert_type)
+
+        self.alert_ta = None
+        self.rog_alert_id = None
 
         # <ISO Extended Z timestamp>
         ts = datetime.datetime.utcnow().isoformat()+'Z'
@@ -139,15 +168,11 @@ class AlertObject(object):
     def as_dict(self):
         
         if self.alert_type:
-            if alert_type_ids:
-                alert_type_id = alert_type_ids.get(self.alert_type, 0)
-            else:
-                alert_type_id = 0
 
             payload = { 
                 'camera_id': self.camera_id, 
                 'alert_id': self.alert_id, 
-                'alert_type_id': alert_type_id,
+                'alert_type_id': self.alert_type_id,
                 'timestamp': self.timestamp, 
             }
 

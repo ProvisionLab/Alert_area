@@ -9,7 +9,8 @@ import tensorflow as tf
 
 from trk_analyzer2 import TrackAnalyzer2
 from trk_object import TrackObject
-from alert_object import AlertObject
+from alert_object import AlertObject, encode_cvimage, add_box_to_image
+from rogapi.alerts import ROG_Alert, ROG_AlertImage
 
 if reco_config.show_dbg_window:
     from debug_window import DebugWindow
@@ -40,6 +41,7 @@ class AlertTAState(object):
         
         self.camera_id = camera_id
         self.alert_id = alert_id
+        self.rog_alert_id = None
 
         self.timestamp = time.time()
 
@@ -121,7 +123,8 @@ class FrameWorker(threading.Thread):
             #print("1 {0} {1}, time: T{2:.2f}, n: {3}".format(ta.alert_id, ta.count, d, n))
 
             if n <= reco_config.send_ta_images and n > ta.count:
-                self._on_ta_alert(ta.alert_id, "T{0}".format(n), frame)
+                
+                self._on_ta_alert(ta, ta.alert_id, "T{0}".format(n), frame)
                 ta.count = n
 
             if n < reco_config.send_ta_images:
@@ -314,8 +317,6 @@ class FrameWorker(threading.Thread):
 
                 self.recognize(frame, motion_detector, pdetector)       
 
-                self.frame_count2 += 1
-
                 objects = []
 
                 if self.dbg and self.dbg.draw_frame(frame, objects):
@@ -326,19 +327,12 @@ class FrameWorker(threading.Thread):
             pass # with
         pass        
 
-    def _on_ta_alert(self, alert_id:str, prefix: str, frame):
-
-        camera_id = self.camera['id']
-
-        alert = AlertObject(camera_id, alert_id, None)
-        alert.camera_name = self.camera['name']
-
-        logging.debug("new %s alert: %s", prefix, alert_id)
-        
-        alert.set_image(prefix, frame)
+    def _on_ta_alert(self, alert_ta, alert_id: str, prefix: str, frame):
 
         if self.post_new_alert:
-            self.post_new_alert(alert)
+            alert_image = ROG_AlertImage(None, encode_cvimage(frame))
+            alert_image.obj = alert_ta
+            self.post_new_alert(alert_image)
         
         pass
 
@@ -350,26 +344,27 @@ class FrameWorker(threading.Thread):
             pos = box.get_pos()
             if self.dbg: self.dbg.add_alert(pos, is_enter)
 
-        alert.camera_id = camera_id
-        alert.camera_name = self.camera['name']
-
         if is_enter:
 
             logging.debug("new alert: %s", alert)
 
             if self.post_new_alert:
                 
-                alert.set_image("T", self.current_frame, box)
+                rog_alert = ROG_Alert(camera_id, alert.alert_type_id)
+                
+                rog_alert.set_image("image_3", encode_cvimage(add_box_to_image(self.current_frame, box)))
 
                 if reco_config.send_tb_images:
-                    alert.set_image("T-1", self.frame1)
-                    alert.set_image("T-2", self.frame2)
+                    rog_alert.set_image("image_1", encode_cvimage(self.frame2))
+                    rog_alert.set_image("image_2", encode_cvimage(self.frame1))
 
                 if reco_config.send_ta_images > 0:
                     with self.lock:
-                        self.alerts_ta.append(AlertTAState(camera_id, alert.alert_id))
+                        alert_ta = AlertTAState(camera_id, alert.alert_id)
+                        rog_alert.obj = alert_ta
+                        self.alerts_ta.append(alert_ta)
 
-                self.post_new_alert(alert)
+                self.post_new_alert(rog_alert)
 
         else:
             pass
@@ -391,5 +386,4 @@ class FrameWorker(threading.Thread):
 
         self.analyzer.process_objects(w, h, objects)        
     
-
-       
+        self.frame_count2 += 1
