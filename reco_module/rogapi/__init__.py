@@ -12,27 +12,30 @@ class ROG_Client(object):
 
     def do_auth(func):
         """
-        decorator to auth if need
+        decorator to auth on demand
         """
         
         def reauth(self, *args, **kwargs):
-
+    
             if not self.jwt_token and not self.auth():
                 return None
 
-            status, res = func(self, *args, **kwargs)
+            try:
 
-            if status == 401:
-    
-                self.jwt_token = None
-    
-                if not self.auth():
-                    return res
+                return func(self, *args, **kwargs)
 
-                status, res = func(self, *args, **kwargs)
+            except requests.exceptions.HTTPError as e:
 
-            return res
+                if e.response.status_code != 401:
+                    raise e
 
+            self.jwt_token = None
+
+            if not self.auth():
+                return None
+
+            return func(self, *args, **kwargs)
+        
         return reauth        
 
     def auth(self):
@@ -81,7 +84,8 @@ class ROG_Client(object):
 
         if r.status_code != 200:
             logging.error("rog get_cameras failed, status: %d, message: %s", r.status_code, r.text)
-            return r.status_code, None
+
+        r.raise_for_status()
 
         res = r.json()
 
@@ -103,7 +107,7 @@ class ROG_Client(object):
         }
         """
 
-        return r.status_code, res.get("data", None)
+        return res.get("data", None)
     
     @do_auth
     def post_alert(self, alert):
@@ -124,29 +128,26 @@ class ROG_Client(object):
                             headers={'Authorization': '{0}'.format(self.jwt_token)},
                             json=alert)
 
-        if r.status_code == 201:
+        if r.status_code != 201:
+            logging.error("rog post_alert failed, status: %d, message: %s", r.status_code, r.text)
 
-            res = r.json()
-
-            logging.info("rog post_alert, status: %d, response: %s", r.status_code, res)
-
-            """
-            {'data': {'id': 53452, 'timestamp': '2017-12-25T19:58:11.912366Z'}}
-            """
-            
-            return r.status_code, alert.get('alert_id')
-
-            #alert_id = res['data']['id']
-            #return r.status_code, alert_id
+            alert['image_3'] = alert.get('image_3','')[:16]
+            alert['image_1'] = alert.get('image_1','')[:16]
+            alert['image_2'] = alert.get('image_2','')[:16]
+            logging.error("%s", str(alert))
     
-        logging.error("rog post_alert failed, status: %d, message: %s", r.status_code, r.text)
+        r.raise_for_status()
 
-        alert['image_3'] = alert.get('image_3','')[:16]
-        alert['image_1'] = alert.get('image_1','')[:16]
-        alert['image_2'] = alert.get('image_2','')[:16]
-        logging.error("%s", str(alert))
+        res = r.json()
 
-        return r.status_code, None
+        logging.info("rog post_alert, status: %d, response: %s", r.status_code, res)
+
+        """
+        {'data': {'id': 53452, 'timestamp': '2017-12-25T19:58:11.912366Z'}}
+        """
+        
+        return res.get('data', {}).get('id')
+        #return alert.get('alert_id')
 
     @do_auth
     def add_alert_image(self, alert_id, image):
@@ -165,33 +166,31 @@ class ROG_Client(object):
                             headers={'Authorization': '{0}'.format(self.jwt_token)},
                             json=data)
 
-        if r.status_code == 201:
+        if r.status_code != 201:
+            logging.error("rog add_alert_image failed, status: %d, message: %s", r.status_code, r.text)
 
-            logging.info("rog add_alert_image, status: %d, message: %s", r.status_code, r.text)
+            data['image'] = data.get('image','')[:16]
+            logging.error("%s", str(data))
+            
+        r.raise_for_status()
 
-            res = r.json()
+        logging.info("rog add_alert_image, status: %d, message: %s", r.status_code, r.text)
 
-            """
-            {'data': {'id': 53452, 'timestamp': '2017-12-25T19:58:11.912366Z'}}
-            """
+        res = r.json()
 
-            alert_id = res['data']['id']
+        """
+        {'data': {'id': 53452, 'timestamp': '2017-12-25T19:58:11.912366Z'}}
+        """
 
-            return r.status_code, True
-    
-        logging.error("rog add_alert_image failed, status: %d, message: %s", r.status_code, r.text)
+        alert_id = res['data']['id']
 
-        data['image'] = data.get('image','')[:16]
-        logging.error("%s", str(data))
-
-        return r.status_code, False
+        return True
 
     def get_alert_ids(self):
     
         r = requests.get('{0}/api/v1/alert_types'.format(self.url))
 
-        if r.status_code != 200:
-            return None
+        r.raise_for_status()
 
         data = r.json()
 

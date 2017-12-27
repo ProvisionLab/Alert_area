@@ -266,38 +266,45 @@ class RecoApp(object):
             
             alert = self.alerts_queue.popleft()
 
-            if reco_config.send_alerts_to_rog:
+            try:
 
-                if isinstance(alert, ROG_Alert):
+                if reco_config.send_alerts_to_rog:
 
-                    rog_alert_id = self.rogapi.post_alert(alert.get_data())
+                    if isinstance(alert, ROG_Alert):
 
-                    if rog_alert_id:
-                        logging.info("alert [%d] is send: %s, %d left", alert.camera_id, rog_alert_id, len(self.alerts_queue))
-                    else:
-                        logging.warning("alert [%d] not sent: %d, %d left", alert.camera_id, alert.alert_id, len(self.alerts_queue))
+                        rog_alert_id = self.rogapi.post_alert(alert.get_data())
 
-                    if rog_alert_id and alert.obj:
-                        alert.obj.rog_alert_id = rog_alert_id
-                
-                elif isinstance(alert, ROG_AlertImage):
+                        if rog_alert_id:
+                            logging.info("alert [%d] is send: %s, %d left", alert.camera_id, rog_alert_id, len(self.alerts_queue))
+                        else:
+                            logging.warning("alert [%d] not sent, %d left", alert.camera_id, len(self.alerts_queue))
 
-                    if alert.obj:
-                        alert.rog_alert_id = alert.obj.rog_alert_id
-
-                    if alert.rog_alert_id:
-                        self.rogapi.add_alert_image(alert.rog_alert_id, alert.image.get_data())
-                    else:
-                        logging.warning("alert TA id not defined, %s", alert.alert_id)
-
-                else:
+                        if rog_alert_id and alert.obj:
+                            alert.obj.rog_alert_id = rog_alert_id
                     
-                    logging.warning("invalid alert type: %s", type(alert))
-                    pass
-    
-  
-            else:
-                self.bvcapi.post_alert(alert)
+                    elif isinstance(alert, ROG_AlertImage):
+                        
+
+                        if alert.obj:
+                            alert.rog_alert_id = alert.obj.rog_alert_id
+
+                        if alert.rog_alert_id:
+                            self.rogapi.add_alert_image(alert.rog_alert_id, alert.image.get_data())
+                        else:
+                            logging.warning("alert TA id not defined, %s", alert.alert_id)
+
+                    else:
+                        
+                        logging.warning("invalid alert type: %s", type(alert))
+                        pass
+       
+                else:
+                    self.bvcapi.post_alert(alert)
+
+            except:
+                logging.exception("exception in rogapi.add_alert_image")
+                pass
+                    
 
             if (time.time() - start_time) > 10.0:
                 break;

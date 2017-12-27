@@ -25,7 +25,7 @@ class ROG_Alert(object):
             'camera_id': self.camera_id,
             'alert_type_id': self.alert_type_id,
             'timestamp': self.timestamp,
-            'alert_id': self.alert_id,             
+            #'alert_id': self.alert_id,             
         }
 
         for n, d in self.images:
