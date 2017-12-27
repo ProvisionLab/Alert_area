@@ -25,10 +25,8 @@
     #define ROGAPI_URL      "https://rog-api-prod.herokuapp.com"
 
     #ifdef _DEBUG
-#define ROGAPI_USERNAME "bvc-dev@gorog.co"
-#define ROGAPI_PASSWORD "password123!!!"
-//        #define ROGAPI_USERNAME "nabus@test.com"
-//        #define ROGAPI_PASSWORD "password123"
+        #define ROGAPI_USERNAME "bvc-prod@gorog.co"
+        #define ROGAPI_PASSWORD "q5y2nib,+g!P8zJ+"
     #endif
 
 #endif
