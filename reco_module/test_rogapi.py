@@ -10,13 +10,17 @@ import datetime
 
 from requests.exceptions import HTTPError
 
+#rogapi_url = 'https://rog-api-prod.herokuapp.com'   # prod-server
+#rogapi_username = 'bvc-prod@gorog.co'
+#rogapi_password = 'q5y2nib,+g!P8zJ+'
+
 rogapi_url='https://rog-api-dev.herokuapp.com'      # dev-server
 rogapi_username = 'bvc-dev@gorog.co'
 rogapi_password = 'password123!!!'
 
-#rogapi_url = 'https://rog-api-prod.herokuapp.com'   # prod-server
-#rogapi_username = 'bvc-prod@gorog.co'
-#rogapi_password = 'q5y2nib,+g!P8zJ+'
+#rogapi_username = 'rbartlett802@gmail.com'
+#rogapi_password = 'Ginger@777'
+
 
 def get_dummy_image():
     
@@ -172,12 +176,12 @@ class Test_add_alert_image(unittest.TestCase):
 
 if __name__ == '__main__':
     
-    unittest.main()
+    #unittest.main()
     #unittest.main(verbosity=2)
 
-    #rog = ROG_Client(rogapi_url,rogapi_username, rogapi_password)
-    #res = rog.auth()
+    rog = ROG_Client(rogapi_url,rogapi_username, rogapi_password)
+    res = rog.auth()
     #res = rog.get_cameras()
     #res = rog.post_alert(str(uuid.uuid4()),get_dummy_image())
     #res = rog.get_alert_ids()
-    #print(res)
+    print(res)
