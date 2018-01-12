@@ -40,6 +40,9 @@ if [ "$ARCH" = "x86_64" -a "$LSBRELEASE" = "16.04" ]; then
 
 elif [ "$ARCH" = "x86_64" -a "$LSBRELEASE" = "17.04" -o "$LSBRELEASE" = "17.10" ]; then
 
+    #echo "Ubuntu $LSBRELEASE not supported"
+    #exit 1
+
 # cuda 8
     CUDA_VER=8.0
     CUDA_VER2=8.0.61

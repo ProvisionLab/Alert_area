@@ -2,6 +2,13 @@
 
 USE_CUDA=1
 
+
+function is_opencv_installed() 
+{
+    if python3 -c "import cv2" 2> /dev/null ; then return 0 ; else return 1 ; fi
+}
+
+
 sudo apt update
 sudo apt install -y git wget unzip python3 python3-pip
 sudo pip3 install --upgrade pip
@@ -14,18 +21,18 @@ if [ "$USE_CUDA" = "1" ]; then
 
 fi
 
-python3 -c "import cv2" 2> /dev/null
-
-if [ $? ]; then
+if ! is_opencv_installed ; then
 
     echo python3 opencv not installed. try install
 
     sudo apt install -y python3-opencv || echo failed to install python3-opencv
 fi
 
-python3 -c "import cv2" 2> /dev/null
+if ! is_opencv_installed ; then
+    sudo pip3 install opencv-python
+fi
 
-if [ $? ]; then
+if ! is_opencv_installed ; then
 
     echo python3 opencv not installed. try build
 
@@ -69,7 +76,7 @@ if [ ! -f ./CMakeCache.txt ]; then
         -DWITH_JPEG=YES \
         .. || exit 1
 
-    make -j $(($(nproc) + 1)) || exit 1
+    make -j $(($(nproc) + 1)) || echo Failed to build opencv && exit 1
 
 fi
 
@@ -77,6 +84,11 @@ fi
 sudo make install || exit
 sudo /bin/bash -c 'echo "/usr/local/lib" > /etc/ld.so.conf.d/opencv.conf'
 sudo ldconfig
+
+if ! is_opencv_installed ; then
+    echo Failed to install opencv
+    exit 1
+fi
 
 cd ../../
 

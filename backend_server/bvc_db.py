@@ -296,7 +296,7 @@ def get_camera_alerts( camera_id : int ):
         return alerts, None
 
     except:
-            return None, 'camera {0} not found'.format(camera_id)
+        return None, 'camera {0} not found'.format(camera_id)
 
 def append_camera_alert( camera_id : int, alert : dict ):
 
