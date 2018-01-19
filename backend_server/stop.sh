@@ -7,8 +7,8 @@ fi
 
 echo stoping...
 
-kill -HUP `cat bvc_server.pid`
-kill `cat bvc_server.pid`
+sudo kill -HUP `cat bvc_server.pid`
+sudo kill `cat bvc_server.pid`
 
 #rm bvc_server.pid
 

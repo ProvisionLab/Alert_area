@@ -18,14 +18,19 @@ sudo service mongodb start
 #    --log-file bvc_server.log  \
 #    --log-level info
 
+if true ; then
 # start as daemon, SSL
-gunicorn3 main:app \
+sudo gunicorn3 main:app \
     --certfile=cert/cert.pem --keyfile=cert/key.pem \
-    --bind 0.0.0.0:5000 \
+    --bind 0.0.0.0:443 \
     --pid bvc_server.pid -D \
     --access-logfile bvc_access.log \
     --log-file bvc_server.log  \
     --log-level info
 
+else
+
 # start for debug
-#gunicorn3 bvc_server:app --certfile=cert/cert.pem --keyfile=cert/key.pem --bind 0.0.0.0:5000 --log-level debug
+sudo gunicorn3 main:app --certfile=cert/cert.pem --keyfile=cert/key.pem --bind 0.0.0.0:443 --log-level debug
+
+fi
