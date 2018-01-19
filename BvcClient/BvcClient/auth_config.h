@@ -1,11 +1,11 @@
 #pragma once
 
-#define USE_ROG_DEV_SERVER  0
+#define USE_ROG_DEV_SERVER  1
 
 
 #if USE_ROG_DEV_SERVER
 
-    #define BVCAPI_URL      "http://54.69.73.20:5000"   // BVC Dev
+    #define BVCAPI_URL      "https://54.69.73.20:5000"   // BVC Dev
     //#define BVCAPI_URL      "http://54.69.83.153:5000"  // server #2 EC2 instance (g3.4xlarge)
     //#define BVCAPI_URL      "http://34.214.218.163:5000"  // server #3
     //#define BVCAPI_URL      "http://192.168.88.247:5000"
@@ -33,3 +33,5 @@
 
 #define BVCAPI_USERNAME "rogt-1"
 #define BVCAPI_PASSWORD "qwerty1"
+
+#define BVCAPI_VERIFY_SSL 0

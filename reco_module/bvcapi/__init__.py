@@ -9,6 +9,7 @@ class BVC_Client(object):
         self.url = url
         self.username = username
         self.password = password
+        self.verify_ssl = True
 
     def do_auth(func):
         """
@@ -40,7 +41,7 @@ class BVC_Client(object):
 
     def auth(self):
         
-        r = requests.post('{}/api/auth'.format(self.url),
+        r = requests.post('{}/api/auth'.format(self.url), verify=self.verify_ssl,
             json={'username':self.username, 'password':self.password})
 
         if r.status_code != 200:
@@ -60,7 +61,7 @@ class BVC_Client(object):
         @return [{...}, ...]
         """
 
-        r = requests.get('{0}/api/active_cameras'.format(self.url),
+        r = requests.get('{0}/api/active_cameras'.format(self.url), verify=self.verify_ssl,
             headers={'Authorization': 'JWT {0}'.format(self.jwt_token)})
 
         if r.status_code != 200:
@@ -77,7 +78,7 @@ class BVC_Client(object):
         """
         """
 
-        r = requests.post('{0}/api/rs'.format(self.url),
+        r = requests.post('{0}/api/rs'.format(self.url), verify=self.verify_ssl,
             headers={'Authorization': 'JWT {0}'.format(self.jwt_token)},
             json=status)
 
@@ -90,7 +91,7 @@ class BVC_Client(object):
     @do_auth
     def get_camera_alerts(self, camera_id):
 
-        r = requests.get('{0}/api/cameras/{1}/alerts'.format(self.url, camera_id),
+        r = requests.get('{0}/api/cameras/{1}/alerts'.format(self.url, camera_id), verify=self.verify_ssl,
                         headers={'Authorization': 'JWT {0}'.format(self.jwt_token)})
 
         if r.status_code != 200:
@@ -114,7 +115,7 @@ class BVC_Client(object):
         posts alert to backend
         """
         
-        r = requests.post('{0}/api/alerts'.format(self.url),
+        r = requests.post('{0}/api/alerts'.format(self.url), verify=self.verify_ssl,
                         headers={'Authorization': 'JWT {0}'.format(self.jwt_token)},
                         json=alert.as_dict())
 

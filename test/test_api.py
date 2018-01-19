@@ -5,20 +5,26 @@ import json
 
 ##################################################
 
-api_url = 'http://localhost:5000/'
+#api_url = 'http://localhost:5000/'
+api_url = 'https://54.69.73.20:5000/'  # BVC Dev Server
+bvc_username = 'rogt-1'
+bvc_password = 'qwerty1'
+bvc_verify_ssl=False
 
 def do_auth(username, password):
-  r = requests.post(
-    api_url+'api/auth', 
-    json={'username':username,'password':password})
+    r = requests.post(
+        api_url+'api/auth', 
+        json={'username':username,'password':password},
+        verify=bvc_verify_ssl)
 
-  return r.json()['access_token'] if r.status_code==200 else None
+    return r.json()['access_token'] if r.status_code==200 else None
 
 
 def do_get_cameras(atoken):
   r = requests.get(
     api_url+'api/cameras/all/', 
-    headers = {'Authorization': 'JWT ' + atoken }
+    headers = {'Authorization': 'JWT ' + atoken },
+    verify=bvc_verify_ssl
     )
   
   return r.json()['cameras'] if r.status_code==200 else None
@@ -93,15 +99,15 @@ def check_response_alerts(self,alerts):
 class Test_auth(unittest.TestCase):
 
   def test_1(self):
-    access_token = do_auth('reco1','reco1passwd')
+    access_token = do_auth(bvc_username,bvc_password)
     self.assertTrue(access_token is not None)
 
   def test_2(self):
-    access_token = do_auth('reco1','reco1passwd111')
+    access_token = do_auth(bvc_username,bvc_password+'111')
     self.assertTrue(access_token is None)
 
   def test_3(self):
-    access_token = do_auth('reco1222','reco1passwd')
+    access_token = do_auth('111'+bvc_username,bvc_password)
     self.assertTrue(access_token is None)
 
 class Test_unknown_resource(unittest.TestCase):
@@ -109,7 +115,8 @@ class Test_unknown_resource(unittest.TestCase):
   def test_1(self):
 
     r = requests.get(
-      api_url+'api/cameras1/'
+      api_url+'api/cameras1/',
+      verify=bvc_verify_ssl
       )
 
     self.assertEqual(r.status_code, 404)
@@ -118,12 +125,13 @@ class Test_get_cameras(unittest.TestCase):
 
   def test_1(self):
 
-    access_token = do_auth('reco1','reco1passwd')
+    access_token = do_auth(bvc_username,bvc_password)
     self.assertTrue(access_token is not None)
 
     r = requests.get(
       api_url+'api/cameras/all/', 
-      headers = {'Authorization': 'JWT ' + access_token }
+      headers = {'Authorization': 'JWT ' + access_token },
+      verify=bvc_verify_ssl
       )
 
     self.assertEqual(r.status_code, 200)
@@ -135,7 +143,8 @@ class Test_get_cameras(unittest.TestCase):
 
     r = requests.get(
       api_url+'api/cameras/all/', 
-      headers = {'Authorization': 'JWT 12345' })
+      headers = {'Authorization': 'JWT 12345' },
+      verify=bvc_verify_ssl)
 
     self.assertTrue(r.status_code==401)
 
@@ -143,7 +152,7 @@ class Test_get_camera(unittest.TestCase):
 
   def test_1(self):
 
-    access_token = do_auth('reco1','reco1passwd')
+    access_token = do_auth(bvc_username,bvc_password)
     self.assertTrue(access_token is not None)
 
     cameras = do_get_cameras(access_token)
@@ -152,7 +161,8 @@ class Test_get_camera(unittest.TestCase):
     camera_id = cameras[0]['id']
 
     r = requests.get('{0}api/cameras/{1}/'.format(api_url,camera_id),
-      headers = {'Authorization': 'JWT {0}'.format(access_token) })
+      headers = {'Authorization': 'JWT {0}'.format(access_token) },
+      verify=bvc_verify_ssl)
 
     self.assertEqual(r.status_code, 200)
 
@@ -161,23 +171,25 @@ class Test_get_camera(unittest.TestCase):
 
   def test_unknown_camera_1(self):
 
-    access_token = do_auth('reco1','reco1passwd')
+    access_token = do_auth(bvc_username,bvc_password)
     self.assertTrue(access_token is not None)
 
     r = requests.get(
       api_url+'api/cameras/123456/', 
-      headers = {'Authorization': 'JWT {0}'.format(access_token) })
+      headers = {'Authorization': 'JWT {0}'.format(access_token) },
+      verify=bvc_verify_ssl)
 
     self.assertEqual(r.status_code, 404)
     
   def test_unknown_camera_2(self):
 
-    access_token = do_auth('reco1','reco1passwd')
+    access_token = do_auth(bvc_username,bvc_password)
     self.assertTrue(access_token is not None)
 
     r = requests.get(
       api_url+'api/cameras/012345678901234567890123/', 
-      headers = {'Authorization': 'JWT {0}'.format(access_token) })
+      headers = {'Authorization': 'JWT {0}'.format(access_token) },
+      verify=bvc_verify_ssl)
 
     self.assertEqual(r.status_code, 404)
 
@@ -185,7 +197,7 @@ class Test_camera_alerts(unittest.TestCase):
 
   def test_get_1(self):
 
-    access_token = do_auth('reco1','reco1passwd')
+    access_token = do_auth(bvc_username,bvc_password)
     self.assertTrue(access_token is not None)
 
     cameras = do_get_cameras(access_token)
@@ -194,7 +206,8 @@ class Test_camera_alerts(unittest.TestCase):
     camera_id = cameras[0]['id']
 
     r = requests.get('{0}api/cameras/{1}/alerts/'.format(api_url,camera_id),
-      headers = {'Authorization': 'JWT {0}'.format(access_token) })
+      headers = {'Authorization': 'JWT {0}'.format(access_token) },
+      verify=bvc_verify_ssl)
 
     self.assertEqual(r.status_code, 200)
     
@@ -202,7 +215,7 @@ class Test_camera_alerts(unittest.TestCase):
 
   def test_post_1(self):
 
-    access_token = do_auth('reco1','reco1passwd')
+    access_token = do_auth(bvc_username,bvc_password)
     self.assertTrue(access_token is not None)
 
     cameras = do_get_cameras(access_token)
@@ -213,7 +226,8 @@ class Test_camera_alerts(unittest.TestCase):
     # create alert
     r = requests.post('{0}api/cameras/{1}/alerts/'.format(api_url,camera_id),
       headers = {'Authorization': 'JWT {0}'.format(access_token) },
-      json= { 'type' : 'RA', 'points' : [[0.0,0.0],[1.0,0.0],[0.5,1.0]]})
+      json= { 'type' : 'RA', 'points' : [[0.0,0.0],[1.0,0.0],[0.5,1.0]]},
+      verify=bvc_verify_ssl)
 
     self.assertEqual(r.status_code, 200)
 
@@ -233,7 +247,8 @@ class Test_camera_alerts(unittest.TestCase):
 
     # get alert
     r = requests.get('{0}api/cameras/{1}/alerts/{2}/'.format(api_url, camera_id, alert_id),
-      headers = {'Authorization': 'JWT {0}'.format(access_token) })
+      headers = {'Authorization': 'JWT {0}'.format(access_token) },
+      verify=bvc_verify_ssl)
 
     self.assertEqual(r.status_code, 200)
 
@@ -254,7 +269,8 @@ class Test_camera_alerts(unittest.TestCase):
 
     r = requests.put('{0}api/cameras/{1}/alerts/{2}/'.format(api_url, camera_id, alert_id),
       headers = {'Authorization': 'JWT {0}'.format(access_token) },
-      json={'type' : 'RA', 'points' : [[0.0,0.0],[1.0,0.0],[0.6,1.0],[0.4,1.0]]})
+      json={'type' : 'RA', 'points' : [[0.0,0.0],[1.0,0.0],[0.6,1.0],[0.4,1.0]]},
+      verify=bvc_verify_ssl)
 
     self.assertEqual(r.status_code, 200)
 
@@ -262,7 +278,8 @@ class Test_camera_alerts(unittest.TestCase):
 
     # get alert again
     r = requests.get('{0}api/cameras/{1}/alerts/{2}/'.format(api_url, camera_id, alert_id),
-      headers = {'Authorization': 'JWT {0}'.format(access_token) })
+      headers = {'Authorization': 'JWT {0}'.format(access_token) },
+      verify=bvc_verify_ssl)
 
     self.assertEqual(r.status_code, 200)
 
@@ -279,14 +296,15 @@ class Test_camera_alerts(unittest.TestCase):
 
     # delete alert
     r = requests.delete('{0}api/cameras/{1}/alerts/{2}/'.format(api_url,camera_id,alert_id),
-      headers = {'Authorization': 'JWT {0}'.format(access_token) })
+      headers = {'Authorization': 'JWT {0}'.format(access_token) },
+      verify=bvc_verify_ssl)
 
     self.assertEqual(r.status_code, 200)
     r.json()
 
   def test_delete_1(self):
 
-    access_token = do_auth('reco1','reco1passwd')
+    access_token = do_auth(bvc_username,bvc_password)
     self.assertTrue(access_token is not None)
 
     cameras = do_get_cameras(access_token)
@@ -297,7 +315,8 @@ class Test_camera_alerts(unittest.TestCase):
     # create alert
     r = requests.post('{0}api/cameras/{1}/alerts/'.format(api_url,camera_id),
       headers = {'Authorization': 'JWT {0}'.format(access_token) },
-      json= { 'type' : 'RA', 'points' : [[0.0,0.0],[1.0,0.0],[0.5,1.0]]})
+      json= { 'type' : 'RA', 'points' : [[0.0,0.0],[1.0,0.0],[0.5,1.0]]},
+      verify=bvc_verify_ssl)
 
     self.assertEqual(r.status_code, 200)
 
@@ -308,21 +327,25 @@ class Test_camera_alerts(unittest.TestCase):
     # try delete
 
     r = requests.delete('{0}api/cameras/{1}/alerts/{2}/'.format(api_url,"12345",alert_id),
-      headers = {'Authorization': 'JWT {0}'.format(access_token) })
+      headers = {'Authorization': 'JWT {0}'.format(access_token) },
+      verify=bvc_verify_ssl)
 
     self.assertEqual(r.status_code, 404)
 
     r = requests.delete('{0}api/cameras/{1}/alerts/{2}/'.format(api_url,camera_id,"123456"),
-      headers = {'Authorization': 'JWT {0}'.format(access_token) })
+      headers = {'Authorization': 'JWT {0}'.format(access_token) },
+      verify=bvc_verify_ssl)
 
     self.assertEqual(r.status_code, 404)
 
     # delete
     r = requests.delete('{0}api/cameras/{1}/alerts/{2}/'.format(api_url,camera_id,alert_id),
-      headers = {'Authorization': 'JWT {0}'.format(access_token) })
+      headers = {'Authorization': 'JWT {0}'.format(access_token) },
+      verify=bvc_verify_ssl)
 
     self.assertEqual(r.status_code, 200)
     r.json()
     
 if __name__ == '__main__':
+    print("Testing URL: \'{}\'".format(api_url))      
     unittest.main()

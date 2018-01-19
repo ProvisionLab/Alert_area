@@ -38,7 +38,8 @@ filter_cameras = [
 
 #bvcapi_url = 'http://127.0.0.1:5000'
 #bvcapi_url = 'http://52.32.99.45:5000'  # BVC Prod
-bvcapi_url = 'http://54.69.73.20:5000'  # BVC Dev
+bvcapi_url = 'https://54.69.73.20:5000'  # BVC Dev
+bvcapi_verify_ssl=False
 
 bvcapi_key = '0123456789'
 
