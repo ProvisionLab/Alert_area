@@ -10,6 +10,8 @@ class ROG_Client(object):
         self.password = password
         self.jwt_token = None
 
+        self.session = requests.Session()
+
     def do_auth(func):
         """
         decorator to auth on demand
@@ -40,7 +42,7 @@ class ROG_Client(object):
 
     def auth(self):
         
-        r = requests.post('{}/api/v1/sessions'.format(self.url),
+        r = self.session.post('{}/api/v1/sessions'.format(self.url),
                             json={'session': {
                                 'email': self.username,
                                 'password': self.password
@@ -79,7 +81,7 @@ class ROG_Client(object):
         @return {'data':[...]}, None if error
         """
         
-        r = requests.get('{}/api/v1/me/cameras'.format(self.url),
+        r = self.session.get('{}/api/v1/me/cameras'.format(self.url),
                         headers={'Authorization': '{0}'.format(self.jwt_token)})
 
         if r.status_code != 200:
@@ -124,7 +126,7 @@ class ROG_Client(object):
         @return: alert_id for add_alert_image
         """
 
-        r = requests.post('{}/api/v1/alert'.format(self.url),
+        r = self.session.post('{}/api/v1/alert'.format(self.url),
                             headers={'Authorization': '{0}'.format(self.jwt_token)},
                             json=alert)
 
@@ -162,7 +164,7 @@ class ROG_Client(object):
                 'image': image,
         }
 
-        r = requests.post('{}/api/v1/add_alert_image'.format(self.url),
+        r = self.session.post('{}/api/v1/add_alert_image'.format(self.url),
                             headers={'Authorization': '{0}'.format(self.jwt_token)},
                             json=data)
 
@@ -188,7 +190,7 @@ class ROG_Client(object):
 
     def get_alert_ids(self):
     
-        r = requests.get('{0}/api/v1/alert_types'.format(self.url))
+        r = self.session.get('{0}/api/v1/alert_types'.format(self.url))
 
         r.raise_for_status()
 

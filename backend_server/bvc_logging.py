@@ -25,7 +25,7 @@ logging.config.dictConfig({
         'infos': {
             'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
-            'filename' : 'bvc.log',
+            'filename' : 'logs/bvc.log',
             'formatter' : 'detail',
             'maxBytes': 10000000,
             'backupCount': 6,
@@ -34,7 +34,7 @@ logging.config.dictConfig({
         'access': {
             'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
-            'filename' : 'bvc_access.log',
+            'filename' : 'logs/bvc_access.log',
             'formatter' : 'detail',
             'maxBytes': 10000000,
             'backupCount': 6,
@@ -43,7 +43,7 @@ logging.config.dictConfig({
         'errors': {
             'level':'ERROR',
             'class':'logging.handlers.RotatingFileHandler',
-            'filename' : 'bvc_errors.log',
+            'filename' : 'logs/bvc_errors.log',
             'formatter' : 'detail',
             'maxBytes': 10000000,
             'backupCount': 2,

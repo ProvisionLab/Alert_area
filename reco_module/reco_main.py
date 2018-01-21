@@ -38,7 +38,7 @@ class RecoApp(object):
         self.alerts_queue = deque()
 
         self.bvcapi = BVC_Client(reco_config.bvcapi_url, 'reco-' + self.reco_id, reco_config.bvcapi_key)
-        self.bvcapi.verify_ssl = reco_config.bvcapi_verify_ssl
+        self.bvcapi.session.verify = reco_config.bvcapi_verify_ssl
         
         self.rogapi = ROG_Client(reco_config.rogapi_url, reco_config.rogapi_username, reco_config.rogapi_password)
 

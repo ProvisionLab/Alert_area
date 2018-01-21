@@ -1,20 +1,42 @@
 #!/bin/sh
 
-if [ ! -f bvc_server.pid ]; then
-    echo no runing server found
-    exit 1
+if [ -f bvc_server.pid ] ; then
+
+  echo stoping...
+
+  sudo kill -HUP `cat bvc_server.pid`
+  sudo kill `cat bvc_server.pid`
+
+  #rm bvc_server.pid
+
+  while [ -f bvc_server.pid ]
+  do
+    sleep 1
+  done
+
+#  exit 0
+
+else
+
+  echo no runing server found
+#  exit 1
+
 fi
 
-echo stoping...
+if [ -f bvc_server2.pid ] ; then
 
-sudo kill -HUP `cat bvc_server.pid`
-sudo kill `cat bvc_server.pid`
+  echo stoping 2 ...
 
-#rm bvc_server.pid
+  sudo kill -HUP `cat bvc_server2.pid`
+  sudo kill `cat bvc_server2.pid`
 
-while [ -f bvc_server.pid ]
-do
-  sleep 1
-done
+  #rm bvc_server2.pid
 
-exit 0
+  while [ -f bvc_server2.pid ]
+  do
+    sleep 1
+  done
+
+#  exit 0
+
+fi
