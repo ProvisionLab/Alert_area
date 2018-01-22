@@ -53,7 +53,7 @@ class BVC_JWT(JWT):
         
         app.config['SECRET_KEY'] = 'bvc-secret'
         app.config['JWT_AUTH_URL_RULE'] = '/api/auth'
-        app.config['JWT_EXPIRATION_DELTA'] = timedelta(seconds=24*3600)   # 2do: change in future
+        app.config['JWT_EXPIRATION_DELTA'] = timedelta(seconds=8760*3600)   # 2do: change in future
         
         super().__init__(app, authenticate, identity)
 
