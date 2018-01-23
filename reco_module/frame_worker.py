@@ -78,7 +78,7 @@ class FrameWorker(threading.Thread):
     def __init__(self, camera, cap_w, cap_h, post_new_alert):
         
         self.camera = camera
-        self.alert_areas = camera['areas']
+        self.alert_areas = [] if camera is None else camera.get('areas',[])
 
         self.post_new_alert = post_new_alert
 
@@ -96,6 +96,8 @@ class FrameWorker(threading.Thread):
         self.frame_time = time.time()
 
         self.alerts_ta = []
+
+        self.use_motion_detector = reco_config.enable_motion_detector
 
         FrameWorker.thread_count += 1
         super().__init__()
@@ -253,7 +255,7 @@ class FrameWorker(threading.Thread):
         use PeopleDetector
         """
     
-        motion_detector = MotionDetector(self.md_min_area)
+        motion_detector = MotionDetector(self.md_min_area) if self.use_motion_detector else None
 
 #        pdetector =  PeopleDetector(config)
 #        with pdetector.as_default():
@@ -263,22 +265,23 @@ class FrameWorker(threading.Thread):
             while not self.bStop:
                 
                 with self.lock:
-                    self.lock.wait(0.2)
+                    self.lock.wait()
 
                     frame = self.frame
+
+                    if frame is None:
+                        continue
+
                     self.frame = None
 
                     self.frame1, _ = self.frames1[0] if self.frames1 else (None, None)
                     self.frame2, _ = self.frames2[0] if self.frames2 else (None, None)
 
-                if frame is None:
-                    continue
+#                print("fps2: ", self.frame_count1, self.frame_count2)
 
                 self.current_frame = frame
 
                 self.recognize(frame, motion_detector, pdetector)       
-
-                self.frame_count2 += 1
 
                 objects = []
 
@@ -295,7 +298,7 @@ class FrameWorker(threading.Thread):
         use PeopleDetector2 ( shared graph )
         """
         
-        motion_detector = MotionDetector(self.md_min_area)
+        motion_detector = MotionDetector(self.md_min_area) if self.use_motion_detector else None
 
         with PeopleDetector2(config) as pdetector:
 
@@ -371,7 +374,7 @@ class FrameWorker(threading.Thread):
 
     def recognize(self, frame, motion_detector, people_detector):
         
-        if reco_config.enable_motion_detector and not motion_detector.isMotion(frame):
+        if motion_detector is not None and not motion_detector.isMotion(frame):
             return
 
         boxes = people_detector.process_frame(frame) if reco_config.enable_people_detector else []
