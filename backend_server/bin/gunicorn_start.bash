@@ -13,11 +13,12 @@ RUNDIR=$(dirname $SOCKFILE)
 test -d $RUNDIR || mkdir -p $RUNDIR
 
 # start as daemon, SSL
-gunicorn3 main:app \
+exec gunicorn3 main:app \
     --name $NAME \
     --bind=unix:$SOCKFILE \
     --access-logfile $LOGDIR/bvc_access.log \
     --log-file $LOGDIR/$NAME.log  \
-    --log-level info
+    --log-level debug
 
+#    --log-level info
 #    --pid $NAME.pid -D \

@@ -23,7 +23,7 @@ logging.config.dictConfig({
         },
 
         'infos': {
-            'level':'INFO',
+            'level': 'INFO',
             'class':'logging.handlers.RotatingFileHandler',
             'filename' : 'logs/bvc.log',
             'formatter' : 'detail',
@@ -32,7 +32,7 @@ logging.config.dictConfig({
         },
 
         'access': {
-            'level':'INFO',
+            'level': 'INFO',
             'class':'logging.handlers.RotatingFileHandler',
             'filename' : 'logs/bvc_access.log',
             'formatter' : 'detail',
@@ -64,7 +64,7 @@ logging.config.dictConfig({
         },
 
         'gunicorn.error': {
-            'level': 'INFO',
+            'level': 'ERROR',
             'handlers': [],
             'propagate': True
         },

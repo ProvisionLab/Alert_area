@@ -276,15 +276,21 @@ class RecoDispatcher(object):
         DELETE /api/cameras/xx
         """
 
-        with self.lock:
-            cs = set(bvc_db.get_active_cameras())
+        try:
 
-            self._update_proc_cameras(cs)
+            with self.lock:
+                cs = set(bvc_db.get_active_cameras())
 
-            self.free_cameras = cs
+                self._update_proc_cameras(cs)
 
-            self.redistribute()
+                self.free_cameras = cs
 
+                self.redistribute()
+
+                pass
+
+        except Exception as e:
+            logging.exception(e)
             pass
        
     def get_status(self):

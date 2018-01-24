@@ -1,6 +1,7 @@
 from flask_jwt import JWT
 import bvc_config
 from datetime import timedelta
+import logging
 
 class User(object):
     
@@ -18,6 +19,7 @@ class User(object):
 def authenticate(username, password):
     
     #print('authenticate {}:{}'.format(username, password))
+    logging.info('authenticate {}:{}'.format(username, password))
     
     prefix = username[:5]
 

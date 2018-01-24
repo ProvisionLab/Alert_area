@@ -255,7 +255,7 @@ void CConnection::set_cameras(QJsonArray const j_cameras, std::function<void(boo
 
     QJsonDocument j_doc(j_cameras);
 
-    auto *reply = m_nm.post(request, j_doc.toJson());
+    auto *reply = m_nm.put(request, j_doc.toJson());
     auto ctx = std::make_shared<RequestContext>(reply);
 
     QObject::connect(ctx->m_reply, &QNetworkReply::finished, [this, ctx, callback]()
