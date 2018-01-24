@@ -7,6 +7,8 @@ LOGDIR=$APPDIR/logs
 
 SOCKFILE=$APPDIR/run/gunicorn.sock 
 
+cd $APPDIR
+
 RUNDIR=$(dirname $SOCKFILE)
 test -d $RUNDIR || mkdir -p $RUNDIR
 
@@ -14,7 +16,8 @@ test -d $RUNDIR || mkdir -p $RUNDIR
 gunicorn3 main:app \
     --name $NAME \
     --bind=unix:$SOCKFILE \
-    --pid $NAME.pid -D \
     --access-logfile $LOGDIR/bvc_access.log \
     --log-file $LOGDIR/$NAME.log  \
     --log-level info
+
+#    --pid $NAME.pid -D \

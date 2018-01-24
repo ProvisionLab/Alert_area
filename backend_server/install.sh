@@ -25,7 +25,7 @@ sudo apt-get install -y nginx
 sudo service nginx start
 
 #sudo ln -s $PWD/bvc_server.nginxconf /etc/nginx/sites-available/bvc_server
-sudo cp -f bvc_server.nginxconf /etc/nginx/sites-available/default
+sudo cp -f bvc_server.nginx.conf /etc/nginx/sites-available/default
 
 # Install Gunicorn
 
@@ -37,3 +37,8 @@ chmod u+x bin/gunicorn_start
 # Install Supervisor
 
 sudo aptitude install -y supervisor
+
+sudo ln -s $PWD/bvc_server.spv.conf /etc/supervisor/conf.d/bvc_server.conf
+
+sudo supervisorctl reread
+sudo supervisorctl update
