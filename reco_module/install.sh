@@ -152,6 +152,14 @@ fi
 
 cd ..
 
-chmod +x start.sh
+chmod +x *.sh
+chmod +x bin/reco_start.bash
 
-exit 0
+# Install Supervisor
+
+sudo aptitude install -y supervisor
+
+sudo ln -s $PWD/reco.spv.conf /etc/supervisor/conf.d/reco.conf
+
+sudo supervisorctl reread
+sudo supervisorctl update

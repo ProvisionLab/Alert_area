@@ -1,9 +1,8 @@
 """
 main module
 """
-import os
-import time
-import signal
+import os, time, signal, sys, argparse
+import multiprocessing
 import uuid
 import requests, requests.utils
 from capture_worker import CaptureWorker
@@ -49,7 +48,7 @@ class RecoApp(object):
         """
         SIGINT handler
         """
-        #print('Ctrl+C was pressed')
+        print('Ctrl+C was pressed')
         self.bStop = True
 
         logging.info("SIGINT reseived, stop all recognitions")
@@ -68,9 +67,11 @@ class RecoApp(object):
         starts/stops recognition threads
         """
 
-        #print("press Ctrl+C to quit")
-
-        logging.info("start")
+        #logging.info("reco start")
+        #while not self.bStop:
+        #    time.sleep(5)
+        #logging.info("reco exit")
+        #return
 
         try:
 
@@ -320,21 +321,109 @@ def get_user_agent(name="BVC reco_module"):
 pid = None
 pid_fname = None
 
-if __name__ == '__main__':
+def main(reco_num, reco_count):
     
-    requests.utils.default_user_agent = get_user_agent
-
-    reco_num = int(os.environ.get('RECO_PROC_ID', '1'))
-    reco_count = int(os.environ.get('RECO_TOTAL_PROCS', '1'))
-
     pid = str(os.getpid())
     pid_fname = 'reco_proc_'+str(reco_num)+'.pid'
     f = open(pid_fname, 'w')
     f.write(pid)
     f.close()
 
-    app = RecoApp(reco_num-1, reco_count)
+    app = RecoApp(reco_num, reco_count)
     #app.use_cpu = reco_count > 1 and reco_num == reco_count
     app.run()
+    
+    os.remove(pid_fname)
+    return
+
+class RecoPool(object):
+
+    def __init__(self, reco_count):
+        
+        self.reco_count = reco_count
+        self.pool = multiprocessing.Pool(reco_count)
+
+        signal.signal(signal.SIGINT, self._sigint_handler)
+        signal.signal(signal.SIGTERM, self._sigterm_handler)
+
+    def run2(self):
+        
+        args = zip(range(0,self.reco_count), [self.reco_count]*self.reco_count)
+
+        with self.pool:
+            res = self.pool.starmap(main, args)
+            print(res)
+
+    def run(self):
+        
+        args = zip(range(0,self.reco_count), [self.reco_count]*self.reco_count)
+
+        try:
+            res = self.pool.starmap_async(main, args)
+            # wait results
+            res = res.get()
+
+        except KeyboardInterrupt:
+            #print("Caught KeyboardInterrupt, terminating workers")
+            #logging.warning("Caught KeyboardInterrupt")
+            pool.terminate()
+
+        except Exception as e:
+            #print(e)
+            #logging.warning("%s", str(e))
+            pool.terminate()
+
+        else:
+            #print("Normal termination 2")
+            #logging.warning("Normal termination")
+            #print(res)
+            pass
+
+        finally:
+            #print("finally")
+            #logging.warning("finally")
+            self.pool.close()
+            self.pool.join()
+
+        #print("main exit")
+        logging.warning("reco_main exit")
+
+    def _sigint_handler(self, signum, taskfrm):
+
+        logging.warning("reco_main SIGINT received")
+        self.pool.terminate()
+        self.pool.close()
+        self.pool.join()
+        sys.exit(1)
+
+    def _sigterm_handler(self, signum, taskfrm):
+    
+        logging.warning("reco_main SIGTERM received")
+        self.pool.terminate()
+        self.pool.close()
+        self.pool.join()
+        sys.exit(1)
+
+if __name__ == '__main__':
+    
+    # parse arguments
+
+    parser = argparse.ArgumentParser(description='reco module.')
+    parser.add_argument('--workers', '-w', type=int, default=1, help='workers count')
+
+    args = parser.parse_args(sys.argv[1:])
+
+    reco_count = args.workers
+
+    requests.utils.default_user_agent = get_user_agent
+
+    pid = str(os.getpid())
+    pid_fname = 'reco.pid'
+    f = open(pid_fname, 'w')
+    f.write(pid)
+    f.close()
+
+    pool = RecoPool(reco_count)
+    pool.run()
 
     os.remove(pid_fname)
