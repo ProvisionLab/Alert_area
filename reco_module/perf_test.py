@@ -7,11 +7,12 @@ from capture_worker import CaptureWorker
 #STREAM_1080_URL = 'rtsp://admin:admin@47.40.34.31:554' # 1920 x 1080
 #STREAM_1080_URL = 'rtsp://admin:admin@23.243.152.142:554' # 1920 x 1080
 STREAM_1080_URL = 'rtsp://admin:admin@207.62.193.8:8554' # 1920 x 1080
+#STREAM_720_URL = 'rtsp://admin:123456@219.85.200.55:554' # 1280 x 720
+STREAM_720_URL = 'rtsp://admin:admin@14.45.88.220:554' # 1280 x 720
 STREAM_576_URL = 'rtsp://admin:admin@217.73.179.4:554' # 960 x 576
-#STREAM_720_URL = 'rtsp://admin:123456@219.85.200.55:554' # 1280, 720
-STREAM_720_URL = 'rtsp://admin:admin@14.45.88.220:554' # 1280, 720
-STREAM_480_URL = 'rtsp://admin:123456@121.254.64.108:554' # 960, 480
+STREAM_480_URL = 'rtsp://admin:123456@121.254.64.108:554' # 960 x 480
 STREAM_240_URL = 'rtsp://admin:admin@190.63.185.42:554' # 704 x 240
+
 
 logging.config.dictConfig({
     'version': 1,
@@ -131,7 +132,7 @@ def main(argv):
 
         parser = argparse.ArgumentParser(description='perfomance test.')
 
-        parser.add_argument('--size', '-s', type=int, default=1080, help='frame size')
+        parser.add_argument('--size', '-s', type=int, default=1080, help='frame size: 1080, 720, 480')
         parser.add_argument('--count', '-n', type=int, default=1, help='feeds count')
         parser.add_argument('--source', nargs='?', help='video source url')
 
