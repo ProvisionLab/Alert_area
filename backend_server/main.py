@@ -3,6 +3,7 @@ import bvc_db
 from flask import Flask, request, render_template
 import flask
 from flask_jwt import jwt_required, current_identity
+from flask_cors import CORS
 import json
 
 import flask.logging
@@ -39,6 +40,7 @@ class BVC_Flask(Flask):
         pass
 
 app = BVC_Flask()
+CORS(app)
 
 #####################################################
 ## Flask api implementation
