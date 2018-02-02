@@ -32,11 +32,11 @@ sudo cp -f bvc_server.nginx.conf /etc/nginx/sites-available/default
 sudo apt-get install -y gunicorn3
 
 chmod +x *.sh
-chmod u+x bin/gunicorn_start
+chmod u+x bin/gunicorn_start.bash
 
 # Install Supervisor
 
-sudo aptitude install -y supervisor
+sudo apt-get install -y supervisor
 
 sudo ln -s $PWD/bvc_server.spv.conf /etc/supervisor/conf.d/bvc_server.conf
 

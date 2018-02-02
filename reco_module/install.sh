@@ -157,7 +157,7 @@ chmod +x bin/reco_start.bash
 
 # Install Supervisor
 
-sudo aptitude install -y supervisor
+sudo apt-get install -y supervisor
 
 sudo ln -s $PWD/reco.spv.conf /etc/supervisor/conf.d/reco.conf
 

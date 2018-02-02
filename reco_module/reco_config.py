@@ -37,7 +37,7 @@ filter_cameras = [
 ]
 
 #bvcapi_url = 'http://127.0.0.1:5000'
-#bvcapi_url = 'http://52.32.99.45:5000'  # BVC Prod
+#bvcapi_url = 'https://production.gorog.co'  # BVC Prod
 bvcapi_url = 'https://dev.gorog.co'  # BVC Dev Server
 bvcapi_verify_ssl=True
 
