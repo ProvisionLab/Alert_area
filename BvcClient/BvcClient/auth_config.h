@@ -1,6 +1,6 @@
 #pragma once
 
-#define USE_ROG_DEV_SERVER  1
+#define USE_ROG_DEV_SERVER  0
 
 
 #if USE_ROG_DEV_SERVER
@@ -20,7 +20,7 @@
 
 #else
 
-    #define BVCAPI_URL      "http://52.32.99.45:5000"   // BVC Prod
+    #define BVCAPI_URL      "https://production.gorog.co"   // BVC Prod
 
     #define ROGAPI_URL      "https://rog-api-prod.herokuapp.com"
 

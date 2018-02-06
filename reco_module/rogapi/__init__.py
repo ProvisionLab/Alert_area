@@ -127,8 +127,8 @@ class ROG_Client(object):
         """
 
         r = self.session.post('{}/api/v1/alert'.format(self.url),
-                            headers={'Authorization': '{0}'.format(self.jwt_token)},
-                            json=alert)
+                            headers={'Authorization': '{}'.format(self.jwt_token)},
+                            json={'alert':alert})
 
         if r.status_code != 201:
             logging.error("rog post_alert failed, status: %d, message: %s", r.status_code, r.text)
@@ -184,9 +184,12 @@ class ROG_Client(object):
         {'data': {'id': 53452, 'timestamp': '2017-12-25T19:58:11.912366Z'}}
         """
 
-        alert_id = res['data']['id']
+        data = res.get('data');
+        if data is None:
+            return False
 
-        return True
+        alert_id = data.get('id')
+        return alert_id is not None;
 
     def get_alert_ids(self):
     
