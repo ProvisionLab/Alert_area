@@ -77,7 +77,59 @@ class BVC_Client(object):
         logging.debug("bvcapi get_user_cameras status: %d", r.status_code)
 
         return r.json()['cameras']
+    @do_auth
+    def new_user_cameras(self, user_id, cameras):
       
+        """
+        @cameras [{...}, ...]
+        """
+
+        r = self.session.post('{0}/api/user/{1}/cameras'.format(self.url, user_id),
+            headers={'Authorization': 'JWT {}'.format(self.jwt_token)},
+            json=cameras)
+
+        if r.status_code // 100 != 2:
+            logging.error("bvcapi new_user_cameras failed, status: %d", r.status_code)
+
+        r.raise_for_status()
+
+        logging.debug("bvcapi new_user_cameras status: %d", r.status_code)
+
+        return True
+
+    @do_auth
+    def set_user_cameras(self, user_id, cameras):
+        
+        """
+        @cameras [{...}, ...]
+        """
+
+        r = self.session.put('{0}/api/user/{1}/cameras'.format(self.url, user_id),
+            headers={'Authorization': 'JWT {}'.format(self.jwt_token)},
+            json=cameras)
+
+        if r.status_code // 100 != 2:
+            logging.error("bvcapi set_user_cameras failed, status: %d", r.status_code)
+
+        r.raise_for_status()
+
+        logging.debug("bvcapi set_user_cameras status: %d", r.status_code)
+
+        return True
+
+    @do_auth
+    def new_camera_alert(self, camera_id, alert):
+        
+        r = self.session.post('{0}/api/cameras/{1}/alerts'.format(self.url, camera_id),
+            headers={'Authorization': 'JWT {}'.format(self.jwt_token)},
+            json=alert)
+        
+        if r.status_code // 100 != 2:
+            logging.error("bvcapi new_camera_alert failed, status: %d", r.status_code)
+        
+        r.raise_for_status()
+        return True
+
     @do_auth
     def get_active_cameras(self):
         """

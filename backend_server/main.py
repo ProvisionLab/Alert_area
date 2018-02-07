@@ -100,65 +100,98 @@ def api_cameras_get_all(user_id:int):
 
     return flask.jsonify({'cameras': cameras})
 
-@app.route('/api/user/<int:user_id>/cameras', methods=["POST", "PUT"])
+@app.route('/api/user/<int:user_id>/camera', methods=["POST"])
 @jwt_required()
-def api_camera_set_all(user_id: int):
-
-    if request.method == 'POST':
-
-        logging.info('set all cameras, user: %d', user_id)
-
-        cameras = request.get_json()
-
-        logging.debug('request headers: %s', str(request.headers))
-        logging.debug('request payload: %s', str(cameras))
-
-        if cameras is None:
-            return error_response(400, "failed")
-
-        if isinstance(cameras,dict):
-            cameras = [cameras]
-
-        for c in cameras:
-            if c.get('enabled'):
-                del c['enabled']
-
-        #print("set cameras: ", cameras)
-
-        if not bvc_db.update_cameras(user_id, cameras):
-            return error_response(404, "failed")
-
-        app.dispatcher.on_cameras_update()
-
-        return flask.jsonify({})
-
-    if request.method == 'PUT':
+def api_user_new_camera(user_id: int):
     
-        logging.info('set all cameras, user: %d', user_id)
+    logging.info('set all cameras, user: %d', user_id)
 
-        cameras = request.get_json()
+    camera = request.get_json()
 
-        logging.debug('request headers: %s', str(request.headers))
-        logging.debug('request payload: %s', str(cameras))
+    logging.debug('request headers: %s', str(request.headers))
+    logging.debug('request payload: %s', str(camera))
 
-        if cameras is None:
-            return error_response(400, "failed")
+    if camera is None:
+        return error_response(400, "failed")
 
-        if isinstance(cameras,dict):
-            cameras = [cameras]
+    if not isinstance(camera,dict):
+        return error_response(400, "failed")
 
-        for c in cameras:
-            if c.get('enabled'):
-                del c['enabled']
+    cameras = [camera]
+    camera_id = camera.get('camera_id')
 
-        #print("set cameras: ", cameras)
+    for c in cameras:
+        if c.get('enabled'):
+            del c['enabled']
 
-        if not bvc_db.update_cameras(user_id, cameras):
-            return error_response(404, "failed")
+    #print("set cameras: ", cameras)
 
-        app.dispatcher.on_cameras_update()
+    if not bvc_db.append_cameras(user_id, cameras):
+        return error_response(400, "failed")
 
-        return flask.jsonify({}), 203
+    app.dispatcher.on_cameras_update()
+
+    return flask.jsonify({}), 201, {'location': '/api/cameras/{}'.format(camera_id)}
+
+@app.route('/api/user/<int:user_id>/cameras', methods=["POST"])
+@jwt_required()
+def api_user_new_cameras(user_id: int):
+    
+    logging.info('set all cameras, user: %d', user_id)
+
+    cameras = request.get_json()
+
+    logging.debug('request headers: %s', str(request.headers))
+    logging.debug('request payload: %s', str(cameras))
+
+    if cameras is None:
+        return error_response(400, "failed")
+
+    if isinstance(cameras,dict):
+        cameras = [cameras]
+
+    for c in cameras:
+        if c.get('enabled'):
+            del c['enabled']
+
+    #print("set cameras: ", cameras)
+
+    if not bvc_db.append_cameras(user_id, cameras):
+        return error_response(400, "failed")
+
+    app.dispatcher.on_cameras_update()
+
+    return flask.jsonify({}), 200
+
+@app.route('/api/user/<int:user_id>/cameras', methods=["PUT"])
+@jwt_required()
+def api_user_put_cameras(user_id: int):
+
+    logging.info('set all cameras, user: %d', user_id)
+
+    cameras = request.get_json()
+
+    logging.debug('request headers: %s', str(request.headers))
+    logging.debug('request payload: %s', str(cameras))
+
+    if cameras is None:
+        return error_response(400, "failed")
+
+    if isinstance(cameras,dict):
+        cameras = [cameras]
+
+    for c in cameras:
+        if c.get('enabled'):
+            del c['enabled']
+
+    #print("set cameras: ", cameras)
+
+    if not bvc_db.update_cameras(user_id, cameras):
+        return error_response(400, "failed")
+
+    app.dispatcher.on_cameras_update()
+
+    return flask.jsonify({}), 204
 
 @app.route('/api/cameras/<int:camera_id>', methods=["GET"])
 @jwt_required()
@@ -170,9 +203,9 @@ def api_camera_get(camera_id: int):
         logging.error(err)
         return error_response(404, err)#"camera {0} not found".format(camera_id))
 
-    return flask.jsonify({'camera' : camera })
+    return flask.jsonify({'camera': camera })
 
-@app.route('/api/cameras/<int:camera_id>/alerts', methods=["GET", "POST"])
+@app.route('/api/cameras/<int:camera_id>/alerts', methods=["GET", "POST", "DELETE"])
 @jwt_required()
 def api_camera_alerts(camera_id:str):
 
@@ -196,7 +229,19 @@ def api_camera_alerts(camera_id:str):
 
         app.dispatcher.on_cameras_update()
 
-        return flask.jsonify({ 'alert' : { 'id' : alert_id } }), 201
+        return flask.jsonify({ 'alert' : { 'id' : alert_id } }), 201, {'location': '/api/cameras/{0}/alerts/{1}'.format(camera_id,alert_id)}
+
+    if request.method == 'DELETE':
+        
+        res, err = bvc_db.delete_camera_alerts(camera_id)
+
+        if res is None:
+            logging.error(err)
+            return error_response(404, err)
+
+        app.dispatcher.on_cameras_update()
+
+        return flask.jsonify(res), 204
     
 @app.route('/api/cameras/<int:camera_id>/alerts/<string:alert_id>', methods=["DELETE", "PUT", "GET"])
 @jwt_required()
@@ -232,7 +277,7 @@ def api_camera_alert_(camera_id:str, alert_id:str):
 
         app.dispatcher.on_cameras_update()
 
-        return flask.jsonify(res)
+        return flask.jsonify(res), 204
 
 @app.route('/api/cameras/<int:camera_id>/enabled', methods=["GET", "PUT"])
 @jwt_required()
