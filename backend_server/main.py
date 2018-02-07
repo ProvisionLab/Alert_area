@@ -158,7 +158,7 @@ def api_camera_set_all(user_id: int):
 
         app.dispatcher.on_cameras_update()
 
-        return flask.jsonify({})
+        return flask.jsonify({}), 203
 
 @app.route('/api/cameras/<int:camera_id>', methods=["GET"])
 @jwt_required()
@@ -194,7 +194,9 @@ def api_camera_alerts(camera_id:str):
             logging.error(err)
             return error_response(404, err)
 
-        return flask.jsonify({ 'alert' : { 'id' : alert_id } })
+        app.dispatcher.on_cameras_update()
+
+        return flask.jsonify({ 'alert' : { 'id' : alert_id } }), 201
     
 @app.route('/api/cameras/<int:camera_id>/alerts/<string:alert_id>', methods=["DELETE", "PUT", "GET"])
 @jwt_required()
@@ -227,6 +229,8 @@ def api_camera_alert_(camera_id:str, alert_id:str):
         if res is None:
             logging.error(err)
             return error_response(404, err)
+
+        app.dispatcher.on_cameras_update()
 
         return flask.jsonify(res)
 
