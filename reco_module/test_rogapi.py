@@ -11,14 +11,19 @@ import datetime
 from requests.exceptions import HTTPError
 from requests import Session
 
+use_dev = False
 
-rogapi_url = 'https://rog-api-prod.herokuapp.com'   # prod-server
-rogapi_username = 'bvc-prod@gorog.co'
-rogapi_password = 'q5y2nib,+g!P8zJ+'
+if use_dev:
 
-#rogapi_url='https://rog-api-dev.herokuapp.com'      # dev-server
-#rogapi_username = 'bvc-dev@gorog.co'
-#rogapi_password = 'password123!!!'
+    rogapi_url='https://rog-api-dev.herokuapp.com'      # dev-server
+    rogapi_username = 'bvc-dev@gorog.co'
+    rogapi_password = 'password123!!!'
+
+else:
+    
+    rogapi_url = 'https://rog-api-prod.herokuapp.com'   # prod-server
+    rogapi_username = 'bvc-prod@gorog.co'
+    rogapi_password = 'q5y2nib,+g!P8zJ+'
 
 #rogapi_username = 'rbartlett802@gmail.com'
 #rogapi_password = 'Ginger@777'
@@ -284,7 +289,7 @@ class Test_post_alert_simple(unittest.TestCase):
                 json={'alert':alert}
                 )
         
-        print("\nresponse: ", r.text)
+        #print("\nresponse: ", r.status_code, r.text)
         self.assertEqual(r.status_code, 201)
 
         res = r.json()
@@ -302,7 +307,15 @@ class Test_post_alert_simple(unittest.TestCase):
                 json=data
                 )
 
-        print("\nresponse: ", r.text)
+        #print("\nresponse 1: ", r.status_code, r.text)
+        self.assertEqual(r.status_code, 201)
+
+        r = self.session.post('{}/api/v1/add_alert_image'.format(self.url),
+                headers={'Authorization': '{}'.format(self.jwt_token)},
+                json=data
+                )
+
+        #print("\nresponse 2: ", r.status_code, r.text)
         self.assertEqual(r.status_code, 201)
 
         pass
@@ -310,11 +323,15 @@ class Test_post_alert_simple(unittest.TestCase):
 
 if __name__ == '__main__':
     
-    #unittest.main()
+    unittest.main()
     #unittest.main(verbosity=2)
 
+    #rog = ROG_Client(rogapi_url, rogapi_username, rogapi_password)
+    #res = rog.auth()
+
+    #unittest.main(argv=["", "Test_auth"])
     #unittest.main(argv=["", "Test_alert_types"],verbosity=2)
     #unittest.main(argv=["", "Test_post_alert.test_ok"],verbosity=2)
     #unittest.main(argv=["", "Test_add_alert_image.test_ok"],verbosity=2)
     #unittest.main(argv=["", "Test_post_alert_simple.test_alert"],verbosity=2)
-    unittest.main(argv=["", "Test_post_alert_simple.test_add_image"],verbosity=2)
+    #unittest.main(argv=["", "Test_post_alert_simple.test_add_image"],verbosity=2)

@@ -13,6 +13,8 @@ class BVC_Client(object):
         self.session = requests.Session()
         self.session.verify = False
 
+        self.jwt_token = None
+
     def do_auth(func):
         """
         decorator to auth if need
@@ -56,9 +58,28 @@ class BVC_Client(object):
         self.jwt_token = res.get('access_token')
     
         return self.jwt_token is not None
+
+    @do_auth
+    def get_user_cameras(self, user_id):
+        
+        """
+        @return [{...}, ...]
+        """
+
+        r = self.session.get('{0}/api/user/{1}/cameras'.format(self.url, user_id),
+            headers={'Authorization': 'JWT {}'.format(self.jwt_token)})
+
+        if r.status_code != 200:
+            logging.error("bvcapi get_user_cameras failed, status: %d", r.status_code)
+
+        r.raise_for_status()
+
+        logging.debug("bvcapi get_user_cameras status: %d", r.status_code)
+
+        return r.json()['cameras']
       
     @do_auth
-    def get_cameras(self):
+    def get_active_cameras(self):
         """
         @return [{...}, ...]
         """

@@ -1,6 +1,6 @@
 #pragma once
 
-#define USE_ROG_DEV_SERVER  0
+#define USE_ROG_DEV_SERVER  1
 
 
 #if USE_ROG_DEV_SERVER

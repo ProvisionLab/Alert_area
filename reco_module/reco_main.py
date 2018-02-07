@@ -130,7 +130,7 @@ class RecoApp(object):
 
         self.bvcapi.post_status(status)
 
-        cameras = self.bvcapi.get_cameras()
+        cameras = self.bvcapi.get_active_cameras()
 
         if cameras is None:
             logging.error("backend cameras request failed, no cameras returned")
