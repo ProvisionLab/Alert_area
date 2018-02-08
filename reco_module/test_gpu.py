@@ -113,7 +113,11 @@ def run_detects(count):
     print("Total FPS {0:.2f}".format(total_fps))
 
 def show_available_gpus():
+
     local_device_protos = device_lib.list_local_devices()
+
+    print("Tensorflow version: ", tf.__version__)
+    print("Tensorflow devices:")
     for i in local_device_protos:
         print("{0}, memory_limit: {1}".format(i.name, i.memory_limit))
 
