@@ -2,7 +2,6 @@ import datetime
 import uuid
 import cv2
 import base64
-import rog_sftp
 import reco_config
 from trk_object import TrackObject
 import logging
@@ -63,28 +62,13 @@ def convert_image(image, prefix: str, id: str):
     if image is None:
         return None
 
-    if reco_config.send_image_to_sftp:
-        
-        #print(prefix, image)
+    #image = cv2.resize(image, (320,200), interpolation=cv2.INTER_AREA)
+    data = encode_cvimage(image)
 
-        data = encode_cvimage(image)
-        fname = prefix + '_'+ id + '.jpg'
-        
-        if rog_sftp.sftp_upload(reco_config.sftp_path + fname, data):
-            return fname
-        else:
-            return None
-
+    if data is not None:
+        return str(base64.b64encode(data))
     else:
-
-        #image = cv2.resize(image, (320,200), interpolation=cv2.INTER_AREA)
-        data = encode_cvimage(image)
-
-        if data is not None:
-            return str(base64.b64encode(data))
-        else:
-            return None
-        pass
+        return None
     pass
 
 
