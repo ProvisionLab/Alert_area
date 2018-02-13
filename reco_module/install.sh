@@ -161,5 +161,8 @@ sudo apt-get install -y supervisor
 
 sudo ln -s $PWD/reco.spv.conf /etc/supervisor/conf.d/reco.conf
 
+cp reco_config.py.orig reco_config.py
+
 sudo supervisorctl reread
 sudo supervisorctl update
+

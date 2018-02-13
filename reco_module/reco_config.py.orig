@@ -1,8 +1,6 @@
 
-
-reco_name   = 'reco.prod.one'
+#reco_name   = 'reco.prod.one'
 #reco_name   = 'reco.dev.one'
-
 
 DEBUG = False
 show_dbg_window = False
@@ -15,31 +13,12 @@ use_cpu = False
 
 # list of camera names
 # to capture all cameras use empty list
-filter_cameras = [
-#    'Beach',
-#    'Ice Rink',
-#    'Warehouse',
-#    'Office',
-#    'Restaurant',
-#    'Kiev',
-#    'Kiev 2',
-#    'Reolink',
-#    'Round-About',
-#    'Road',
-#    'Kennel',
-#    'Prospect-North',
-#    'Birds Eye',
-#    'Dog Play',
-#    'Island House',
-#    'Bench',
-#   'H1',
-#   'H2',
-#   'H3',
-]
+filter_cameras = []
 
 #bvcapi_url = 'http://127.0.0.1:5000'
 bvcapi_url = 'https://production.gorog.co'  # BVC Prod
 #bvcapi_url = 'https://dev.gorog.co'  # BVC Dev Server
+
 bvcapi_verify_ssl=True
 
 bvcapi_key = '0123456789'
