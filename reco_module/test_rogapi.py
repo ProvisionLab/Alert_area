@@ -11,7 +11,7 @@ import datetime
 from requests.exceptions import HTTPError
 from requests import Session
 
-use_dev = False
+use_dev = True
 
 if use_dev:
 

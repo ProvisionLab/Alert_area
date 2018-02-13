@@ -7,11 +7,14 @@ from capture_worker import CaptureWorker
 #STREAM_1080_URL = 'rtsp://admin:admin@47.40.34.31:554' # 1920 x 1080
 #STREAM_1080_URL = 'rtsp://admin:admin@23.243.152.142:554' # 1920 x 1080
 STREAM_1080_URL = 'rtsp://admin:admin@207.62.193.8:8554' # 1920 x 1080
+#STREAM_1080_URL = 'rtsp://admin:admin@12.110.253.194:554'
+
 #STREAM_720_URL = 'rtsp://admin:123456@219.85.200.55:554' # 1280 x 720
 STREAM_720_URL = 'rtsp://admin:admin@14.45.88.220:554' # 1280 x 720
 STREAM_576_URL = 'rtsp://admin:admin@217.73.179.4:554' # 960 x 576
 STREAM_480_URL = 'rtsp://admin:123456@121.254.64.108:554' # 960 x 480
 STREAM_240_URL = 'rtsp://admin:admin@190.63.185.42:554' # 704 x 240
+
 
 
 logging.config.dictConfig({
@@ -174,5 +177,7 @@ if __name__ == "__main__":
     #main(argv=[""])
     #main(argv=["","-s", "480", "-n", "4"])
     #main(argv=["","-s", "720", "-n", "4"])
-    #main(argv=["","-s", "1080", "-n", "4"])
+    #main(argv=["","-s", "1080", "-n", "1"])
     #main(argv=["", "-n", "4", "--source=rtsp://admin:admin@190.63.185.42:554"])
+    #main(argv=["", "-n", "1", "--source=rtsp://admin:admin@12.110.253.194:554"])
+    #main(argv=["", "-n", "1", "--source=rtsp://12.110.253.194:554"])

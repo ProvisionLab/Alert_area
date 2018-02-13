@@ -26,7 +26,8 @@ def get_subs_cameras():
         'id':c['id'], 
         'users': c['users'],
         'enabled': 'enabled' if c.get('enabled', True) else 'disabled',
-        'alerts': len(c.get('alerts',[]))
+        'alerts': len(c.get('alerts',[])),
+        'url': c.get('url')
         } for c in db.cameras.find({})]
 
     return cameras
