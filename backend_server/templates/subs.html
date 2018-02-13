@@ -1,0 +1,41 @@
+<html>
+
+<head>
+    <title>{{ title }}</title>
+    <meta http-equiv="refresh" content="10">
+</head>
+
+<body>
+    <a href="/status">Status</a>
+
+    <div>users count: {{subs.users|length}}</div>
+    <div>
+        <table>
+            {% for user in subs.users %}
+            <tr>
+                <td>user: {{user.id}},</td>
+                <td>cameras: {{user.cameras|string}},</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div>cameras count: {{subs.cameras|length}}</div>
+    <div>
+        <table>
+            {% for cam in subs.cameras %}
+            <tr>
+                <td>cam: {{cam.id}},</td>
+                <td>users: {{cam.users|string}},</td>
+                <td>{{cam.enabled}},</td>
+                <td>alerts: {{cam.alerts}},</td>
+                <td>url: {{cam.url}},</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+
+</body>
+
+</html>

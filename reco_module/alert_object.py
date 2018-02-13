@@ -2,7 +2,6 @@ import datetime
 import uuid
 import cv2
 import base64
-import rog_sftp
 import reco_config
 from trk_object import TrackObject
 import logging
@@ -17,7 +16,6 @@ alert_type_names = {
 }
 
 alert_type_ids = None
-
 
 def set_alert_type_ids(data):
     
@@ -41,6 +39,13 @@ def set_alert_type_ids(data):
     logging.info('set_alert_type_ids: %s', str(alert_type_ids))
     pass
 
+def get_alert_type_id(alert_type):
+
+    if alert_type_ids:
+        return alert_type_ids.get(alert_type, 0)
+    else:
+        return 0
+            
 
 def encode_cvimage(image):
     
@@ -57,30 +62,33 @@ def convert_image(image, prefix: str, id: str):
     if image is None:
         return None
 
-    if reco_config.send_image_to_sftp:
-        
-        #print(prefix, image)
+    #image = cv2.resize(image, (320,200), interpolation=cv2.INTER_AREA)
+    data = encode_cvimage(image)
 
-        data = encode_cvimage(image)
-        fname = prefix + '_'+ id + '.jpg'
-        
-        if rog_sftp.sftp_upload(reco_config.sftp_path + fname, data):
-            return fname
-        else:
-            return None
-
+    if data is not None:
+        return str(base64.b64encode(data))
     else:
-
-        #image = cv2.resize(image, (320,200), interpolation=cv2.INTER_AREA)
-        data = encode_cvimage(image)
-
-        if data is not None:
-            return str(base64.b64encode(data))
-        else:
-            return None
-        pass
+        return None
     pass
 
+
+def add_box_to_image(image, box):
+    
+    if isinstance(box, TrackObject):
+
+        image = image.copy()
+
+        cv2.rectangle(image, (int(box.x1),int(box.y1)), (int(box.x2),int(box.y2)), (0,0,255), thickness=2);
+        #global image_index
+        #image_index += 1
+        #cv2.imwrite("image_{0}_{1:04d}.jpg".format(prefix, image_index), image)
+
+        return image
+
+    else:
+       
+        return image
+        
 class AlertObject(object):
     
     camera_id = None
@@ -94,7 +102,12 @@ class AlertObject(object):
         """
         self.camera_id = camera_id
         self.alert_id = alert_id if alert_id else str(uuid.uuid4())
+
         self.alert_type = alert_type
+        self.alert_type_id = get_alert_type_id(self.alert_type)
+
+        self.alert_ta = None
+        self.rog_alert_id = None
 
         # <ISO Extended Z timestamp>
         ts = datetime.datetime.utcnow().isoformat()+'Z'
@@ -139,15 +152,11 @@ class AlertObject(object):
     def as_dict(self):
         
         if self.alert_type:
-            if alert_type_ids:
-                alert_type_id = alert_type_ids.get(self.alert_type, 0)
-            else:
-                alert_type_id = 0
 
             payload = { 
                 'camera_id': self.camera_id, 
                 'alert_id': self.alert_id, 
-                'alert_type_id': alert_type_id,
+                'alert_type_id': self.alert_type_id,
                 'timestamp': self.timestamp, 
             }
 

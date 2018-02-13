@@ -5,7 +5,7 @@
 
 #if USE_ROG_DEV_SERVER
 
-    #define BVCAPI_URL      "http://54.69.73.20:5000"   // BVC Dev
+    #define BVCAPI_URL      "https://dev.gorog.co"   // BVC Dev
     //#define BVCAPI_URL      "http://54.69.83.153:5000"  // server #2 EC2 instance (g3.4xlarge)
     //#define BVCAPI_URL      "http://34.214.218.163:5000"  // server #3
     //#define BVCAPI_URL      "http://192.168.88.247:5000"
@@ -20,7 +20,7 @@
 
 #else
 
-    #define BVCAPI_URL      "http://52.32.99.45:5000"   // BVC Prod
+    #define BVCAPI_URL      "https://production.gorog.co"   // BVC Prod
 
     #define ROGAPI_URL      "https://rog-api-prod.herokuapp.com"
 
@@ -33,3 +33,5 @@
 
 #define BVCAPI_USERNAME "rogt-1"
 #define BVCAPI_PASSWORD "qwerty1"
+
+#define BVCAPI_VERIFY_SSL 1

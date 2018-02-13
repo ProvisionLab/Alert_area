@@ -9,7 +9,8 @@ import tensorflow as tf
 
 from trk_analyzer2 import TrackAnalyzer2
 from trk_object import TrackObject
-from alert_object import AlertObject
+from alert_object import AlertObject, encode_cvimage, add_box_to_image
+from rogapi.alerts import ROG_Alert, ROG_AlertImage
 
 if reco_config.show_dbg_window:
     from debug_window import DebugWindow
@@ -40,6 +41,7 @@ class AlertTAState(object):
         
         self.camera_id = camera_id
         self.alert_id = alert_id
+        self.rog_alert_id = None
 
         self.timestamp = time.time()
 
@@ -76,7 +78,7 @@ class FrameWorker(threading.Thread):
     def __init__(self, camera, cap_w, cap_h, post_new_alert):
         
         self.camera = camera
-        self.alert_areas = camera['areas']
+        self.alert_areas = [] if camera is None else camera.get('areas',[])
 
         self.post_new_alert = post_new_alert
 
@@ -89,11 +91,13 @@ class FrameWorker(threading.Thread):
         
         self.frame = None
 
-        self.frame_count = 0
+        self.frame_count1 = 0
         self.frame_count2 = 0
         self.frame_time = time.time()
 
         self.alerts_ta = []
+
+        self.use_motion_detector = reco_config.enable_motion_detector
 
         FrameWorker.thread_count += 1
         super().__init__()
@@ -121,7 +125,8 @@ class FrameWorker(threading.Thread):
             #print("1 {0} {1}, time: T{2:.2f}, n: {3}".format(ta.alert_id, ta.count, d, n))
 
             if n <= reco_config.send_ta_images and n > ta.count:
-                self._on_ta_alert(ta.alert_id, "T{0}".format(n), frame)
+                
+                self._on_ta_alert(ta, ta.alert_id, "T{0}".format(n), frame)
                 ta.count = n
 
             if n < reco_config.send_ta_images:
@@ -146,7 +151,7 @@ class FrameWorker(threading.Thread):
             now = time.time()
 
             self.frame = frame
-            self.frame_count += 1
+            self.frame_count1 += 1
 
             self.frames1.append((frame, now))
 
@@ -211,7 +216,7 @@ class FrameWorker(threading.Thread):
 
         pass
 
-    def get_fps(self):
+    def get_fps(self, reset=True):
         """
         @return (fps,fps2)  input FPS and output FPS
         """
@@ -222,14 +227,16 @@ class FrameWorker(threading.Thread):
         if d < 1.0:
             return 0,0
 
-        fps = self.frame_count / d
+        fps1 = self.frame_count1 / d
         fps2 = self.frame_count2 / d
 
-        self.frame_time = now
-        self.frame_count = 0
-        self.frame_count2 = 0
+        if reset:
 
-        return fps, fps2
+            self.frame_time = now
+            self.frame_count1 = 0
+            self.frame_count2 = 0
+
+        return fps1, fps2
 
     def update_areas(self, areas):
         
@@ -248,7 +255,7 @@ class FrameWorker(threading.Thread):
         use PeopleDetector
         """
     
-        motion_detector = MotionDetector(self.md_min_area)
+        motion_detector = MotionDetector(self.md_min_area) if self.use_motion_detector else None
 
 #        pdetector =  PeopleDetector(config)
 #        with pdetector.as_default():
@@ -258,22 +265,23 @@ class FrameWorker(threading.Thread):
             while not self.bStop:
                 
                 with self.lock:
-                    self.lock.wait(0.2)
+                    self.lock.wait()
 
                     frame = self.frame
+
+                    if frame is None:
+                        continue
+
                     self.frame = None
 
                     self.frame1, _ = self.frames1[0] if self.frames1 else (None, None)
                     self.frame2, _ = self.frames2[0] if self.frames2 else (None, None)
 
-                if frame is None:
-                    continue
+#                print("fps2: ", self.frame_count1, self.frame_count2)
 
                 self.current_frame = frame
 
                 self.recognize(frame, motion_detector, pdetector)       
-
-                self.frame_count2 += 1
 
                 objects = []
 
@@ -290,7 +298,7 @@ class FrameWorker(threading.Thread):
         use PeopleDetector2 ( shared graph )
         """
         
-        motion_detector = MotionDetector(self.md_min_area)
+        motion_detector = MotionDetector(self.md_min_area) if self.use_motion_detector else None
 
         with PeopleDetector2(config) as pdetector:
 
@@ -312,8 +320,6 @@ class FrameWorker(threading.Thread):
 
                 self.recognize(frame, motion_detector, pdetector)       
 
-                self.frame_count2 += 1
-
                 objects = []
 
                 if self.dbg and self.dbg.draw_frame(frame, objects):
@@ -324,19 +330,12 @@ class FrameWorker(threading.Thread):
             pass # with
         pass        
 
-    def _on_ta_alert(self, alert_id:str, prefix: str, frame):
-
-        camera_id = self.camera['id']
-
-        alert = AlertObject(camera_id, alert_id, None)
-        alert.camera_name = self.camera['name']
-
-        logging.debug("new %s alert: %s", prefix, alert_id)
-        
-        alert.set_image(prefix, frame)
+    def _on_ta_alert(self, alert_ta, alert_id: str, prefix: str, frame):
 
         if self.post_new_alert:
-            self.post_new_alert(alert)
+            alert_image = ROG_AlertImage(None, encode_cvimage(frame))
+            alert_image.obj = alert_ta
+            self.post_new_alert(alert_image)
         
         pass
 
@@ -348,33 +347,34 @@ class FrameWorker(threading.Thread):
             pos = box.get_pos()
             if self.dbg: self.dbg.add_alert(pos, is_enter)
 
-        alert.camera_id = camera_id
-        alert.camera_name = self.camera['name']
-
         if is_enter:
 
             logging.debug("new alert: %s", alert)
 
             if self.post_new_alert:
                 
-                alert.set_image("T", self.current_frame, box)
+                rog_alert = ROG_Alert(camera_id, alert.alert_type_id)
+                
+                rog_alert.set_image("image_3", encode_cvimage(add_box_to_image(self.current_frame, box)))
 
                 if reco_config.send_tb_images:
-                    alert.set_image("T-1", self.frame1)
-                    alert.set_image("T-2", self.frame2)
+                    rog_alert.set_image("image_1", encode_cvimage(self.frame2))
+                    rog_alert.set_image("image_2", encode_cvimage(self.frame1))
 
                 if reco_config.send_ta_images > 0:
                     with self.lock:
-                        self.alerts_ta.append(AlertTAState(camera_id, alert.alert_id))
+                        alert_ta = AlertTAState(camera_id, alert.alert_id)
+                        rog_alert.obj = alert_ta
+                        self.alerts_ta.append(alert_ta)
 
-                self.post_new_alert(alert)
+                self.post_new_alert(rog_alert)
 
         else:
             pass
 
     def recognize(self, frame, motion_detector, people_detector):
         
-        if reco_config.enable_motion_detector and not motion_detector.isMotion(frame):
+        if motion_detector is not None and not motion_detector.isMotion(frame):
             return
 
         boxes = people_detector.process_frame(frame) if reco_config.enable_people_detector else []
@@ -389,5 +389,4 @@ class FrameWorker(threading.Thread):
 
         self.analyzer.process_objects(w, h, objects)        
     
-
-       
+        self.frame_count2 += 1

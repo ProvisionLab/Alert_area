@@ -17,12 +17,28 @@ sudo service mongodb start
 
 # Install python packages
 
-
 sudo pip3 install -r dependencies.txt
+
+# Install NGINX
+
+sudo apt-get install -y nginx
+sudo service nginx start
+
+#sudo ln -s $PWD/bvc_server.nginxconf /etc/nginx/sites-available/bvc_server
+sudo cp -f bvc_server.nginx.conf /etc/nginx/sites-available/default
 
 # Install Gunicorn
 
 sudo apt-get install -y gunicorn3
 
-chmod +x start.sh
-chmod +x stop.sh
+chmod +x *.sh
+chmod u+x bin/gunicorn_start.bash
+
+# Install Supervisor
+
+sudo apt-get install -y supervisor
+
+sudo ln -s $PWD/bvc_server.spv.conf /etc/supervisor/conf.d/bvc_server.conf
+
+sudo supervisorctl reread
+sudo supervisorctl update

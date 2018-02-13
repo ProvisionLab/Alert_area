@@ -30,7 +30,7 @@ logging.config.dictConfig({
         'infos': {
             'level':'INFO',
             'class':'logging.handlers.RotatingFileHandler',
-            'filename' : 'reco' + sufix + '.log',
+            'filename' : 'logs/reco' + sufix + '.log',
             'formatter' : 'detail',
             'maxBytes': 10000000,
             'backupCount': 2,
@@ -38,7 +38,7 @@ logging.config.dictConfig({
         'errors': {
             'level':'ERROR',
             'class':'logging.handlers.RotatingFileHandler',
-            'filename' : 'reco_errors' + sufix + '.log',
+            'filename' : 'logs/reco_errors' + sufix + '.log',
             'formatter' : 'detail',
             'maxBytes': 10000000,
             'backupCount': 6,
@@ -56,6 +56,6 @@ logging.config.dictConfig({
 
     'root': {
         'level': 'INFO',
-        'handlers': ['infos', 'errors'],
+        'handlers': ['console', 'infos', 'errors'],
     }
 })

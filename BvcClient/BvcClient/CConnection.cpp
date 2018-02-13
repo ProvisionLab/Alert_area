@@ -159,6 +159,12 @@ void CConnection::auth(std::function<void(bool succeeded)> callback)
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
+#if !BVCAPI_VERIFY_SSL
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
+#endif
+
     QJsonObject j_auth;
 
     j_auth["username"] = m_api_username;
@@ -206,6 +212,12 @@ void CConnection::get_cameras(std::function<void(QJsonObject const&)> callback)
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
 
+#if !BVCAPI_VERIFY_SSL
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
+#endif
+
     auto ctx = std::make_shared<RequestContext>(
                     m_nm.get(request));
 
@@ -235,9 +247,15 @@ void CConnection::set_cameras(QJsonArray const j_cameras, std::function<void(boo
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
 
+#if !BVCAPI_VERIFY_SSL
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
+#endif
+
     QJsonDocument j_doc(j_cameras);
 
-    auto *reply = m_nm.post(request, j_doc.toJson());
+    auto *reply = m_nm.put(request, j_doc.toJson());
     auto ctx = std::make_shared<RequestContext>(reply);
 
     QObject::connect(ctx->m_reply, &QNetworkReply::finished, [this, ctx, callback]()
@@ -255,6 +273,12 @@ void CConnection::set_camera_enabled(int camera_id, bool enabled, std::function<
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
+
+#if !BVCAPI_VERIFY_SSL
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
+#endif
 
     QJsonObject j_value;
     j_value["enabled"] = enabled;
@@ -275,6 +299,12 @@ void CConnection::get_camera_alerts(int camera_id, std::function<void(QJsonObjec
     QNetworkRequest request(QString("%1/api/cameras/%2/alerts").arg(m_apiUrl).arg(camera_id));
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
+
+#if !BVCAPI_VERIFY_SSL
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
+#endif
 
     auto ctx = std::make_shared<RequestContext>(
                     m_nm.get(request));
@@ -299,6 +329,12 @@ void CConnection::post_camera_alert(int camera_id, QJsonObject const & j_alert, 
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
+
+#if !BVCAPI_VERIFY_SSL
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
+#endif
 
     QJsonDocument j_doc(j_alert);
 
@@ -329,6 +365,12 @@ void CConnection::delete_camera_alert(int camera_id, QString alert_id,
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
 
+#if !BVCAPI_VERIFY_SSL
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
+#endif
+
     auto ctx = std::make_shared<RequestContext>(
                 m_nm.deleteResource(request));
 
@@ -356,6 +398,12 @@ void CConnection::update_camera_alert(int camera_id, QString alert_id, QJsonObje
     request.setHeader(QNetworkRequest::UserAgentHeader, BVC_USER_AGENT);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("Authorization", ("JWT " + m_access_token).toLocal8Bit());
+
+#if !BVCAPI_VERIFY_SSL
+    QSslConfiguration conf = request.sslConfiguration();
+    conf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(conf);
+#endif
 
     qDebug() << "update alert: " << j_alert;
 

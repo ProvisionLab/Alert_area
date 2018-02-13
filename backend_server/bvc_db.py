@@ -14,6 +14,69 @@ def drop():
     db.users.drop()
     db.cameras.drop()
 
+def get_subs_users():
+    
+    users = [ {'id':u['uid'], 'cameras': u['cameras'] } for u in db.users.find({})]
+
+    return users
+
+def get_subs_cameras():
+    
+    cameras = [ {
+        'id':c['id'], 
+        'users': c['users'],
+        'enabled': 'enabled' if c.get('enabled', True) else 'disabled',
+        'alerts': len(c.get('alerts',[])),
+        'url': c.get('url')
+        } for c in db.cameras.find({})]
+
+    return cameras
+    
+def get_subscribes():
+    
+    return {
+        'users': get_subs_users(),
+        'cameras': get_subs_cameras(),
+    }
+
+def is_camera_active(camera):
+    
+    if not camera.get('enabled', True):
+        return False
+
+    if not bool(camera.get('users')):
+        return False
+
+    if not bool(camera.get('alerts')):
+        return False
+
+    return True
+
+def get_active_cameras():
+    """
+    returns cids of all active cameras
+    """
+    
+    cursor = db.cameras.find({})
+
+    cids = [ c['id'] for c in cursor if is_camera_active(c) ]
+
+    return cids
+
+def get_cameras_by_cids(cids:list):
+    """
+    returns cameras from its ids
+    """
+    
+    cursor = db.cameras.find({'id': {'$in': cids }}, {'alerts':False, 'users':False})
+    
+    cameras = [ camera for camera in cursor if camera.get('enabled', True)]
+
+    for camera in cameras:
+        camera.pop('_id')
+
+    return cameras
+
 def get_enabled_cameras():
     
     cursor = db.cameras.find({}, {'alerts':False})
@@ -45,6 +108,14 @@ def get_cameras(user_id: int):
 
     return cameras
 
+def append_camera(user_id: int, camera: dict):
+    
+    return set_camera(user_id, camera)
+
+def update_camera(user_id: int, camera: dict):
+    
+    return set_camera(user_id, camera)
+
 def delete_camera(camera_id):
     """
     @return True oon success, False if not found
@@ -67,10 +138,33 @@ def delete_camera(camera_id):
     db.cameras.remove({'id': camera_id})
     return True
 
-def append_camera(user_id: int, camera: dict):
+def append_cameras(user_id: int, cameras: list):
     
-    return set_camera(user_id, camera)
+    try:
+    
+        new_ids = [c['id'] for c in cameras]
 
+        logging.info('append cameras: %s, user: %d', str(new_ids), user_id)
+
+        user = db.users.find_one({'uid' : user_id})
+
+        if user is None:
+            user = {'uid': user_id, 'cameras': new_ids}
+            db.users.insert_one(user)
+            logging.info('new user created, uid: %d', user_id)
+        else:
+            old_ids = user['cameras']
+            new_ids.extend( [cid for cid in old_ids if cid not in new_ids] )
+            db.users.update_one({'uid' : user_id}, { '$set': { 'cameras' : new_ids }})
+
+        for c in cameras:
+            set_camera(user_id, c)            
+
+    except:
+        return False
+    
+    return True
+    
 def update_cameras(user_id: int, cameras: list):
 
     try:
@@ -234,7 +328,7 @@ def get_camera_alerts( camera_id : int ):
         return alerts, None
 
     except:
-            return None, 'camera {0} not found'.format(camera_id)
+        return None, 'camera {0} not found'.format(camera_id)
 
 def append_camera_alert( camera_id : int, alert : dict ):
 
@@ -268,6 +362,20 @@ def get_camera_alert( camera_id: int, alert_id: int):
                     return a, None
 
         return None, 'camera {0} alert {1} not found'.format(camera_id, alert_id)
+
+    except:
+        return None, 'camera {0} not found'.format(camera_id)
+
+def delete_camera_alerts( camera_id: int ):
+    
+    try:
+    
+        camera = db.cameras.find_one({ 'id': camera_id }, { 'alerts':True } )
+        if camera is None:
+            return None, 'camera {0} not found'.format(camera_id)
+
+        result = db.cameras.update_one({'id': camera_id }, { '$set': { 'alerts' : [] }} )
+        return {}, None
 
     except:
         return None, 'camera {0} not found'.format(camera_id)

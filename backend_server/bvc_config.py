@@ -5,13 +5,13 @@ mongoDB_connectStr = "mongodb://localhost/"
 
 # rog server settings
 
-#rogapi_url = 'https://rog-api-prod.herokuapp.com'
-#rogapi_username = 'nabus@test.com'
-#rogapi_password = 'password123'
+rogapi_url = 'https://rog-api-prod.herokuapp.com'
+rogapi_username = 'bvc-prod@gorog.co'
+rogapi_password = 'q5y2nib,+g!P8zJ+'
 
-rogapi_url = 'https://rog-api-dev.herokuapp.com'
-rogapi_username = 'bvc-dev@gorog.co'
-rogapi_password = 'password123!!!'
+#rogapi_url = 'https://rog-api-dev.herokuapp.com'
+#rogapi_username = 'bvc-dev@gorog.co'
+#rogapi_password = 'password123!!!'
 
 #log_file_name = None
 log_file_name = 'bvc_server.log'
