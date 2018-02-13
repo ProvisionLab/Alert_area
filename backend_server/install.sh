@@ -34,7 +34,10 @@ sudo apt-get install -y gunicorn3
 chmod +x *.sh
 chmod u+x bin/gunicorn_start.bash
 
-cp bvc_config.py.orig bvc_config.py
+if [ ! -f bvc_config.py ] ; then
+    cp bvc_config.py.orig bvc_config.py
+fi
+
 
 # Install Supervisor
 
