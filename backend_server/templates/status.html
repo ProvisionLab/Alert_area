@@ -2,7 +2,7 @@
 
 <head>
     <title>{{ title }}</title>
-    <meta http-equiv="refresh" content="2">
+    <meta http-equiv="refresh" content="4">
 </head>
 
 <body>
@@ -38,7 +38,7 @@
     </div>
     {% endfor %}
 
-    <div>total cameras: {{status.active_cameras|string}}</div>
+    <div>total cameras: count: {{status.active_cameras|length}}, {{status.active_cameras|string}}</div>
     <div>free cameras: {{status.free_cameras|string}}</div>
 
 

@@ -28,7 +28,8 @@ def get_subs_cameras():
         'users': c['users'],
         'enabled': 'enabled' if c.get('enabled', True) else 'disabled',
         'alerts': len(c.get('alerts',[])),
-        'url': c.get('url')
+        'url': c.get('url'),
+        'connectedOnce': c.get('connectedOnce', False),
         } for c in db.cameras.find({})]
 
     return sorted(cameras, key=lambda x: x['id'])
@@ -241,14 +242,24 @@ def delete_empty_cameras():
 def set_camera(user_id: int, camera: dict):
     """
     creates or updates camera
+
+    input fields:
+        id, name, url
+        enabled, connectedOnce
+
+    inner fields:
+        users
     """
     try:
+
+        camera.pop('connectedOnce')
 
         alerts = camera.get('alerts')
         
         if alerts is not None:
             for alert in alerts:
-                alert['id'] = str(ObjectId())
+                if alert.get('id') is None:
+                    alert['id'] = str(ObjectId())
 
         old_camera = db.cameras.find_one({'id': camera['id']}, {'alerts': False })
 
@@ -256,13 +267,21 @@ def set_camera(user_id: int, camera: dict):
             # create new
             logging.info('new camera created: %s', str(camera))
             camera['users'] = [user_id]
+
+            camera['connectedOnce'] = False
+
             result = db.cameras.insert_one(camera)
+
         else:
             # update one
             users = old_camera.get('users', [])
             if user_id not in users:
                 users.append(user_id)
             camera['users'] = users
+
+            if old_camera.get('url') != camera['url']:
+                camera['connectedOnce'] = False
+
             result = db.cameras.update_one({'id': camera['id'] }, {'$set': camera})
     
     except:
@@ -296,6 +315,9 @@ def get_camera( camera_id : int ):
             return None, 'camera {0} not found'.format(camera_id)
 
         camera.pop('_id')
+
+        camera['connectedOnce'] = camera.get('connectedOnce', False),
+
         return camera, None
 
     except:
@@ -303,9 +325,29 @@ def get_camera( camera_id : int ):
 
 def set_camera_enabled(camera_id: int, enabled: bool):
     
+    return set_camera_property(camera_id, 'enabled', enabled)
+
+def get_camera_property(camera_id: int, name:str, def_value):
+    
     try:
 
-        result = db.cameras.update_one({'id': camera_id }, { '$set': { 'enabled' : enabled }} )
+        camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts': False } )
+
+        if camera is None:
+            return None, 'camera {0} not found'.format(camera_id)
+
+        result = camera.get(name, def_value)
+
+        return result, None
+
+    except:
+        return None, 'camera {0} not found'.format(camera_id)
+
+def set_camera_property(camera_id: int, name:str, value):
+    
+    try:
+
+        result = db.cameras.update_one({'id': camera_id }, { '$set': { name : value }} )
 
         return {}, None
 

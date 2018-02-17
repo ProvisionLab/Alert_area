@@ -158,7 +158,8 @@ class RecoApp(object):
         
         total_fps1 = 0.0
         total_fps2 = 0.0
-        cameras_count = 0
+
+        cameras = []
         
         for t in self.threads:
             fps1, fps2 = t.get_fps()
@@ -167,8 +168,11 @@ class RecoApp(object):
 
             logging.info("FPS: %.1f/%.1f", fps1, fps2)
 
-            if fps1 > 0.0:
-                cameras_count += 1
+            cameras.append({
+                'id' : t.camera.get('id'),
+                'fps1' : fps1,
+                'fps2' : fps2,
+            })
 
             logging.info("camera [%d] \'%s\' FPS: %.1f/%.1f, areas: %d, users: %s", 
                         t.camera['id'], t.camera['name'], 
@@ -176,9 +180,9 @@ class RecoApp(object):
                         len(t.camera['areas']),
                         str(t.camera.get('users',[])))
 
-        logging.info("total FPS: %.1f/%.2f for %d cameras", total_fps1, total_fps2, cameras_count)
+        logging.info("total FPS: %.1f/%.2f for %d cameras", total_fps1, total_fps2, len(cameras))
 
-        return {'cameras_count' : cameras_count, 'fps' : total_fps2}
+        return {'cameras' : cameras, 'fps' : total_fps2}
 
     def set_cameras(self, cameras):
         """

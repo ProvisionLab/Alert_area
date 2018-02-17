@@ -2,11 +2,13 @@
 
 <head>
     <title>{{ title }}</title>
-    <meta http-equiv="refresh" content="10">
+    <meta http-equiv="refresh" content="30">
 </head>
 
 <body>
     <a href="/status">Status</a>
+
+    <h2>Users</h2>
 
     <div>users count: {{subs.users|length}}</div>
     <div>
@@ -20,16 +22,28 @@
         </table>
     </div>
 
+    <h2>Cameras</h2>
+
     <div>cameras count: {{subs.cameras|length}}</div>
     <div>
         <table>
+            <tr>
+                <th>cam_id</th>
+                <th>users</th>
+                <th>enabled</th>
+                <th>alerts</th>
+                <th>url</th>
+                <th>connectedOnce</th>
+            </tr>
+
             {% for cam in subs.cameras %}
             <tr>
-                <td>cam: {{cam.id}},</td>
-                <td>users: {{cam.users|string}},</td>
-                <td>{{cam.enabled}},</td>
-                <td>alerts: {{cam.alerts}},</td>
-                <td>url: {{cam.url}},</td>
+                <td>{{cam.id}}</td>
+                <td>{{cam.users|string}}</td>
+                <td>{{cam.enabled}}</td>
+                <td>{{cam.alerts}}</td>
+                <td>{{cam.url}}</td>
+                <td>{{cam.connectedOnce}}</td>
             </tr>
             {% endfor %}
         </table>

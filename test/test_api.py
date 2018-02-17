@@ -84,6 +84,7 @@ def check_camera(self,camera):
 
     camera_id = camera.get('id')
     self.assertTrue(isinstance(camera_id,int))
+    self.assertTrue(isinstance(camera.get('connectedOnce'),bool))
 
 def check_response_camera(self,camera):
 
@@ -241,6 +242,66 @@ class Test_get_camera(unittest.TestCase):
             headers = {'Authorization': 'JWT {0}'.format(self.access_token)})
 
         self.assertEqual(r.status_code, 404)
+
+    def test_get_enabled(self):
+
+        r = session.get('{}/api/camera/{}/enabled'.format(bvcapi_url, self.camera_id),
+            headers = {'Authorization': 'JWT {0}'.format(self.access_token)})
+
+        self.assertEqual(r.status_code, 200)
+
+        res = r.json()
+        self.assertTrue(isinstance(res, dict))
+        value = res.get('value')
+        self.assertTrue(isinstance(value, bool))
+
+    def test_set_enabled(self):
+        
+        # set False
+        
+        r = session.put('{}/api/camera/{}/enabled'.format(bvcapi_url, self.camera_id),
+            headers = {'Authorization': 'JWT {0}'.format(self.access_token)},
+            json={'value': False})
+
+        self.assertEqual(r.status_code, 204)
+    
+        r = session.get('{}/api/camera/{}/enabled'.format(bvcapi_url, self.camera_id),
+            headers = {'Authorization': 'JWT {0}'.format(self.access_token)})
+
+        self.assertEqual(r.status_code, 200)
+
+        res = r.json()
+        self.assertTrue(isinstance(res, dict))
+        self.assertEqual(res.get('value'), False)
+        
+        # set True
+
+        r = session.put('{}/api/camera/{}/enabled'.format(bvcapi_url, self.camera_id),
+            headers = {'Authorization': 'JWT {0}'.format(self.access_token)},
+            json={'value': True})
+
+        self.assertEqual(r.status_code, 204)
+    
+        r = session.get('{}/api/camera/{}/enabled'.format(bvcapi_url, self.camera_id),
+            headers = {'Authorization': 'JWT {0}'.format(self.access_token)})
+
+        self.assertEqual(r.status_code, 200)
+
+        res = r.json()
+        self.assertTrue(isinstance(res, dict))
+        self.assertEqual(res.get('value'), True)
+
+    def test_connectedOnce(self):
+
+        r = session.get('{}/api/camera/{}/connectedOnce'.format(bvcapi_url, self.camera_id),
+            headers = {'Authorization': 'JWT {0}'.format(self.access_token)})
+
+        self.assertEqual(r.status_code, 200)
+
+        res = r.json()
+        self.assertTrue(isinstance(res, dict))
+        value = res.get('value')
+        self.assertTrue(isinstance(value, bool))
 
 class Test_camera_alerts(unittest.TestCase):
       

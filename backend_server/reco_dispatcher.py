@@ -267,12 +267,14 @@ class RecoDispatcher(object):
     def _on_del_instance(self):
         pass
 
-    def set_reco_state(self, reco_id, cameras_count, fps):
+    def set_reco_state(self, reco_id, fps, cameras):
         """
         /api/rs handler
         """
 
         inst_id, proc_id = split_recoid(reco_id)
+
+        cameras_count = len(cameras)
 
         with bvc_db.DatabaseLock('procs'):
 

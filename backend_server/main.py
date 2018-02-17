@@ -193,9 +193,10 @@ def api_user_put_cameras(user_id: int):
 
     app.dispatcher.on_cameras_update()
 
-    return flask.jsonify({}), 204
+    return 204
 
 @app.route('/api/cameras/<int:camera_id>', methods=["GET"])
+@app.route('/api/camera/<int:camera_id>', methods=["GET"])
 @jwt_required()
 def api_camera_get(camera_id: int):
 
@@ -206,6 +207,57 @@ def api_camera_get(camera_id: int):
         return error_response(404, err)#"camera {0} not found".format(camera_id))
 
     return flask.jsonify({'camera': camera })
+
+@app.route('/api/cameras/<int:camera_id>/enabled', methods=["GET", "PUT"])
+@app.route('/api/camera/<int:camera_id>/enabled', methods=["GET", "PUT"])
+@jwt_required()
+def api_camera_enabled(camera_id: int):
+
+    if request.method == 'GET':
+    
+        value, err = bvc_db.get_camera_property(camera_id, 'enabled', True)
+    
+        if value is None:
+            logging.error(err)
+            return error_response(404, err)
+
+        return flask.jsonify({'value' : value, 'enabled' : value })
+
+    if request.method == 'PUT':
+
+        value = request.get_json().get('value')
+
+        if value is None:
+            value = request.get_json().get('value')
+
+        if not isinstance(value,bool):
+            return error_response(400, "invalid argument")
+
+        res, err = bvc_db.set_camera_property(camera_id, 'enabled', value)
+
+        if res is None:
+            logging.error(err)
+            return error_response(404, err)
+
+        logging.info("camera [%d] enabled = %s", camera_id, value)
+
+        app.dispatcher.on_cameras_update()
+
+        return 204
+
+@app.route('/api/camera/<int:camera_id>/connectedOnce', methods=["GET"])
+@jwt_required()
+def api_camera_connectedOnce(camera_id: int):
+
+    if request.method == 'GET':
+    
+        value, err = bvc_db.get_camera_property(camera_id, 'connectedOnce', False)
+
+        if value is None:
+            logging.error(err)
+            return error_response(404, err)
+
+        return flask.jsonify({'value' : value })
 
 @app.route('/api/cameras/<int:camera_id>/alerts', methods=["GET", "POST", "DELETE"])
 @jwt_required()
@@ -267,7 +319,7 @@ def api_camera_alert_(camera_id:str, alert_id:str):
             logging.error(err)
             return error_response(404, err)
 
-        return flask.jsonify(res)
+        return 204
 
     if request.method == 'DELETE':
 
@@ -279,40 +331,7 @@ def api_camera_alert_(camera_id:str, alert_id:str):
 
         app.dispatcher.on_cameras_update()
 
-        return flask.jsonify(res), 204
-
-@app.route('/api/cameras/<int:camera_id>/enabled', methods=["GET", "PUT"])
-@jwt_required()
-def api_camera_enabled(camera_id: int):
-
-    if request.method == 'GET':
-    
-        camera, err = bvc_db.get_camera(camera_id)
-
-        if camera is None:
-            logging.error(err)
-            return error_response(404, err)
-
-        return flask.jsonify({'enabled' : camera.get('enabled', True) })
-
-    if request.method == 'PUT':
-
-        enabled = request.get_json()['enabled']
-
-        if not isinstance(enabled,bool):
-            return error_response(400, "invalid argument")
-
-        res, err = bvc_db.set_camera_enabled(camera_id, enabled)
-
-        if res is None:
-            logging.error(err)
-            return error_response(404, err)
-
-        logging.info("camera [%d] enabled = %s", camera_id, enabled)
-
-        app.dispatcher.on_cameras_update()
-
-        return flask.jsonify(res)
+        return 204
 
 @app.route('/api/alerts', methods=["POST"])
 @jwt_required()
@@ -333,6 +352,7 @@ def api_alerts():
     return flask.jsonify({}), 201
 
 @app.route('/api/rs', methods=["POST"])
+@app.route('/api/reco_status', methods=["PUT"])
 @jwt_required()
 def api_rs():
 
@@ -347,12 +367,12 @@ def api_rs():
     if reco_id is None:
         return error_response(400, "invalid arguments")
 
-    cameras_count = data.get('cameras_count', 0)
     fps = data.get('fps', 0.0)
+    cameras = data.get('cameras', [])
 
-    app.dispatcher.set_reco_state(reco_id, cameras_count, fps)
+    app.dispatcher.set_reco_state(reco_id, fps, cameras)
 
-    return flask.jsonify({}), 204
+    return 204
 
 @app.route('/status', methods=["GET"])
 def get_status():
