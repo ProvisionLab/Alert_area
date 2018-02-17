@@ -193,7 +193,7 @@ def api_user_put_cameras(user_id: int):
 
     app.dispatcher.on_cameras_update()
 
-    return 204
+    return flask.jsonify({}), 204
 
 @app.route('/api/cameras/<int:camera_id>', methods=["GET"])
 @app.route('/api/camera/<int:camera_id>', methods=["GET"])
@@ -243,7 +243,7 @@ def api_camera_enabled(camera_id: int):
 
         app.dispatcher.on_cameras_update()
 
-        return 204
+        return flask.jsonify({}), 204
 
 @app.route('/api/camera/<int:camera_id>/connectedOnce', methods=["GET"])
 @jwt_required()
@@ -312,14 +312,20 @@ def api_camera_alert_(camera_id:str, alert_id:str):
         return flask.jsonify({'alert' : alert })
 
     if request.method == 'PUT':
+        
+        try:
 
-        res, err = bvc_db.update_camera_alert(camera_id, alert_id, request.get_json())
+            res, err = bvc_db.update_camera_alert(camera_id, alert_id, request.get_json())
 
-        if res is None:
-            logging.error(err)
-            return error_response(404, err)
+            if res is None:
+                logging.error(err)
+                return error_response(404, err)
 
-        return 204
+            return flask.jsonify({}), 204
+
+        except Exception as e:
+            logging.exception("exce")
+            return "exception", 500
 
     if request.method == 'DELETE':
 
@@ -331,7 +337,7 @@ def api_camera_alert_(camera_id:str, alert_id:str):
 
         app.dispatcher.on_cameras_update()
 
-        return 204
+        return flask.jsonify({}), 204
 
 @app.route('/api/alerts', methods=["POST"])
 @jwt_required()
@@ -372,7 +378,7 @@ def api_rs():
 
     app.dispatcher.set_reco_state(reco_id, fps, cameras)
 
-    return 204
+    return flask.jsonify({}), 204
 
 @app.route('/status', methods=["GET"])
 def get_status():

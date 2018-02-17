@@ -84,7 +84,7 @@ def check_camera(self,camera):
 
     camera_id = camera.get('id')
     self.assertTrue(isinstance(camera_id,int))
-    self.assertTrue(isinstance(camera.get('connectedOnce'),bool))
+    #self.assertTrue(isinstance(camera.get('connectedOnce'),bool))
 
 def check_response_camera(self,camera):
 
@@ -352,12 +352,10 @@ class Test_camera_alerts(unittest.TestCase):
         self.assertTrue(type(res) is dict)
 
         res = res.get('alert')
-        self.assertTrue(res is not None)
-        self.assertTrue(type(res) is dict)
+        self.assertTrue(isinstance(res, dict))
 
         alert_id = res.get('id')
-        self.assertTrue(alert_id is not None)
-        self.assertTrue(type(alert_id) is str)
+        self.assertTrue(isinstance(alert_id, str))
         self.assertTrue(len(alert_id) > 0)
 
         baseurl = bvcapi_url
@@ -390,9 +388,7 @@ class Test_camera_alerts(unittest.TestCase):
             headers = {'Authorization': 'JWT {0}'.format(self.access_token) },
             json=dummy_alert_4)
 
-        self.assertEqual(r.status_code, 200)
-
-        res = r.json()
+        self.assertEqual(r.status_code, 204)
 
         # get alert again
         r = session.get('{0}/api/cameras/{1}/alerts/{2}'.format(bvcapi_url, self.camera_id, alert_id),
@@ -469,3 +465,4 @@ if __name__ == '__main__':
     #unittest.main(argv=["", "Test_get_cameras"])
     #unittest.main(argv=["", "Test_get_camera"])
     #unittest.main(argv=["", "Test_camera_alerts"])
+    #unittest.main(argv=["", "Test_camera_alerts.test_post_1"])

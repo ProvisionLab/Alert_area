@@ -16,8 +16,8 @@ test -d $RUNDIR || mkdir -p $RUNDIR
 exec gunicorn3 main:app \
     --name $NAME \
     --bind=unix:$SOCKFILE \
-    --access-logfile $LOGDIR/bvc_access.log \
-    --log-file $LOGDIR/$NAME.log  \
+    --access-logfile $LOGDIR/access.log \
+    --log-file $LOGDIR/server.log  \
     --log-level debug
 
 #    --log-level info
