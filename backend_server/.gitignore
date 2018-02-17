@@ -1,4 +1,4 @@
 bvc_config.py
-logs/*.log
+logs/*
 test_*
 
