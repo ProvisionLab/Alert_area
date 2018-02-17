@@ -14,7 +14,7 @@
     <div>
         <p>
             <span>instance: {{inst.id}},</span>
-            <span>cameras: {{inst.cc}},</span>
+            <span>active cameras: {{inst.cc}},</span>
             <span>fps: {{'%0.2f' % inst.fps|float}},</span>
             <span>fix fps: {{'%0.2f' % inst.fixfps|float}},</span>
             <span>fps/cam: {{'%0.2f' % inst.fpspc|float}},</span>
@@ -25,11 +25,11 @@
             {% for proc in inst.procs %}
             <tr>
                 <td>process: {{proc.id}},</td>
-                <td>cameras: {{proc.cc}},</td>
+                <td>active cameras: {{proc.cc}},</td>
                 <td>fps: {{'%0.2f' % proc.fps|float}},</td>
                 <td>prev: {{'%0.0f' % proc.prev|float}} s,</td>
                 <td>last: {{'%0.0f' % proc.last|float}} s,</td>
-                <td>cameras: {{proc.cids|string}}.</td>
+                <td>assigned cameras: {{proc.cids|string}}.</td>
                 <td>{{proc.comments|string}}</td>
             </tr>
             {% endfor %}
@@ -38,7 +38,7 @@
     </div>
     {% endfor %}
 
-    <div>active cameras: {{status.active_cameras|string}}</div>
+    <div>total cameras: {{status.active_cameras|string}}</div>
     <div>free cameras: {{status.free_cameras|string}}</div>
 
 </body>
