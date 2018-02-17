@@ -173,7 +173,7 @@ class CaptureWorker(threading.Thread):
 
             else:
     
-                logging.error("camera [%d] \'%s\' not opened", self.camera_id, self.camera_name)
+                logging.warning("camera [%d] \'%s\' not opened", self.camera_id, self.camera_name)
                 break;
 
             if self.bStop or not self.restart_on_fail:

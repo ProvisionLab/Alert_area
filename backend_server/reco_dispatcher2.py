@@ -51,12 +51,8 @@ class RecoDispatcher2(object):
 
             time.sleep(1.0)
 
-            now = time.time()
-
-            if self.bStop or (now-prev) > 30.0:
+            if self.bStop or (time.time()-prev) > interval:
                 break
-
-            prev = now
 
         pass
 

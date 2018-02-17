@@ -638,7 +638,7 @@ def reco_get_status():
             'id': inst['inst_id'],
             'cam_count': inst.get('status_count',0),
             'fps': inst.get('status_fps',0),
-            'fix_fps': inst.get('fix_fps',0),
+            'fixfps': inst.get('fix_fps',0),
             'procs': sorted([
                 {
                     'id': p['proc_id'],

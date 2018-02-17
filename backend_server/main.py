@@ -96,7 +96,7 @@ def internal_error(e):
 @jwt_required()
 def api_cameras_get_enabled():
 
-    logging.info('get active cameras, %s', current_identity.id)
+    logging.debug('get active cameras, %s', current_identity.id)
 
     if current_identity.id[:5] != 'reco-':
         return error_response(403, "")
@@ -111,7 +111,7 @@ def api_cameras_get_enabled():
 @jwt_required()
 def api_cameras_delete(camera_id):
 
-    logging.info('detete camera: %d', camera_id)
+    logging.info('delete camera: %d', camera_id)
 
     if not bvc_db.delete_camera(camera_id):
         return error_response(404, "not found")
@@ -397,7 +397,7 @@ def api_reco_status():
     data = request.get_json()
 
     reco_id = current_identity.id[5:]
-    logging.info("ps: %s %s", reco_id, str(data))
+    logging.debug("ps: %s %s", reco_id, str(data))
 
     if reco_id is None:
         return error_response(400, "invalid arguments")
@@ -413,21 +413,33 @@ def api_reco_status():
 @app.route('/status', methods=["GET"])
 def get_status():
     
-    return render_template(
-        'status.html',
-        title='Status',
-        status=app.dispatcher.get_status(),
-        status2=app.dispatcher2.get_status()
-    )
+    try:
+
+        return render_template(
+            'status.html',
+            title='Status',
+            status=app.dispatcher.get_status(),
+            status2=app.dispatcher2.get_status()
+        )
+
+    except Exception as e:
+        logging.exception("[EX] /status: ")
+        raise
 
 @app.route('/subs', methods=["GET"])
 def get_subs():
     
-    return render_template(
-        'subs.html',
-        title='Subscribes',
-        subs=bvc_db.get_subscribes()
-    )
+    try:
+
+        return render_template(
+            'subs.html',
+            title='Subscribes',
+            subs=bvc_db.get_subscribes()
+        )
+
+    except Exception as e:
+        logging.exception("[EX] /subs: ")
+        raise
 
 @app.route('/', methods=["GET"])
 def get_home():

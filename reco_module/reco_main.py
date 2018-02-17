@@ -87,8 +87,7 @@ class RecoApp(object):
 
                     if (now - self.updatate_timer) >= reco_config.update_interval:
 
-                        if not self.update_cameras():
-                            break
+                        self.update_cameras()
 
                         self.updatate_timer = now
 
@@ -102,6 +101,18 @@ class RecoApp(object):
                 except (requests.exceptions.ConnectionError) as e:
 
                     logging.error("ConnectionError: %s", str(e))
+                    time.sleep(30)
+                    pass
+
+                except (requests.exceptions.HTTPError) as e:
+
+                    logging.error("HTTPError: %s", str(e))
+                    time.sleep(30)
+                    pass
+
+                except (Exception) as e:
+
+                    logging.exception("exception")
                     time.sleep(30)
                     pass
 
@@ -123,9 +134,6 @@ class RecoApp(object):
         updates recognizers
         """
 
-        if not self.bvcapi.auth():
-            return False
-        
         status = self.get_status()
 
         self.bvcapi.post_status(status)
@@ -133,8 +141,7 @@ class RecoApp(object):
         cameras = self.bvcapi.get_active_cameras()
 
         if cameras is None:
-            logging.error("backend cameras request failed, no cameras returned")
-            return False
+            raise Exception("backend cameras request failed, no cameras returned")
 
         #if reco_config.filter_cameras:
         #    cameras = [c for c in cameras if c['name'] in reco_config.filter_cameras]
@@ -143,8 +150,6 @@ class RecoApp(object):
         cameras = [c for c in cameras if c.get('enabled',True)]
 
         self.set_cameras(cameras)
-
-        return True
 
     def remove_stoped_threads(self):
 

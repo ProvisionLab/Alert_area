@@ -17,11 +17,11 @@
         <h3>instance: {{inst.id}}</h3>
         <div>active cameras: {{inst.cc}},</div>
         <div>fps: {{'%0.2f' % inst.fps|float}}</div>
-        <div>fix fps: {{'%0.2f' % inst.fix_fps|float}}</div>
-        <div>fps/cam: {{'%0.2f' % inst.fpspc|float}},</div>
-        <div>{{inst.comments}},</div>
+        <div>fix fps: {{'%0.2f' % inst.fixfps|float}}</div>
+        <div>fps/cam: {{'%0.2f' % inst.fpspc|float}}</div>
+        <div>{{inst.comments}}</div>
 
-        <table>
+        <table border=1>
             <tr>
                 <th>proc_id</th>
                 <th>last</th>
@@ -47,8 +47,9 @@
     </div>
     {% endfor %}
 
-    <div>total cameras: count: {{status.active_cameras|length}}, {{status.active_cameras|string}}</div>
-    <div>free cameras: {{status.free_cameras|string}}</div>
+    <br>
+    <div>total cameras: count: {{status.active_cameras|length}}: {{status.active_cameras|string}}</div>
+    <div>not assigned cameras: {{status.free_cameras|string}}</div>
 
 
     <br>
@@ -58,9 +59,9 @@
     <div>
         <h3>instance: {{inst.id}}</h3>
         <div>fps: {{'%0.2f' % inst.fps|float}}</div>
-        <div>fix fps: {{'%0.2f' % inst.fix_fps|float}}</div>
+        <div>fix fps: {{'%0.2f' % inst.fixfps|float}}</div>
         <div>cam count: {{inst.cam_count}}</div>
-        <table>
+        <table border=1>
             <tr>
                 <th>proc id</th>
                 <th>status fps</th>
