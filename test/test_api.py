@@ -5,7 +5,7 @@ import json
 
 ##################################################
 
-use_dev = False
+use_dev = True
 
 if use_dev:
 

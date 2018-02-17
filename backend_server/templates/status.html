@@ -41,6 +41,37 @@
     <div>total cameras: {{status.active_cameras|string}}</div>
     <div>free cameras: {{status.free_cameras|string}}</div>
 
+
+    <br>
+    <h2>Status 2</h2>
+    <div>instances count: {{status2|length}}</div>
+    {% for inst in status2 %}
+    <div>
+        <h3>instance: {{inst.id}}</h3>
+        <div>fps: {{'%0.2f' % inst.fps|float}}</div>
+        <div>fix fps: {{'%0.2f' % inst.fix_fps|float}}</div>
+        <div>cam count: {{inst.cam_count}}</div>
+        <table>
+            <tr>
+                <th>proc id</th>
+                <th>status fps</th>
+                <th>cam count</th>
+                <th>last time</th>
+            </tr>
+            {% for proc in inst.procs %}
+            <tr>
+                <td>{{proc.id}}</td>
+                <td>{{'%0.2f' % proc.tot_fps|float}}</td>
+                <td>{{proc.cam_count}}</td>
+                <td>{{'%0.1f' % proc.last_time|float}}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+    </div>
+    {% endfor %}
+
+
 </body>
 
 </html>

@@ -2,6 +2,7 @@ import time
 import logging
 import bvc_db
 from threading import Lock
+from threading import Thread
 
 purge_timeout = 200  # seconds
 
@@ -23,6 +24,7 @@ def split_recoid(reco_id):
 class RecoProc(object):
     
     def __init__(self, id, inst):
+        
         self.id = id
         self.inst = inst
         self.status_time = None
@@ -216,18 +218,65 @@ class RecoDispatcher(object):
 
     def __init__(self):
         
+        bvc_db.mutex_init('procs')
+        bvc_db.mutex_init('disp')
+        
         self.instances = {}
 
         self.free_cameras = {}
 
         self.lock = Lock()
 
+        self.worker = Thread(target=self._workerFunc)
+        self.worker.start()        
         pass
 
-    def on_reco_state(self, reco_id, cameras_count, fps):
+    def _workerFunc(self):
+    
+        with bvc_db.DatabaseLock("disp"):
+    
+            while True:
+    
+                bvc_db.mutex_confirm("disp")                
+    
+                self._workerTick()
+    
+                time.sleep(30.0)
+
+        pass
+
+    def _workerTick(self):
+
+        #logging.debug("worker Tick")
+
+        bvc_db.reco_purge_procs(300.0)
+
+        # 2do:
+        # purge procs
+        # dispatch cameras
+
+        pass
+
+    def _on_new_instance(self, inst_id):
+        
+        instance = RecoInstance(inst_id)
+        self.instances[inst_id] = instance
+
+        return instance
+
+    def _on_del_instance(self):
+        pass
+
+    def set_reco_state(self, reco_id, cameras_count, fps):
         """
         /api/rs handler
         """
+
+        inst_id, proc_id = split_recoid(reco_id)
+
+        with bvc_db.DatabaseLock('procs'):
+
+            bvc_db.reco_update_proc(inst_id, proc_id, cameras_count, fps)
 
         with self.lock:
         
@@ -236,8 +285,7 @@ class RecoDispatcher(object):
             instance = self.instances.get(inst_id)
 
             if instance is None:
-                instance = RecoInstance(inst_id)
-                self.instances[inst_id] = instance
+                instance = self._on_new_instance(inst_id)
 
             new_proc = instance.set_status(proc_id, cameras_count, fps)
 
@@ -293,7 +341,24 @@ class RecoDispatcher(object):
             logging.exception(e)
             pass
        
+    def get_status2(self):
+        """
+        """
+
+        status = []
+        now = time.time()
+
+        with bvc_db.RecoLock():
+
+            status = bvc_db.reco_get_status()
+
+            pass
+
+        return {}
+       
     def get_status(self):
+        """
+        """
         
         with self.lock:
 

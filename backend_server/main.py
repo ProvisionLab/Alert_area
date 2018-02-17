@@ -20,6 +20,8 @@ class BVC_Flask(Flask):
         
         super().__init__(__name__);
    
+        logging.info("BVC server starting")
+
         self.jwt = BVC_JWT(self)
         self.dispatcher = RecoDispatcher()
 
@@ -348,7 +350,7 @@ def api_rs():
     cameras_count = data.get('cameras_count', 0)
     fps = data.get('fps', 0.0)
 
-    app.dispatcher.on_reco_state(reco_id, cameras_count, fps)
+    app.dispatcher.set_reco_state(reco_id, cameras_count, fps)
 
     return flask.jsonify({}), 204
 
@@ -358,7 +360,8 @@ def get_status():
     return render_template(
         'status.html',
         title='Status',
-        status=app.dispatcher.get_status()
+        status=app.dispatcher.get_status(),
+        status2=bvc_db.reco_get_status()
     )
 
 @app.route('/subs', methods=["GET"])
@@ -370,8 +373,13 @@ def get_subs():
         subs=bvc_db.get_subscribes()
     )
 
+@app.route('/', methods=["GET"])
+def get_home():
+    
+    return "<html>OK<html>", 200
+
 if __name__ == '__main__':
     #app.run(host="127.0.0.1", port=5000)
-    #app.run(host="0.0.0.0", port=5000, threaded=True, debug=False)
-    context = ('cert/cert.pem', 'cert/key.pem')
-    app.run(host="0.0.0.0", port=443, threaded=True, ssl_context=context, debug=True)
+    app.run(host="0.0.0.0", port=5000, threaded=True, debug=False)
+    #context = ('cert/cert.pem', 'cert/key.pem')
+    #app.run(host="0.0.0.0", port=443, threaded=True, ssl_context=context, debug=True)

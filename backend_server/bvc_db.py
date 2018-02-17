@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from bson.objectid import ObjectId 
 import logging
+import time
 
 import bvc_config
 
@@ -18,7 +19,7 @@ def get_subs_users():
     
     users = [ {'id':u['uid'], 'cameras': u['cameras'] } for u in db.users.find({})]
 
-    return users
+    return sorted(users, key=lambda x: x['id'])    
 
 def get_subs_cameras():
     
@@ -30,8 +31,8 @@ def get_subs_cameras():
         'url': c.get('url')
         } for c in db.cameras.find({})]
 
-    return cameras
-    
+    return sorted(cameras, key=lambda x: x['id'])
+
 def get_subscribes():
     
     return {
@@ -428,6 +429,172 @@ def update_camera_alert( camera_id: int, alert_id : str, alert : dict ):
 
     except:
         return None, 'camera {0} not found'.format(camera_id)
+
+def mutex_init(name:str):
+    
+    res = db.mutexes.update_one({'name':name}, {'$set' : {'name': name }}, upsert=True)
+    if res.upserted_id is not None:
+        db.mutexes.update_one({'name':name}, {'$set' : {'locked': False }})
+
+def mutex_confirm(name:str):
+    now = time.time()
+    db.mutexes.update_one({'name':name}, {'$set' : {'locked': True, 'time': now }})
+    
+def mutex_lock(name:str):
+
+    try:
+
+        now = time.time()
+        upper_time = now - 60.0
+
+        res = db.mutexes.update_one(
+            {
+                '$and' : [
+                    {'name':name},
+                    { '$or': [
+                        {'locked': False},
+                        {'time': { '$lt': upper_time}},
+                        ]
+                    }
+                ]
+            }, {'$set' : {'locked': True, 'time': now }})
+
+        return res.matched_count > 0
+
+    except pymongo.errors.PyMongoError:
+        return False
+
+    pass
+
+def mutex_unlock(name:str):
+
+    res = db.mutexes.update_one({'name': name}, {'$set' : { 'locked': False }} )
+    pass
+
+class DatabaseLock(object):
+    
+    def __init__(self, name: str):
+        self.name = name
+    
+    def __enter__(self):
+        while not mutex_lock(self.name):
+            time.sleep(0.05)
+        return self
+
+    def __exit__(self, type, value, traceback):
+        mutex_unlock(self.name)
+        pass    
+
+def reco_update_proc(inst_id: str, proc_id: str, cam_count: int, proc_fps: int):
+    """
+    check if instance exists, if no - creates it
+    """
+    now = time.time()
+    
+#    db.reco_insts.update_one({'inst_id': inst_id}, {'$set': {
+#        'inst_id': inst_id, 
+#        'status_time': now
+#        }}, upsert=True)
+
+    db.reco_procs.update_one({'inst_id': inst_id, 'proc_id': proc_id}, {'$set': {
+        'proc_id': proc_id,
+        'inst_id': inst_id,
+        'status_time': now,
+        'status_count': cam_count,
+        'status_fps': proc_fps
+        }}, upsert=True)    
+
+    # update instance status
+
+    procs = [p for p in db.reco_procs.find({'inst_id': inst_id}, 
+        {
+            'status_count':True, 
+            'status_fps':True
+        })]
+
+    inst = db.reco_insts.find_one({'inst_id': inst_id}, 
+        {
+            'fix_fps': True, 
+            'status_time': True
+        })
+
+    inst_cam_count = sum(p.get('status_count',0) for p in procs)
+    inst_tot_fps = sum(p.get('status_fps',0) for p in procs)
+
+    if inst is None:
+        fix_fps = 0
+        fix_time = 0
+    else:
+        fix_fps = inst.get('fix_fps', 0.0)
+        fix_time = inst.get('status_time', 0)
+        
+    # calculate average fps on interval window
+    d = now - fix_time
+    fix_fps = (fix_fps * bvc_config.fix_fps_window + inst_tot_fps * d) / (bvc_config.fix_fps_window + d)
+
+    db.reco_insts.update_one({'inst_id': inst_id}, {'$set': {
+        'inst_id': inst_id,
+        'status_time': now,
+        'status_count': inst_cam_count,
+        'status_fps': inst_tot_fps,
+        'fix_fps': fix_fps
+        }}, upsert=True)
+
+    pass
+
+def reco_purge_procs(timeout:float):
+    
+    now = time.time()
+    upper_time = now - timeout
+
+    procs = [p for p in db.reco_procs.find({'status_time' : { '$lt': upper_time}})]
+
+    free_cameras = [ x for p in procs for x in p.get('cameras',[]) ]
+
+    insts = set()
+
+    for p in procs:
+
+        inst_id = p.get('inst_id')
+        proc_id = p.get('proc_id')
+
+        insts.add(inst_id)
+
+        db.reco_procs.delete_one({'inst_id': inst_id, 'proc_id': proc_id})
+
+        logging.warning("removed inactive process: %s:%s", inst_id, proc_id)
+
+    for inst_id in insts:
+        
+        if db.reco_procs.find({'inst_id': inst_id}).count() == 0:
+
+            db.reco_insts.delete_one({'inst_id': inst_id})
+            logging.warning("removed inactive instance: %s", inst_id)
+   
+    pass
+
+def reco_get_status():
+    
+    now = time.time()
+
+    return [
+        {
+            'id': inst['inst_id'],
+            'cam_count': inst.get('status_count',0),
+            'fps': inst.get('status_fps',0),
+            'fix_fps': inst.get('fix_fps',0),
+            'procs': sorted([
+                {
+                    'id': p['proc_id'],
+                    'last_time': now - p.get('status_time', now),
+                    'cam_count': p['status_count'],
+                    'tot_fps': p['status_fps']
+                }
+                for p in db.reco_procs.find({'inst_id': inst['inst_id']})
+            ], key=lambda k: k['id'])
+        }
+        for inst in db.reco_insts.find()
+    ]
 
 def help():
     print("examples:")

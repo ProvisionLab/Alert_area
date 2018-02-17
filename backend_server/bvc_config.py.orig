@@ -31,3 +31,7 @@ rogt_key    = 'qwerty1'
 # ROG server uses this to connect to backend
 rogserver_username = 'rog'          
 rogserver_password = 'rogpassword'
+
+
+# cameras dispatcher options
+fix_fps_window = 300
