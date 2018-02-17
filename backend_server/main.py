@@ -11,8 +11,11 @@ import flask.logging
 import bvc_config
 import bvc_logging, logging
 
+import sys, signal
+
 from bvc_users import BVC_JWT
 from reco_dispatcher import RecoDispatcher
+from reco_dispatcher2 import RecoDispatcher2
 
 class BVC_Flask(Flask):
     
@@ -23,9 +26,35 @@ class BVC_Flask(Flask):
         logging.info("BVC server starting")
 
         self.jwt = BVC_JWT(self)
-        self.dispatcher = RecoDispatcher()
 
+        self.dispatcher = RecoDispatcher()
         self.dispatcher.on_cameras_update()
+
+        self.dispatcher2 = RecoDispatcher2()
+
+        self.prev_sigint = signal.signal(signal.SIGINT, self.on_signal_int)
+        self.prev_sigterm = signal.signal(signal.SIGTERM, self.on_signal_term)
+
+    def on_signal_int(self, signum, taskfrm):
+
+        logging.warning("on_signal_int")
+
+        self.prev_sigint(signum, taskfrm)
+        pass
+       
+    def on_signal_term(self, signum, taskfrm):
+
+        logging.warning("on_signal_term")
+
+        self.dispatcher.stop(False)
+        self.dispatcher2.stop(False)
+
+        self.dispatcher.stop()
+        self.dispatcher2.stop()
+
+        sys.exit(0)
+        #self.prev_sigterm(signum, taskfrm)
+        pass
 
     def on_reco_instance_request(self, reco_id):
         
@@ -358,9 +387,9 @@ def api_alerts():
     return flask.jsonify({}), 201
 
 @app.route('/api/rs', methods=["POST"])
-@app.route('/api/reco_status', methods=["PUT"])
+@app.route('/api/reco_status', methods=["POST"])
 @jwt_required()
-def api_rs():
+def api_reco_status():
 
     if current_identity.id[:5] != 'reco-':
         return error_response(403, "")
@@ -376,7 +405,8 @@ def api_rs():
     fps = data.get('fps', 0.0)
     cameras = data.get('cameras', [])
 
-    app.dispatcher.set_reco_state(reco_id, fps, cameras)
+    app.dispatcher.set_reco_status(reco_id, fps, cameras)
+    app.dispatcher2.set_reco_status(reco_id, fps, cameras)
 
     return flask.jsonify({}), 204
 
@@ -387,7 +417,7 @@ def get_status():
         'status.html',
         title='Status',
         status=app.dispatcher.get_status(),
-        status2=bvc_db.reco_get_status()
+        status2=app.dispatcher2.get_status()
     )
 
 @app.route('/subs', methods=["GET"])

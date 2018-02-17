@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError
 from bson.objectid import ObjectId 
 import logging
 import time
@@ -354,6 +355,16 @@ def set_camera_property(camera_id: int, name:str, value):
     except:
         return None, 'camera {0} not found'.format(camera_id)
 
+def get_not_connectedOnce_cameras():
+    
+    cameras = [ c.get('id') for c in db.cameras.find({ 'connectedOnce' : False }, { 'id': True } ) ]
+    cameras2 = [ c.get('id') for c in db.cameras.find({ 'connectedOnce' : { '$exists' : False } }, { 'id': True } ) ]
+
+    cameras.extend(cameras2)
+
+    return cameras
+ 
+
 def get_camera_alerts( camera_id : int ):
 
     try:  
@@ -503,7 +514,7 @@ def mutex_lock(name:str):
 
         return res.matched_count > 0
 
-    except pymongo.errors.PyMongoError:
+    except PyMongoError:
         return False
 
     pass
@@ -527,7 +538,7 @@ class DatabaseLock(object):
         mutex_unlock(self.name)
         pass    
 
-def reco_update_proc(inst_id: str, proc_id: str, cam_count: int, proc_fps: int):
+def reco_update_proc(inst_id: str, proc_id: str, cameras: list):
     """
     check if instance exists, if no - creates it
     """
@@ -538,11 +549,14 @@ def reco_update_proc(inst_id: str, proc_id: str, cam_count: int, proc_fps: int):
 #        'status_time': now
 #        }}, upsert=True)
 
+    good = [c for c in cameras if c.get('fps1')>0.0]
+    proc_fps = sum([c.get('fps2',0.0) for c in good])
+
     db.reco_procs.update_one({'inst_id': inst_id, 'proc_id': proc_id}, {'$set': {
         'proc_id': proc_id,
         'inst_id': inst_id,
         'status_time': now,
-        'status_count': cam_count,
+        'status_count': len(good),
         'status_fps': proc_fps
         }}, upsert=True)    
 

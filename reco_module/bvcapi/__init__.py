@@ -1,6 +1,34 @@
 import requests
 import logging
 
+def do_auth(func):
+    """
+    decorator to auth if need
+    """
+    
+    def reauth(self, *args, **kwargs):
+
+        if not self.jwt_token and not self.auth():
+            return None
+
+        try:
+
+            return func(self, *args, **kwargs)
+
+        except requests.exceptions.HTTPError as e:
+
+            if e.response.status_code != 401:
+                raise e
+
+        self.jwt_token = None
+
+        if not self.auth():
+            return None
+
+        return func(self, *args, **kwargs)
+
+    return reauth        
+
 class BVC_Client(object):
 
 
@@ -14,34 +42,6 @@ class BVC_Client(object):
         self.session.verify = False
 
         self.jwt_token = None
-
-    def do_auth(func):
-        """
-        decorator to auth if need
-        """
-        
-        def reauth(self, *args, **kwargs):
-
-            if not self.jwt_token and not self.auth():
-                return None
-
-            try:
-
-                return func(self, *args, **kwargs)
-
-            except requests.exceptions.HTTPError as e:
-
-                if e.response.status_code != 401:
-                    raise e
-
-            self.jwt_token = None
-
-            if not self.auth():
-                return None
-
-            return func(self, *args, **kwargs)
-
-        return reauth        
 
     def auth(self):
         
@@ -153,13 +153,13 @@ class BVC_Client(object):
         """
         """
 
-        r = self.session.post('{0}/api/rs'.format(self.url),
+        r = self.session.post('{0}/api/reco_status'.format(self.url),
             headers={'Authorization': 'JWT {0}'.format(self.jwt_token)},
             json=status)
 
         r.raise_for_status()
 
-        logging.debug("/api/rs status: %d", r.status_code)
+        logging.debug("/api/reco_status status: %d", r.status_code)
 
         return None
 

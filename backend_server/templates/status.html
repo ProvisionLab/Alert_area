@@ -9,27 +9,36 @@
 
     <a href="/subs">Subs</a>
 
+    <h2>Status 1</h2>
+
     <div>instances count: {{status.insts|length}}</div>
     {% for inst in status.insts %}
     <div>
-        <p>
-            <span>instance: {{inst.id}},</span>
-            <span>active cameras: {{inst.cc}},</span>
-            <span>fps: {{'%0.2f' % inst.fps|float}},</span>
-            <span>fix fps: {{'%0.2f' % inst.fixfps|float}},</span>
-            <span>fps/cam: {{'%0.2f' % inst.fpspc|float}},</span>
-            <span>{{inst.comments}},</span>
-        </p>
+        <h3>instance: {{inst.id}}</h3>
+        <div>active cameras: {{inst.cc}},</div>
+        <div>fps: {{'%0.2f' % inst.fps|float}}</div>
+        <div>fix fps: {{'%0.2f' % inst.fix_fps|float}}</div>
+        <div>fps/cam: {{'%0.2f' % inst.fpspc|float}},</div>
+        <div>{{inst.comments}},</div>
 
         <table>
+            <tr>
+                <th>proc_id</th>
+                <th>last</th>
+                <th>total fps</th>
+                <th>assigned cameras</th>
+                <th>active cameras</th>
+                <th>bad cameras</th>
+                <th></th>
+            </tr>
             {% for proc in inst.procs %}
             <tr>
-                <td>process: {{proc.id}},</td>
-                <td>active cameras: {{proc.cc}},</td>
-                <td>fps: {{'%0.2f' % proc.fps|float}},</td>
-                <td>prev: {{'%0.0f' % proc.prev|float}} s,</td>
-                <td>last: {{'%0.0f' % proc.last|float}} s,</td>
-                <td>assigned cameras: {{proc.cids|string}}.</td>
+                <td>{{proc.id}},</td>
+                <td>{{'%0.0f' % proc.last|float}} s</td>
+                <td>{{'%0.2f' % proc.fps|float}}</td>
+                <td>{{proc.cids|string}}</td>
+                <td>{{proc.good|string}}</td>
+                <td>{{proc.bad|string}}</td>
                 <td>{{proc.comments|string}}</td>
             </tr>
             {% endfor %}

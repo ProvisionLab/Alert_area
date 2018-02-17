@@ -15,6 +15,8 @@ if use_dev:
 
     #bvcapi_url = 'http://localhost:5000'
     bvcapi_url = 'https://dev.gorog.co'  # BVC Dev Server
+    #bvcapi_url = 'http://dev.gorog.co:5000'  # BVC Dev Server
+    #bvcapi_url = 'http://54.69.73.20:5000'  # BVC Dev Server
     bvc_verify_ssl=True
 
     bvcapi_username = 'rogt-2'
