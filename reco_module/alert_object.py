@@ -1,6 +1,7 @@
 import datetime
 import uuid
 import cv2
+import numpy as np
 import base64
 import reco_config
 from trk_object import TrackObject
@@ -48,6 +49,9 @@ def get_alert_type_id(alert_type):
             
 
 def encode_cvimage(image):
+    
+    if image is None:
+        image = np.zeros((8,8,3), np.uint8)
     
     encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
     result, encimg = cv2.imencode('.jpg', image, encode_param)
