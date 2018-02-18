@@ -1,9 +1,11 @@
 import time
-import logging
 import bvc_db
 import random
 from threading import Lock
 from threading import Thread
+
+import logging
+logger = logging.getLogger('reco_dispatcher')
 
 purge_timeout = 200  # seconds
 
@@ -72,7 +74,7 @@ class RecoProc(object):
         self.period = now - self.status_time if self.status_time else 0.0
         self.status_time = now
 
-        logging.debug('proc set_status: %d %.2f', self.status_cc, self.status_fps)
+        logger.debug('proc set_status: %d %.2f', self.status_cc, self.status_fps)
 
     def append_camera(self, cid):
         
@@ -81,6 +83,7 @@ class RecoProc(object):
         if not bvc_db.get_camera_property(cid, 'connectedOnce', False):
             self.not_connectedOnce.add(cid)
 
+        logger.info("assing camera [%d] to %s", cid, self.id)
         pass
 
     def remove_camera(self, cid:int = None):
@@ -94,6 +97,8 @@ class RecoProc(object):
         self.good_cameras.discard(cid)
         self.not_connectedOnce.discard(cid)
         
+        logger.info("remove camera [%d] from %s", cid, self.id)
+
         return cid
 
     def get_cameras_min_quality(self, qmin:int):
@@ -112,7 +117,7 @@ class RecoProc(object):
         if (now - self.status_time) <  purge_timeout:
             return set()
 
-        logging.warning("purge process: %s", self.id)
+        logger.warning("purge process: %s", self.id)
 
         if not self.cameras:
             return set()
@@ -179,9 +184,21 @@ class RecoInstance(object):
 
         self.status_fps = status_fps
 
-        logging.debug('instance set_status: %d %.2f', self.status_cc, self.status_fps)
+        logger.debug('instance set_status: %d %.2f', self.status_cc, self.status_fps)
         
         return new_proc
+
+    def remove_proc(self, proc_id):
+        
+        proc = self.procs.get(proc_id)
+        if proc is None:
+            return None
+
+        cs = proc.cameras
+
+        self.procs.pop(proc_id)
+        
+        return cs
 
     def purge(self):
 
@@ -291,8 +308,8 @@ class RecoInstance(object):
                 max_p = p
 
         if min_p and max_p and len(min_p.cameras)+1 < len(max_p.cameras):
-            c = max_p.cameras.pop()
-            min_p.cameras.add(c)
+            c = max_p.remove_camera()
+            min_p.append_camera(c)
 
 class RecoDispatcher(object):
 
@@ -333,7 +350,7 @@ class RecoDispatcher(object):
     def _workerFunc(self):
         
         # run
-        logging.info("RecoDispatcher worker start")
+        logger.info("RecoDispatcher worker start")
 
         while not self.bStop:
 
@@ -344,17 +361,17 @@ class RecoDispatcher(object):
                     self._workerTick()
 
                 except:
-                    logging.exception("[EX] _workerFunc")
+                    logger.exception("[EX] _workerFunc")
                     pass
 
             self.wait(30.0)
 
-        logging.info("RecoDispatcher worker stop")
+        logger.info("RecoDispatcher worker stop")
         pass
 
     def _workerTick(self):
 
-        logging.debug("worker Tick")
+        logger.debug("worker Tick")
 
         self.purge()
 
@@ -380,6 +397,29 @@ class RecoDispatcher(object):
             instance = self._on_new_instance(inst_id)
 
         return instance
+
+    def on_reco_end(self, reco_id):
+        
+        inst_id, proc_id = split_recoid(reco_id)
+
+        logger.info("reco proc ending: %s %s", inst_id, proc_id)
+
+        with self.lock:
+        
+            instance = self._get_instance(inst_id)
+            if instance:
+                cs = instance.remove_proc(proc_id)
+                if cs:
+                    self.free_cameras.update(cs)
+
+                    if len(instance.procs) == 0:
+                        logger.info("reco instance ending: %s", instance.id)
+                        self.instances.pop(instance.id)
+                        instance = None
+
+                    self.redistribute()
+
+        pass
 
     def set_reco_status(self, reco_id, fps, cameras):
         """
@@ -417,7 +457,7 @@ class RecoDispatcher(object):
 
             cameras = bvc_db.get_cameras_by_cids(list(cids))
 
-            #logging.debug('on_reco_get_cameras: %s %s', str(cids), str(cameras))
+            #logger.debug('on_reco_get_cameras: %s %s', str(cids), str(cameras))
 
             return cameras
 
@@ -442,7 +482,7 @@ class RecoDispatcher(object):
                 pass
 
         except Exception as e:
-            logging.exception("[EX] on_cameras_update:")
+            logger.exception("[EX] on_cameras_update:")
             pass
        
     def get_status(self):
@@ -505,7 +545,7 @@ class RecoDispatcher(object):
             css |= inst.purge()
 
             if inst.is_purged():
-                logging.warning("purge instance: %s", inst.id)
+                logger.warning("purge instance: %s", inst.id)
 
         self.instances = { k:inst for k,inst in self.instances.items() if not inst.is_purged() }
 
@@ -619,7 +659,7 @@ class RecoDispatcher(object):
             d2 = abs((max_fps2-min_fps2) / max_fps2)
 
             if d2 < d1 * 1.5:
-                logging.info('redistribute: %s->%s, %.2f->%.2f', min_i.id, max_i.id, d1, d2)                
+                logger.info('redistribute: %s->%s, %.2f->%.2f', min_i.id, max_i.id, d1, d2)                
                 return min_i, max_i
 
         return None, None
@@ -650,7 +690,11 @@ class RecoDispatcher(object):
         if min_i is None:
             return None
 
-        return min_i.remove_camera(random.choice(min_cs))
+        cid = random.choice(min_cs)
+
+        logger.info("free camera [%d] from %s", cid, min_i.id)
+
+        return min_i.remove_camera(cid)
 
     def redistribute(self):
 
@@ -659,7 +703,7 @@ class RecoDispatcher(object):
         free_procs = self._get_empty_procs()
 
         if len(free_procs) > 0:
-            logging.info("free procs: %d", len(free_procs))
+            logger.info("free procs count: %d", len(free_procs))
 
         while len(free_procs) > len(self.free_cameras):
 
@@ -676,6 +720,7 @@ class RecoDispatcher(object):
         for c,p in list(zip(self.free_cameras, self._get_empty_procs())):
             if p.inst.append_camera(c):
                 self.free_cameras.discard(c)
+                
 
         # assign rest of free cameras
 

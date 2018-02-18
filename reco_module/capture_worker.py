@@ -70,6 +70,10 @@ class CaptureWorker(threading.Thread):
         logging.debug("signal to stop capture camera [%d]", self.camera['id'])
         self.bStop = True
 
+    def stop_and_wait(self):
+        self.bStop = True
+        self.join()                
+
     def get_fps(self):
         
         if self.worker:

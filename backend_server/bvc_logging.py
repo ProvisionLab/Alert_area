@@ -48,6 +48,15 @@ logging.config.dictConfig({
             'maxBytes': 10000000,
             'backupCount': 2,
         },
+
+        'disp': {
+            'level':'INFO',
+            'class':'logging.handlers.RotatingFileHandler',
+            'filename' : 'logs/disp.log',
+            'formatter' : 'detail',
+            'maxBytes': 10000000,
+            'backupCount': 2,
+        },
     },
 
     'loggers': {
@@ -72,6 +81,12 @@ logging.config.dictConfig({
         'gunicorn.access': {
             'level': 'INFO',
             'handlers': ['access'],
+            'propagate': False
+        },
+
+        'reco_dispatcher': {
+            'level': 'INFO',
+            'handlers': ['disp'],
             'propagate': False
         },
      },

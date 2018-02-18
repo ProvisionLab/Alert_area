@@ -42,24 +42,36 @@ class RecoApp(object):
         self.rogapi = ROG_Client(reco_config.rogapi_url, reco_config.rogapi_username, reco_config.rogapi_password)
 
         signal.signal(signal.SIGINT, self.stop_execution)
+        signal.signal(signal.SIGTERM, self.on_sigterm)
         pass
+
+    def stop(self):
+
+        self.bStop = True
+
+        if len(self.alerts_queue)>4:
+            logging.warning("there are many alerts in queue: %d, reseting them", len(self.alerts_queue))
+            self.alerts_queue.clear()
+        
+        for t in self.threads:
+            t.stop()
+
+    def on_sigterm(self, signum, taskfrm):
+        
+        logging.info("SIGTERM reseived, stop all recognitions")
+        
+        self.stop()
 
     def stop_execution(self, signum, taskfrm):
         """
         SIGINT handler
         """
         print('Ctrl+C was pressed')
-        self.bStop = True
 
         logging.info("SIGINT reseived, stop all recognitions")
 
-        if len(self.alerts_queue)>4:
-            logging.warning("there are many alerts in queue: %d, reseting them", len(self.alerts_queue))
-            self.alerts_queue.clear()
+        self.stop()
 
-        for t in self.threads:
-            t.stop()
-        
     def run(self):
         """
         main loop
@@ -116,6 +128,7 @@ class RecoApp(object):
                     time.sleep(30)
                     pass
 
+
         except:
 
             logging.exception("exception")
@@ -124,7 +137,12 @@ class RecoApp(object):
         logging.info("stopping... this may take some time")
 
         for t in self.threads:
+            t.stop()
+
+        for t in self.threads:
             t.join()
+
+        self.bvcapi.post_reco_end()
 
         logging.info("Quit")
 

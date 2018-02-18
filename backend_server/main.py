@@ -9,7 +9,9 @@ import json
 import flask.logging
 
 import bvc_config
-import bvc_logging, logging
+import logging
+
+logger = logging.getLogger('reco_dispatcher')
 
 import sys, signal
 
@@ -397,10 +399,10 @@ def api_reco_status():
     data = request.get_json()
 
     reco_id = current_identity.id[5:]
-    logging.debug("ps: %s %s", reco_id, str(data))
-
     if reco_id is None:
         return error_response(400, "invalid arguments")
+
+    logging.debug("reco_status: %s %s", reco_id, str(data))
 
     fps = data.get('fps', 0.0)
     cameras = data.get('cameras', [])
@@ -409,6 +411,26 @@ def api_reco_status():
     app.dispatcher2.set_reco_status(reco_id, fps, cameras)
 
     return flask.jsonify({}), 204
+
+@app.route('/api/reco_end', methods=["POST"])
+@jwt_required()
+def api_reco_end():
+
+    if current_identity.id[:5] != 'reco-':
+        return error_response(403, "")
+
+    data = request.get_json()
+
+    reco_id = current_identity.id[5:]
+    if reco_id is None:
+        return error_response(400, "invalid arguments")
+    
+    logging.info("reco end: %s %s", reco_id, str(data))
+
+    app.dispatcher.on_reco_end(reco_id)
+
+    return flask.jsonify({}), 204
+   
 
 @app.route('/status', methods=["GET"])
 def get_status():

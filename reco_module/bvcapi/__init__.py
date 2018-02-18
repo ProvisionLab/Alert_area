@@ -164,6 +164,21 @@ class BVC_Client(object):
         return None
 
     @do_auth
+    def post_reco_end(self):
+        """
+        """
+
+        r = self.session.post('{0}/api/reco_end'.format(self.url),
+            headers={'Authorization': 'JWT {0}'.format(self.jwt_token)},
+            json={})
+
+        r.raise_for_status()
+
+        logging.debug("/api/reco_end: %d", r.status_code)
+
+        return None
+
+    @do_auth
     def get_camera_alerts(self, camera_id):
 
         r = self.session.get('{0}/api/cameras/{1}/alerts'.format(self.url, camera_id),
