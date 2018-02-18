@@ -278,7 +278,7 @@ class RecoInstance(object):
 
         return xs
 
-    def get_cameras_count(self):
+    def get_total_count(self):
         
         cc = 0
         for p in self.procs.values():
@@ -286,9 +286,27 @@ class RecoInstance(object):
 
         return cc
 
+    def get_active_count(self):
+        
+        cc = 0
+        for p in self.procs.values():
+            cc += len(p.good_cameras)
+
+        return cc
+
+    def get_availeable_for_moving_count(self):
+        
+        cc = 0
+        for p in self.procs.values():
+            n = len(p.cameras)
+            if n > 0 :
+                cc += n-1
+
+        return cc
+
     def get_fpspc(self):
         
-        cc = self.get_cameras_count()
+        cc = self.get_active_count()
         if cc == 0:
             cc += 1
 
@@ -639,11 +657,16 @@ class RecoDispatcher(object):
         max_fps2 = 0
 
         for inst in self.instances.values():
+            
+            #if not inst.is_fixed():
+            #    continue
 
             fps = inst.get_fpspc()
-            cc = inst.get_cameras_count()
 
-            if cc > 1 and (not min_i or fps < min_fps):
+            ac = inst.get_availeable_for_moving_count()
+            cc = inst.get_active_count()
+
+            if cc > 0 and ac > 0 and (not min_i or fps < min_fps):
                 min_i = inst
                 min_fps = fps
                 min_fps2 = fps * cc / (cc-1)
@@ -653,12 +676,16 @@ class RecoDispatcher(object):
                 max_fps = fps
                 max_fps2 = fps * cc / (cc+1)
 
-        if min_i and max_i and max_fps > 0 and max_fps2 > 0:
+        if min_i and max_i and min_i != max_i and max_fps > 0 and max_fps2 > 0:
 
-            d1 = abs((max_fps-min_fps) / max_fps)
-            d2 = abs((max_fps2-min_fps2) / max_fps2)
+            #d1 = abs((max_fps-min_fps) / max_fps)
+            #d2 = abs((max_fps2-min_fps2) / max_fps2)
+            #if d2 < d1 * 1.5:
 
-            if d2 < d1 * 1.5:
+            d1 = min_fps
+            d2 = max_fps2
+
+            if d2 > d1:
                 logger.info('redistribute: %s->%s, %.2f->%.2f', min_i.id, max_i.id, d1, d2)                
                 return min_i, max_i
 
@@ -691,8 +718,6 @@ class RecoDispatcher(object):
             return None
 
         cid = random.choice(min_cs)
-
-        logger.info("free camera [%d] from %s", cid, min_i.id)
 
         return min_i.remove_camera(cid)
 

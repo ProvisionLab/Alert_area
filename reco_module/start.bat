@@ -1,2 +1,2 @@
-start python reco_main.py -w 4
+start python reco_main.py -w 1
 

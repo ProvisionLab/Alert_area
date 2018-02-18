@@ -11,8 +11,6 @@ import flask.logging
 import bvc_config
 import logging
 
-logger = logging.getLogger('reco_dispatcher')
-
 import sys, signal
 
 from bvc_users import BVC_JWT
