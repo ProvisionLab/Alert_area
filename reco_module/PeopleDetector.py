@@ -68,11 +68,43 @@ class PeopleDetector:
         session = tf.get_default_session()
         (boxes, scores, classes, num_detections) = session.run(
            [self.boxes, self.scores, self.classes, self.num_detections],
-           feed_dict={self.image_tensor: image_np_expanded})
+           feed_dict={'image_tensor:0': image_np_expanded})
 
         min_score_thresh = 0.2
 
         people_boxes = [[b[0] * frame.shape[0], b[1] * frame.shape[1], b[2] * frame.shape[0], b[3] * frame.shape[1]]
+           for b, s, c in zip(boxes[0], scores[0], classes[0]) if s > min_score_thresh and c == 1.0]
+
+        return people_boxes
+
+    def process_frame2(self, frame):
+        
+        h, w = frame.shape[:2]
+        
+        frame_scaled = cv2.resize(frame, (640, 480))
+        # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
+        image_np_expanded = np.expand_dims(frame_scaled, axis=0)
+
+        frames = np.stack([frame_scaled,frame_scaled], axis=0)
+
+        # Actual detection.
+
+        session = tf.get_default_session()
+        (nboxes, scores, classes, num_detections) = session.run(
+           [self.boxes, self.scores, self.classes, self.num_detections],
+           feed_dict={'image_tensor': frames})
+
+        print(nboxes)
+        print(scores)
+        print(classes)
+        
+
+        for i in range(0,2):
+            boxes = nboxes[i]
+
+        min_score_thresh = 0.2
+
+        people_boxes = [[b[0] * h, b[1] * w, b[2] * h, b[3] * w]
            for b, s, c in zip(boxes[0], scores[0], classes[0]) if s > min_score_thresh and c == 1.0]
 
         return people_boxes
