@@ -2,6 +2,17 @@ import cv2
 import numpy as np
 from tracker_emu import TrackerEmu
 
+image_index = 0
+
+def debug_image_output(image):
+   
+    global image_index
+
+    cv2.imwrite('./logs/image{:04d}.jpg'.format(image_index), image)
+
+    image_index += 1
+
+
 class DebugWindow:
 
     bbox_color = (0, 255, 0)

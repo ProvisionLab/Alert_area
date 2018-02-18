@@ -255,7 +255,7 @@ class RecoApp(object):
             for c in cameras:
                 if c['id'] == camera_id:
                     c_areas = t.camera['areas']
-                    t.update_areas(c_areas)
+                    t.set_alert_areas(c_areas)
 
         # add new camera threads
         add_cameras = [c for c in cameras if c['id'] not in del_ids and c['id'] not in old_ids]

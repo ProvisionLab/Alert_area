@@ -4,10 +4,12 @@ import threading
 import traceback
 import time
 import cv2
-from frame_worker import FrameWorker
-import reco_config
 from urllib.parse import quote
+from CameraContext import CameraContext
+from frame_worker import FrameWorker
+
 import logging
+import reco_config
 
 """
 camera: { 
@@ -81,7 +83,7 @@ class CaptureWorker(threading.Thread):
         else:
             return 0,0
 
-    def update_areas(self, areas):
+    def set_alert_areas(self, areas):
 
         #print('############## update_areas #################')
 
@@ -96,7 +98,7 @@ class CaptureWorker(threading.Thread):
         #logging.debug("update areas of camera: [%d] \'%s\', %d areas", self.camera['id'], self.camera['name'], len(areas))
 
         if self.worker:
-            self.worker.update_areas(areas)
+            self.worker.set_alert_areas(areas)
 
         pass
 
@@ -125,21 +127,13 @@ class CaptureWorker(threading.Thread):
                 logging.info('camera: [%d] \'%s\', EOF', self.camera_id, self.camera_name)
                 break
 
-            self.worker.process_frame(frame)
+            self.worker.new_frame(frame)
             pass
 
         logging.debug('capture loop end of camera [%d] \'%s\'', self.camera_id, self.camera_name)
 
     def run(self):
         
-        if self.camera is not None:
-            camera_id = self.camera.get('id')
-            camera_name = self.camera.get('name')
-        else:
-            camera_id = 0
-            camera_name = ''
-            
-
         #if not self.alert_areas:
         #    logging.info("camera %s has no alerts, resetting...", camera_name)
         #    CaptureWorker.thread_count -= 1
@@ -149,7 +143,10 @@ class CaptureWorker(threading.Thread):
         # open stream by url
 
         while True:
-
+            
+            #self.camera_url = 'rtsp://70.233.119.2:554' # temp
+            #self.camera_url = 'rtsp://173.163.208.170:554' # temp
+            
             cap = cv2.VideoCapture(self.camera_url)
 
             if cap.isOpened():
@@ -161,9 +158,12 @@ class CaptureWorker(threading.Thread):
                 logging.info('begin capture of camera: \'%s\', url: \'%s\', fps: %d, [%d x %d]', 
                     self.camera_name, self.camera_url, cap_fps, cap_w, cap_h)
         
-                self.worker = FrameWorker(self.camera, cap_w, cap_h, self.post_reco_alert)
+                context = CameraContext(self.camera_id, cap_w, cap_h,
+                    post_alert_callback = self.post_reco_alert,
+                    use_motion_detector = self.use_motion_detector)
+
+                self.worker = FrameWorker(context)
                 self.worker.use_cpu = self.use_cpu
-                self.worker.use_motion_detector = self.use_motion_detector
 
                 self.worker.start()
 
