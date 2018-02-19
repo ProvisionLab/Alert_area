@@ -33,7 +33,7 @@
             </tr>
             {% for proc in inst.procs %}
             <tr>
-                <td>{{proc.id}},</td>
+                <td>{{proc.id}}</td>
                 <td>{{'%0.0f' % proc.last|float}} s</td>
                 <td>{{'%0.2f' % proc.fps|float}}</td>
                 <td>{{proc.cids|string}}</td>

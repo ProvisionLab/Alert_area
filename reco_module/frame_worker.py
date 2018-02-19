@@ -121,7 +121,7 @@ class FrameWorker(threading.Thread):
 
     def _recognize(self, frame):
         
-        boxes = self.people_detector.process_frame2(frame) if reco_config.enable_people_detector else []
+        boxes = self.people_detector.process_frame(frame) if reco_config.enable_people_detector else []
             
         objects = list(boxes_to_track_objects(boxes))
 
