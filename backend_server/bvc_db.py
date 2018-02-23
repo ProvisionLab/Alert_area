@@ -164,6 +164,7 @@ def append_cameras(user_id: int, cameras: list):
             set_camera(user_id, c)            
 
     except:
+        logging.exception('bvc_db.append_cameras')
         return False
     
     return True
@@ -195,6 +196,7 @@ def update_cameras(user_id: int, cameras: list):
         delete_cameras(user_id, del_ids)
 
     except:
+        logging.exception('bvc_db.update_cameras')
         return False
     
     return True
@@ -253,7 +255,7 @@ def set_camera(user_id: int, camera: dict):
     """
     try:
 
-        camera.pop('connectedOnce')
+        camera.pop('connectedOnce', None)
 
         alerts = camera.get('alerts')
         
@@ -286,6 +288,7 @@ def set_camera(user_id: int, camera: dict):
             result = db.cameras.update_one({'id': camera['id'] }, {'$set': camera})
     
     except:
+        logging.exception('bvc_db.set_camera')
         return False
       
     return True
@@ -302,6 +305,7 @@ def set_camera_by_name(camera : dict):
             result = db.cameras.update_one({'name' : camera['name']}, { '$set': camera})
 
     except:
+        logging.exception('bvc_db.set_camera_by_name')
         return False
       
     return True
@@ -322,6 +326,7 @@ def get_camera( camera_id : int ):
         return camera, None
 
     except:
+        logging.exception('bvc_db.get_camera')
         return None, 'camera {0} not found'.format(camera_id)
 
 def set_camera_enabled(camera_id: int, enabled: bool):

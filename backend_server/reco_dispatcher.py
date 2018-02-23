@@ -4,7 +4,7 @@ import random
 from threading import Lock
 from threading import Thread
 
-import logging
+import bvc_logging, logging
 logger = logging.getLogger('reco_dispatcher')
 
 purge_timeout = 200  # seconds
