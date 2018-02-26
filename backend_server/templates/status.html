@@ -28,6 +28,7 @@
                 <th>total fps</th>
                 <th>assigned cameras</th>
                 <th>active cameras</th>
+                <th>cameras fps</th>
                 <th>bad cameras</th>
                 <th></th>
             </tr>
@@ -45,6 +46,10 @@
                 <td>
                     {% for cid in proc.good %}
                     <a href='./camera/{{cid}}'>[{{cid}}]</a> {% endfor %}
+                </td>
+
+                <td>
+                    |{% for fps in proc.fpss %} {{'%0.2f' % fps|float}}| {% endfor %}
                 </td>
 
                 <td>{{proc.bad|string}}</td>

@@ -46,6 +46,9 @@ class RecoProc(object):
 
     def get_camera_status(self, camera_id):
         
+        if camera_id not in self.cameras:
+            return None
+        
         stat = self.status.get(camera_id)
 
         if not self.status:
@@ -71,6 +74,8 @@ class RecoProc(object):
 
         tot_fps = 0.0
 
+        new_status = dict()
+
         for c in status:
             cid = c.get('id')
             interval = c.get('interval',0)
@@ -88,7 +93,6 @@ class RecoProc(object):
             stat = self.status.get(cid)
             if not stat:
                 stat = c
-                self.status[cid] = stat
             else:
                 stat.update(c)
 
@@ -98,6 +102,12 @@ class RecoProc(object):
             stat['fps2'] = fps2
 
             stat['md_per'] = c.get('md_drop',0) / tot2 if tot2 > 0 else 0.0
+
+            new_status[cid] = stat
+
+        self.status = new_status
+
+        #log.debug('proc status: %s', self.status)
 
         self.status_cc = len(self.good_cameras)
         self.status_fps = tot_fps        
@@ -128,8 +138,10 @@ class RecoProc(object):
         self.bad_cameras.discard(cid)
         self.good_cameras.discard(cid)
         self.not_connectedOnce.discard(cid)
+
+        self.status.pop(cid, None)
         
-        log .info("remove camera [%d] from %s", cid, self.id)
+        log.info("remove camera [%d] from %s", cid, self.id)
 
         return cid
 
@@ -567,6 +579,9 @@ class RecoDispatcher(object):
                     
                     comments = ''
 
+                    good_ss = [p.get_camera_status(cid) for cid in p.good_cameras]
+                    fpss = [s.get('fps2',0.0) if s else 0.0 for s in good_ss]
+
                     procs.append({
                         'id': p.id, 
                         'cc': p.status_cc, 
@@ -574,6 +589,7 @@ class RecoDispatcher(object):
                         'prev': p.period,
                         'last': now - p.status_time,
                         'cids': list(p.cameras),
+                        'fpss': fpss,
                         'good': list(p.good_cameras),
                         'bad': list(p.bad_cameras),
                         'comments': comments,
@@ -714,7 +730,7 @@ class RecoDispatcher(object):
             ac = inst.get_availeable_for_moving_count()
             cc = inst.get_active_count()
 
-            if cc > 0 and ac > 0 and (not min_i or fps < min_fps):
+            if cc > 1 and ac > 0 and (not min_i or fps < min_fps):
                 min_i = inst
                 min_fps = fps
                 min_fps2 = fps * cc / (cc-1)

@@ -50,7 +50,7 @@ logging.config.dictConfig({
         },
 
         'disp': {
-            'level':'INFO',
+            'level':'DEBUG',
             'class':'logging.handlers.RotatingFileHandler',
             'filename' : 'logs/disp.log',
             'formatter' : 'detail',
@@ -93,6 +93,6 @@ logging.config.dictConfig({
 
     'root': {
         'level': 'INFO',
-        'handlers': ['console', 'infos', 'errors'],
+        'handlers': ['infos', 'errors'],
     }
 })
