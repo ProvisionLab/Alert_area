@@ -28,7 +28,7 @@ logging.config.dictConfig({
             'formatter' : 'simple',
         },
         'infos': {
-            'level':'INFO',
+            'level':'DEBUG',
             'class':'logging.handlers.RotatingFileHandler',
             'filename' : 'logs/reco' + sufix + '.log',
             'formatter' : 'detail',
@@ -56,6 +56,6 @@ logging.config.dictConfig({
 
     'root': {
         'level': 'INFO',
-        'handlers': ['console', 'infos', 'errors'],
+        'handlers': ['infos', 'errors'],
     }
 })

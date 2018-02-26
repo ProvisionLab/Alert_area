@@ -174,6 +174,7 @@ class FrameWorker(threading.Thread):
                 pass                
 
             self.lock.notify()
+
         pass
 
     def run(self):
@@ -220,31 +221,34 @@ class FrameWorker(threading.Thread):
         """
         @return (fps,fps2)  input FPS and output FPS
         """
+        with self.lock:
         
-        now = time.time()
-        d = now - self.frame_time
+            now = time.time()
+            d = now - self.frame_time
 
-        if d < 1.0:
-            return 0,0
+            if d < 1.0:
+                return 0,0
 
-        fps1 = self.frame_count1 / d
-        fps2 = self.frame_count2 / d
+            fps1 = self.frame_count1 / d
+            fps2 = self.frame_count2 / d
 
-        if reset:
+            if reset:
 
-            self.frame_time = now
-            self.frame_count1 = 0
-            self.frame_count2 = 0
+                self.frame_time = now
+                self.frame_count1 = 0
+                self.frame_count2 = 0
 
-        return fps1, fps2
+            return fps1, fps2
 
     def update_areas(self, areas):
         
-        if self.analyzer:
-            self.analyzer.update_areas(areas)
+        with self.lock:
+        
+            if self.analyzer:
+                self.analyzer.update_areas(areas)
 
-        if self.dbg:
-            self.dbg.update_areas(areas)
+            if self.dbg:
+                self.dbg.update_areas(areas)
         
         pass
 
@@ -254,42 +258,66 @@ class FrameWorker(threading.Thread):
         """
         use PeopleDetector
         """
+
+        logging.info('use motion detector: %s', self.use_motion_detector)
     
         motion_detector = MotionDetector(self.md_min_area) if self.use_motion_detector else None
 
 #        pdetector =  PeopleDetector(config)
 #        with pdetector.as_default():
 
-        with PeopleDetector(config) as pdetector:
+        t1 = time.time()
+
+        with PeopleDetector(config) as pdetector, self.lock:
 
             while not self.bStop:
                 
-                with self.lock:
-                    self.lock.wait()
+                #logging.info('reco loop')
 
-                    frame = self.frame
+                frame = self.frame
+                self.frame = None
+                
+                if frame is None:
+                    self.lock.wait(0.1)
+                    continue
 
-                    if frame is None:
-                        continue
-
-                    self.frame = None
-
-                    self.frame1, _ = self.frames1[0] if self.frames1 else (None, None)
-                    self.frame2, _ = self.frames2[0] if self.frames2 else (None, None)
+                self.frame1, _ = self.frames1[0] if self.frames1 else (None, None)
+                self.frame2, _ = self.frames2[0] if self.frames2 else (None, None)
 
 #                print("fps2: ", self.frame_count1, self.frame_count2)
 
                 self.current_frame = frame
 
-                self.recognize(frame, motion_detector, pdetector)       
+                self.lock.release()
 
-                objects = []
+                h, w = frame.shape[:2]
 
-                if self.dbg and self.dbg.draw_frame(frame, objects):
-                    logging.info("stop signal from debug window [%d]", self.camera['id'])
-                    break
+                try:
+
+                    #logging.info("reco begin: %.2f s", time.time()-t1)
+                    #t1 = time.time()
+
+                    if motion_detector is not None and not motion_detector.isMotion(frame):
+                        continue
+
+                    objects = self.recognize(frame, motion_detector, pdetector)       
+
+                    #logging.info("reco end: %.2f s", time.time()-t1)
+                    #t1 = time.time()
+
+                finally:
+
+                    self.lock.acquire()
+
+                self.frame_count2 += 1
+
+                if len(objects) > 0:
+
+                    self.analyzer.process_objects(w, h, objects)        
+                    objects = None
 
                 self.current_frame = None
+
             pass # with
         
 
@@ -349,7 +377,7 @@ class FrameWorker(threading.Thread):
 
         if is_enter:
 
-            logging.debug("new alert: %s", alert)
+            logging.info("new alert: [%d] %s", alert.camera_id, alert.alert_type)
 
             if self.post_new_alert:
                 
@@ -374,9 +402,6 @@ class FrameWorker(threading.Thread):
 
     def recognize(self, frame, motion_detector, people_detector):
         
-        if motion_detector is not None and not motion_detector.isMotion(frame):
-            return
-
         boxes = people_detector.process_frame(frame) if reco_config.enable_people_detector else []
         
         h, w = frame.shape[:2]
@@ -387,6 +412,4 @@ class FrameWorker(threading.Thread):
         else:
             objects = list(boxes_to_track_objects(boxes))
 
-        self.analyzer.process_objects(w, h, objects)        
-    
-        self.frame_count2 += 1
+        return objects
