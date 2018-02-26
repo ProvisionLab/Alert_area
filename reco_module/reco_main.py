@@ -58,8 +58,8 @@ class RecoApp(object):
 
     def on_sigterm(self, signum, taskfrm):
         
-        logging.info("SIGTERM reseived, stop all recognitions")
-        
+        logging.info("reco proc: SIGTERM reseived")
+
         self.stop()
 
     def stop_execution(self, signum, taskfrm):
@@ -144,7 +144,7 @@ class RecoApp(object):
 
         self.bvcapi.post_reco_end()
 
-        logging.info("Quit")
+        logging.info("RecoApp %d: Quit", self.reco_num)
 
     def update_cameras(self):
         """
@@ -372,7 +372,7 @@ def main(reco_num, reco_count):
     app.run()
     
     os.remove(pid_fname)
-    return
+    exit(1)
 
 class RecoPool(object):
 

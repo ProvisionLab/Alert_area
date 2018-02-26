@@ -193,7 +193,7 @@ class CaptureWorker(threading.Thread):
 
         CaptureWorker.thread_count -= 1
 
-        logging.info('end capture of camera [%d] \'%s\', workers left: %d', self.camera_id, self.camera_name, CaptureWorker.thread_count)
+        logging.info('CaptureWorker: end capture of camera [%d] \'%s\', workers left: %d', self.camera_id, self.camera_name, CaptureWorker.thread_count)
 
         self.bExit = True
         pass

@@ -98,6 +98,8 @@ class FrameWorker(threading.Thread):
                     logging.exception("exception in FrameWorker.run")
 
         self.people_detector = None
+
+        logging.info('FrameWorker: [%d] exited', self.camera_id)
         pass
 
     def _process_frame(self, frame):
