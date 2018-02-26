@@ -321,7 +321,7 @@ def get_camera( camera_id : int ):
 
         camera.pop('_id')
 
-        camera['connectedOnce'] = camera.get('connectedOnce', False),
+        camera['connectedOnce'] = camera.get('connectedOnce', False)
 
         return camera, None
 

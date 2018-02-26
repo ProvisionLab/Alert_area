@@ -36,8 +36,17 @@
                 <td>{{proc.id}}</td>
                 <td>{{'%0.0f' % proc.last|float}} s</td>
                 <td>{{'%0.2f' % proc.fps|float}}</td>
-                <td>{{proc.cids|string}}</td>
-                <td>{{proc.good|string}}</td>
+
+                <td>
+                    {% for cid in proc.cids %}
+                    <a href='./camera/{{cid}}'>[{{cid}}]</a> {% endfor %}
+                </td>
+
+                <td>
+                    {% for cid in proc.good %}
+                    <a href='./camera/{{cid}}'>[{{cid}}]</a> {% endfor %}
+                </td>
+
                 <td>{{proc.bad|string}}</td>
                 <td>{{proc.comments|string}}</td>
             </tr>

@@ -1,0 +1,36 @@
+<html>
+
+<head>
+    <title>Camera {{camera_id}} Status</title>
+    <meta http-equiv="refresh" content="10">
+</head>
+
+<body>
+
+    <span><a href="/subs">Subs</a></span>
+    <span><a href="/status">Status</a></span>
+
+    <h2>Camera {{camera_id}} Status</h2>
+
+    <div>url: {{camera_url}}</div>
+    <div>enabled: {{enabled}}</div>
+    <div>connected once: {{cononce}}</div>
+    <div>{{status.cap_w}} x {{status.cap_h}}</div>
+
+    <br>
+    <div>capture opens: {{status.cam_open}}</div>
+    <div>capture fails: {{status.cam_fail}}</div>
+    <div>capture eofs: {{status.cam_eof}}</div>
+
+    <br>
+    <div>update interval: {{status.interval}} ms</div>
+
+    <br>
+    <div>capture fps: {{'%0.2f' % status.fps1|float}}</div>
+    <div>analyze fps: {{'%0.2f' % status.fps2|float}}</div>
+    <div>md drops: {{status.md_drop}}, {{'%0.0f' % status.md_per|float}} %</div>
+    <div>alerts: {{status.alerts}}</div>
+
+</body>
+
+</html>

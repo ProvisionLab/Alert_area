@@ -43,36 +43,37 @@ class FrameWorker(threading.Thread):
         self.use_cpu = False
 
         self.frame = None
-        self.lock = threading.Condition()
+
+        self.motion_detector = None
         
         self.bRunning = True
         super().__init__()
         pass
+
+    def set_mdetector(self, cap_w, cap_h):
+        md_min_area = (cap_w * cap_h) / 600
+        self.motion_detector = MotionDetector(md_min_area)
 
     def stop(self):
         self.bRunning = False
 
     def new_frame(self, frame):
 
-        with self.lock:
-
-            self.frame = frame
-            self.context.on_new_frame(frame)
-
-            self.lock.notify()
+        self.context.on_new_frame(frame)
 
         pass
+    
+    def get_stat(self):
 
+        return self.context.get_stat()
+    
     def get_fps(self, reset=True):
         
         return self.context.get_fps(reset)
 
     def set_alert_areas(self, areas):
 
-        with self.lock:
-            self.context.set_alert_areas(areas)
-
-        pass
+        self.context.set_alert_areas(areas)
 
     def run(self):
         
@@ -80,16 +81,18 @@ class FrameWorker(threading.Thread):
 
         self.people_detector = PeopleDetector(config)
         
-        with self.people_detector, self.lock:
+        with self.people_detector, self.context.lock:
         
             while self.bRunning:
                 
                 try:
         
-                    if self.frame is None:
-                        self.lock.wait(1.0)
+                    frame = self.context.preprocess_frame()
+
+                    if frame is None:
+                        self.context.lock.wait(1.0)
                     else:
-                        self._process_frame()
+                        self._process_frame(frame)
 
                 except:
                     logging.exception("exception in FrameWorker.run")
@@ -97,28 +100,25 @@ class FrameWorker(threading.Thread):
         self.people_detector = None
         pass
 
-    def _process_frame(self):
+    def _process_frame(self, frame):
         
-        frame = self.frame
-        self.frame = None
+        self.context.lock.release()
 
-        if self.context.preprocess_frame(frame):
-            
-            self.lock.release()
-        
-            try:
+        try:
 
-                objects = self._recognize(frame)
+            if self.motion_detector and self.motion_detector.isMotion(frame):
+                self.context.stat.inc_md_drop()
+                return
 
-            finally:
-                self.lock.acquire()
+            objects = self._recognize(frame)
 
-            self.context.postprocess_frame(frame, objects)
+        finally:
+            self.context.lock.acquire()
 
-            pass
-        
+        self.context.postprocess_frame(frame, objects)
+
         pass
-
+        
     def _recognize(self, frame):
         
         boxes = self.people_detector.process_frame(frame) if reco_config.enable_people_detector else []

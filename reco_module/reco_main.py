@@ -183,9 +183,20 @@ class RecoApp(object):
         total_fps2 = 0.0
 
         cameras = []
+
+        stat = []
         
         for t in self.threads:
-            fps1, fps2 = t.get_fps()
+
+            tstat = t.get_stat()
+            stat.append( tstat )
+
+            interval = tstat.get('interval',0)
+            freq = 1000.0 / interval if interval > 0 else 0.0
+
+            fps1 = tstat.get('capture',0) * freq
+            fps2 = tstat.get('analyze',0) * freq
+
             total_fps1 += fps1
             total_fps2 += fps2
 
@@ -205,7 +216,7 @@ class RecoApp(object):
 
         logging.info("total FPS: %.1f/%.2f for %d cameras", total_fps1, total_fps2, len(cameras))
 
-        return {'cameras' : cameras, 'fps' : total_fps2}
+        return {'status': stat, 'cameras' : cameras, 'fps' : total_fps2}
 
     def set_cameras(self, cameras):
         """
@@ -393,12 +404,12 @@ class RecoPool(object):
         except KeyboardInterrupt:
             #print("Caught KeyboardInterrupt, terminating workers")
             #logging.warning("Caught KeyboardInterrupt")
-            pool.terminate()
+            self.pool.terminate()
 
         except Exception as e:
             #print(e)
             #logging.warning("%s", str(e))
-            pool.terminate()
+            self.pool.terminate()
 
         else:
             #print("Normal termination 2")

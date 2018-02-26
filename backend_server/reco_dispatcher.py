@@ -5,7 +5,7 @@ from threading import Lock
 from threading import Thread
 
 import bvc_logging, logging
-logger = logging.getLogger('reco_dispatcher')
+log = logging.getLogger('reco_dispatcher')
 
 purge_timeout = 200  # seconds
 
@@ -30,20 +30,36 @@ class RecoProc(object):
         
         self.id = id
         self.inst = inst
-        self.status_time = None
+        self.status_time = time.time()
 
         self.cameras = set()
         self.good_cameras = set()
         self.bad_cameras = set()
         self.not_connectedOnce = set()
+
+        self.status = dict()
+
+        self.status_cc = 0
+        self.status_fps = 0.0
+        self.period = 0.0
         pass
 
-    def set_status(self, cameras, fps):
+    def get_camera_status(self, camera_id):
+        
+        stat = self.status.get(camera_id)
 
+        if not self.status:
+            return None
+
+        return stat
+
+    def set_status(self, status:list):
+        
         # update 'connectedOnce'
-        for c in cameras:
+        for c in status:
+            #log.debug('proc camera: %s', c)
             cid = c['id']
-            if c['fps1'] > 0 and cid in self.not_connectedOnce:
+            if c.get('capture',0) > 0 and cid in self.not_connectedOnce:
                 try:
                     bvc_db.set_camera_property(cid, 'connectedOnce', True)
                     self.not_connectedOnce.discard(cid)
@@ -55,17 +71,33 @@ class RecoProc(object):
 
         tot_fps = 0.0
 
-        for c in cameras:
-
+        for c in status:
             cid = c.get('id')
-            fps1 = c.get('fps1',0.0)
-            fps2 = c.get('fps2',0.0)
+            interval = c.get('interval',0)
+            freq = 1000.0 / interval if interval > 0 else 0.0
 
-            if fps1 > 0.0:
+            fps1 = c.get('capture',0) * freq
+            fps2 = c.get('analyze',0) * freq
+
+            if c.get('capture',0) > 0:
                 self.good_cameras.add(cid)
                 tot_fps += fps2
             else:
                 self.bad_cameras.add(cid)
+
+            stat = self.status.get(cid)
+            if not stat:
+                stat = c
+                self.status[cid] = stat
+            else:
+                stat.update(c)
+
+            tot2 = c.get('md_drop',0) + c.get('analyze',0)
+
+            stat['fps1'] = fps1
+            stat['fps2'] = fps2
+
+            stat['md_per'] = c.get('md_drop',0) / tot2 if tot2 > 0 else 0.0
 
         self.status_cc = len(self.good_cameras)
         self.status_fps = tot_fps        
@@ -74,16 +106,16 @@ class RecoProc(object):
         self.period = now - self.status_time if self.status_time else 0.0
         self.status_time = now
 
-        logger.debug('proc set_status: %d %.2f', self.status_cc, self.status_fps)
-
     def append_camera(self, cid):
         
         self.cameras.add(cid)
 
-        if not bvc_db.get_camera_property(cid, 'connectedOnce', False):
+        connectedOnce, _ = bvc_db.get_camera_property(cid, 'connectedOnce', False)
+
+        if not connectedOnce:
             self.not_connectedOnce.add(cid)
 
-        logger.info("assing camera [%d] to %s", cid, self.id)
+        log.info("assing camera [%d] to %s", cid, self.id)
         pass
 
     def remove_camera(self, cid:int = None):
@@ -97,7 +129,7 @@ class RecoProc(object):
         self.good_cameras.discard(cid)
         self.not_connectedOnce.discard(cid)
         
-        logger.info("remove camera [%d] from %s", cid, self.id)
+        log .info("remove camera [%d] from %s", cid, self.id)
 
         return cid
 
@@ -117,7 +149,7 @@ class RecoProc(object):
         if (now - self.status_time) <  purge_timeout:
             return set()
 
-        logger.warning("purge process: %s", self.id)
+        log .warning("purge process: %s", self.id)
 
         if not self.cameras:
             return set()
@@ -147,7 +179,7 @@ class RecoInstance(object):
 
         pass
 
-    def set_status(self, proc_id, cameras, fps):
+    def set_status(self, proc_id:str, status:list):
         
         new_proc = False
 
@@ -159,7 +191,7 @@ class RecoInstance(object):
 
         now = time.time()
 
-        proc.set_status(cameras, fps)
+        proc.set_status(status)
 
         status_cc = 0
         status_fps = 0.0
@@ -184,7 +216,7 @@ class RecoInstance(object):
 
         self.status_fps = status_fps
 
-        logger.debug('instance set_status: %d %.2f', self.status_cc, self.status_fps)
+        log.debug('instance set_status: %d %.2f', self.status_cc, self.status_fps)
         
         return new_proc
 
@@ -368,7 +400,7 @@ class RecoDispatcher(object):
     def _workerFunc(self):
         
         # run
-        logger.info("RecoDispatcher worker start")
+        log.info("RecoDispatcher worker start")
 
         while not self.bStop:
 
@@ -379,17 +411,17 @@ class RecoDispatcher(object):
                     self._workerTick()
 
                 except:
-                    logger.exception("[EX] _workerFunc")
+                    log.exception("[EX] _workerFunc")
                     pass
 
             self.wait(30.0)
 
-        logger.info("RecoDispatcher worker stop")
+        log.info("RecoDispatcher worker stop")
         pass
 
     def _workerTick(self):
 
-        logger.debug("worker Tick")
+        log.debug("worker Tick")
 
         self.purge()
 
@@ -420,7 +452,7 @@ class RecoDispatcher(object):
         
         inst_id, proc_id = split_recoid(reco_id)
 
-        logger.info("reco proc ending: %s %s", inst_id, proc_id)
+        log.info("reco proc ending: %s %s", inst_id, proc_id)
 
         with self.lock:
         
@@ -431,7 +463,7 @@ class RecoDispatcher(object):
                     self.free_cameras.update(cs)
 
                     if len(instance.procs) == 0:
-                        logger.info("reco instance ending: %s", instance.id)
+                        log.info("reco instance ending: %s", instance.id)
                         self.instances.pop(instance.id)
                         instance = None
 
@@ -439,19 +471,21 @@ class RecoDispatcher(object):
 
         pass
 
-    def set_reco_status(self, reco_id, fps, cameras):
+    def set_reco_status(self, reco_id, status:list):
         """
         /api/reco_status handler
         """
 
         inst_id, proc_id = split_recoid(reco_id)
 
+        #log.debug('set_reco_status: %s, %s', reco_id, status)
+
         # main
         with self.lock:
         
             instance = self._get_instance(inst_id)
 
-            new_proc = instance.set_status(proc_id, cameras, fps)
+            new_proc = instance.set_status(proc_id, status)
 
             if new_proc:
                 self.redistribute()
@@ -500,8 +534,22 @@ class RecoDispatcher(object):
                 pass
 
         except Exception as e:
-            logger.exception("[EX] on_cameras_update:")
+            log.exception("[EX] on_cameras_update:")
             pass
+
+    def get_camera_status(self, camera_id):
+        """
+        """
+        with self.lock:
+        
+            for inst in self.instances.values():
+                for proc in inst.procs.values():
+                    
+                    status = proc.get_camera_status(camera_id)
+                    if status:
+                        return status
+                    
+        return None
        
     def get_status(self):
         """
@@ -563,7 +611,7 @@ class RecoDispatcher(object):
             css |= inst.purge()
 
             if inst.is_purged():
-                logger.warning("purge instance: %s", inst.id)
+                log.warning("purge instance: %s", inst.id)
 
         self.instances = { k:inst for k,inst in self.instances.items() if not inst.is_purged() }
 
@@ -686,7 +734,7 @@ class RecoDispatcher(object):
             d2 = max_fps2
 
             if d2 > d1:
-                logger.info('redistribute: %s->%s, %.2f->%.2f', min_i.id, max_i.id, d1, d2)                
+                log.info('redistribute: %s->%s, %.2f->%.2f', min_i.id, max_i.id, d1, d2)                
                 return min_i, max_i
 
         return None, None
@@ -728,7 +776,7 @@ class RecoDispatcher(object):
         free_procs = self._get_empty_procs()
 
         if len(free_procs) > 0:
-            logger.info("free procs count: %d", len(free_procs))
+            log.info("free procs count: %d", len(free_procs))
 
         while len(free_procs) > len(self.free_cameras):
 

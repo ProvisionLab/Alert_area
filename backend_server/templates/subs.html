@@ -38,7 +38,7 @@
 
             {% for cam in subs.cameras %}
             <tr>
-                <td>{{cam.id}}</td>
+                <td><a href='./camera/{{cam.id}}'>{{cam.id}}</a></td>
                 <td>{{cam.users|string}}</td>
                 <td>{{cam.enabled}}</td>
                 <td>{{cam.alerts}}</td>

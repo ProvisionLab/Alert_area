@@ -404,8 +404,9 @@ def api_reco_status():
 
     fps = data.get('fps', 0.0)
     cameras = data.get('cameras', [])
+    status = data.get('status', [])
 
-    app.dispatcher.set_reco_status(reco_id, fps, cameras)
+    app.dispatcher.set_reco_status(reco_id, status)
     app.dispatcher2.set_reco_status(reco_id, fps, cameras)
 
     return flask.jsonify({}), 204
@@ -459,6 +460,33 @@ def get_subs():
 
     except Exception as e:
         logging.exception("[EX] /subs: ")
+        raise
+
+@app.route('/camera/<int:camera_id>', methods=["GET"])
+def get_camera_status(camera_id):
+    
+    try:
+
+        camera, err = bvc_db.get_camera(camera_id)
+        if err:
+            return err, 404
+
+        status = app.dispatcher.get_camera_status(camera_id)
+
+        if not status:
+            return "no capturing", 404
+
+        return render_template(
+            'camera.html',
+            camera_id=camera_id,
+            camera_url=camera.get('url'),
+            enabled=camera.get('enabled', True),
+            cononce=camera.get('connectedOnce', False),
+            status=status
+        )
+
+    except Exception as e:
+        logging.exception("[EX] /camera: ")
         raise
 
 @app.route('/', methods=["GET"])

@@ -64,6 +64,8 @@ class CaptureWorker(threading.Thread):
         self.restart_on_fail = False
         self.use_motion_detector = reco_config.enable_motion_detector
 
+        self.context = CameraContext(self.camera_id, post_alert_callback = self.post_reco_alert)
+
         CaptureWorker.thread_count += 1
 
         super().__init__()
@@ -75,6 +77,10 @@ class CaptureWorker(threading.Thread):
     def stop_and_wait(self):
         self.bStop = True
         self.join()                
+
+    def get_stat(self):
+
+        return self.context.get_stat()
 
     def get_fps(self):
         
@@ -124,6 +130,7 @@ class CaptureWorker(threading.Thread):
     
             res, frame = cap.read()
             if not res:
+                self.context.stat.inc_cam_eof()
                 logging.info('camera: [%d] \'%s\', EOF', self.camera_id, self.camera_name)
                 break
 
@@ -148,6 +155,7 @@ class CaptureWorker(threading.Thread):
             #self.camera_url = 'rtsp://173.163.208.170:554' # temp
             
             cap = cv2.VideoCapture(self.camera_url)
+            self.context.stat.inc_cam_open()
 
             if cap.isOpened():
         
@@ -157,13 +165,12 @@ class CaptureWorker(threading.Thread):
 
                 logging.info('begin capture of camera: \'%s\', url: \'%s\', fps: %d, [%d x %d]', 
                     self.camera_name, self.camera_url, cap_fps, cap_w, cap_h)
-        
-                context = CameraContext(self.camera_id, cap_w, cap_h,
-                    post_alert_callback = self.post_reco_alert,
-                    use_motion_detector = self.use_motion_detector)
 
-                self.worker = FrameWorker(context)
+                self.worker = FrameWorker(self.context)
                 self.worker.use_cpu = self.use_cpu
+
+                if self.use_motion_detector:
+                    self.worker.set_mdetector(cap_w, cap_h)
 
                 self.worker.start()
 
@@ -176,7 +183,8 @@ class CaptureWorker(threading.Thread):
                 cap.release()
 
             else:
-    
+
+                self.context.stat.inc_cam_fail()
                 logging.warning("camera [%d] \'%s\' not opened", self.camera_id, self.camera_name)
                 break;
 
