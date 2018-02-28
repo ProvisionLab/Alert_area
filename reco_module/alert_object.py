@@ -53,7 +53,7 @@ def encode_cvimage(image):
     if image is None:
         image = np.zeros((8,8,3), np.uint8)
     
-    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 50]
     result, encimg = cv2.imencode('.jpg', image, encode_param)
 
     if result:

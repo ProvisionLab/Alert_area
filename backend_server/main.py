@@ -4,9 +4,8 @@ from flask import Flask, request, render_template
 import flask
 from flask_jwt import jwt_required, current_identity
 from flask_cors import CORS
-import json
-
 import flask.logging
+import json, base64
 
 import bvc_config
 import logging
@@ -272,6 +271,59 @@ def api_camera_connectedOnce(camera_id: int):
 
         return flask.jsonify({'value' : value })
 
+@app.route('/api/camera/<int:camera_id>/thumbnail', methods=["GET","PUT","DELETE"])
+@jwt_required()
+def api_camera_thumbnail(camera_id: int):
+
+    if request.method == 'GET':
+    
+        t = bvc_db.get_camera_thumbnail(camera_id)
+
+        return flask.jsonify({
+            'camera_id' : camera_id,
+            'image' : str(base64.b64encode(t.get('image')), 'utf-8'),
+            'timestamp': t.get('timestamp')
+        }), 200
+
+    if request.method == 'PUT':
+        
+        data = request.get_json()
+
+        image = data.get('image')
+
+        if image:
+            image = base64.b64decode(image)
+
+        bvc_db.set_camera_thumbnail(camera_id, image, data.get('timestamp'))
+
+        if image is None:
+            app.dispatcher.on_cameras_update()
+
+        return flask.jsonify({}), 204
+        
+    if request.method == 'DELETE':
+        bvc_db.set_camera_thumbnail(camera_id, None)
+        return flask.jsonify({}), 204
+
+@app.route('/api/camera/<int:camera_id>/update_thumbnail', methods=["POST"])
+@jwt_required()
+def api_camera_update_thumbnail(camera_id:int):
+
+    logging.info("camera [%d] update thumbnail request", camera_id)
+
+    bvc_db.set_camera_property(camera_id, 'thumbnail', False)
+
+    app.dispatcher.on_cameras_update()
+
+    return flask.jsonify({}), 204
+
+@app.route('/camera/<int:camera_id>/thumbnail', methods=["GET"])
+def raw_camera_thumbnail(camera_id: int):
+
+    t = bvc_db.get_camera_thumbnail(camera_id)
+
+    return t.get('image'), 200, { 'Content-Type': 'image/jpeg' }
+
 @app.route('/api/cameras/<int:camera_id>/alerts', methods=["GET", "POST", "DELETE"])
 @jwt_required()
 def api_camera_alerts(camera_id:str):
@@ -425,8 +477,26 @@ def get_camera_status(camera_id):
 
         status = app.dispatcher.get_camera_status(camera_id)
 
-        if not status:
-            return 'no capturing', 404
+        if status is None:
+
+            status = {
+                'cap_w':0,
+                'cap_h':0,
+
+                'cam_open':0,
+                'cam_fail':0,
+                'cam_eof':0,
+                'interval':0,
+
+                'fps1':0.0,
+                'fps2':0.0,
+                'md_drop':0,
+                'md_per':0.0,
+                'alerts':0,
+            }
+
+        else:
+            pass
 
         return render_template(
             'camera.html',

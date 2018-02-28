@@ -120,7 +120,7 @@ class RecoProc(object):
         
         self.cameras.add(cid)
 
-        connectedOnce, _ = bvc_db.get_camera_property(cid, 'connectedOnce', False)
+        connectedOnce = bvc_db.get_camera_property(cid, 'connectedOnce', False)
 
         if not connectedOnce:
             self.not_connectedOnce.add(cid)

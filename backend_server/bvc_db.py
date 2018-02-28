@@ -2,7 +2,7 @@ from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 from bson.objectid import ObjectId 
 import logging
-import time
+import time, datetime
 
 from bvc_exceptions import ENotFound, ECameraNotFound
 
@@ -52,10 +52,10 @@ def is_camera_active(camera):
     if not bool(camera.get('users')):
         return False
 
-    if not bool(camera.get('alerts')):
-        return False
+    has_alerts = bool(camera.get('alerts'))
+    has_thumbnail = bool(camera.get('thumbnail',False))
 
-    return True
+    return has_alerts or not has_thumbnail
 
 def get_active_cameras():
     """
@@ -75,7 +75,7 @@ def get_cameras_by_cids(cids:list):
     
     cursor = db.cameras.find({'id': {'$in': cids }}, {'alerts':False, 'users':False})
     
-    cameras = [ camera for camera in cursor if camera.get('enabled', True)]
+    cameras = [camera for camera in cursor if camera.get('enabled', True)]
 
     for camera in cameras:
         camera.pop('_id')
@@ -146,7 +146,9 @@ def delete_camera(camera_id):
                 db.users.update_one({'uid': uid}, { '$set': { 'cameras' : u_cameras }})
             else:
                 db.users.delete_one({'uid': uid})
-        
+
+    db.thumbnails.delete_one({'cid': camera_id})
+    
     db.cameras.remove({'id': camera_id})
 
 def delete_user_cameras(user_id: int, cids : list):
@@ -447,6 +449,45 @@ def update_camera_alert( camera_id: int, alert_id : str, alert : dict ):
                 return
 
     raise ENotFound('camera {0} alert {1} not found'.format(camera_id, alert_id))
+
+###### Thumbnails
+
+def set_camera_thumbnail(camera_id:int, image:bytes, timestamp=None):
+    
+    if image is None:
+        result = db.thumbnails.delete_one({'cid': camera_id })
+        if result.deleted_count==0:
+            raise ENotFound('thumbnail of camera [{}] not found'.format(camera_id))
+
+        db.cameras.update_one({'id': camera_id}, {'$set': {'thumbnail': False}})
+        return        
+
+    if timestamp is None:
+        ts = datetime.datetime.utcnow().isoformat()+'Z'
+    else:
+        ts = timestamp
+
+    result = db.thumbnails.update_one({'cid': camera_id }, {'$set': { 'cid': camera_id, 'image': image, 'timestamp': ts }}, upsert=True)
+
+    #if result.modified_count==0:
+    #    logging.error("%d %d %d", result.matched_count, result.modified_count, result.upserted_id)
+    #    raise Exception('set_camera_thumbnail: db.thumbnails.update_one')
+
+    result = db.cameras.update_one({'id': camera_id }, {'$set': {'thumbnail': True}})
+    if result.modified_count==0:
+        raise ECameraNotFound(camera_id)
+
+    pass
+
+def get_camera_thumbnail(camera_id:int):
+
+    t = db.thumbnails.find_one({ 'cid' : camera_id })
+    if t  is None:
+        raise ENotFound('thumbnail of camera [{}] not found'.format(camera_id))
+
+    return t
+    
+###### Mutex    
 
 def mutex_init(name:str):
     
