@@ -549,6 +549,15 @@ class RecoDispatcher(object):
             log.exception("[EX] on_cameras_update:")
             pass
 
+    def get_connectedNow(self, camera_id):
+        
+        status = self.get_camera_status(camera_id)
+
+        if status:
+            return status.get('capture',0) > 0
+        else:
+            return False
+        
     def get_camera_status(self, camera_id):
         """
         """
@@ -797,8 +806,11 @@ class RecoDispatcher(object):
         while len(free_procs) > len(self.free_cameras):
 
             cid = self._get_camera_for_free_proc(1)
+            log.debug("_get_camera_for_free_proc(1): %s", cid)
+
             if not cid:
                 cid = self._get_camera_for_free_proc(0)
+                log.debug("_get_camera_for_free_proc(0): %s", cid)
                 if not cid:
                     break
 

@@ -271,6 +271,16 @@ def api_camera_connectedOnce(camera_id: int):
 
         return flask.jsonify({'value' : value })
 
+@app.route('/api/camera/<int:camera_id>/connectedNow', methods=["GET"])
+@jwt_required()
+def api_camera_connectedNow(camera_id: int):
+
+    if request.method == 'GET':
+        
+        value = app.dispatcher.get_connectedNow(camera_id)
+    
+        return flask.jsonify({'value' : value })
+
 @app.route('/api/camera/<int:camera_id>/thumbnail', methods=["GET","PUT","DELETE"])
 @jwt_required()
 def api_camera_thumbnail(camera_id: int):
@@ -504,6 +514,7 @@ def get_camera_status(camera_id):
             camera_url=camera.get('url'),
             enabled=camera.get('enabled', True),
             cononce=camera.get('connectedOnce', False),
+            connow=app.dispatcher.get_connectedNow(camera_id),
             status=status
         )
 

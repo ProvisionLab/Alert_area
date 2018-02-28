@@ -476,6 +476,18 @@ class Test_get_camera(TestCaseBase):
         value = res.get('value')
         self.assertTrue(isinstance(value, bool))
 
+    def test_connectedNow(self):
+    
+        r = session.get('{}/api/camera/{}/connectedNow'.format(bvcapi_url, self.camera_id),
+            headers=self.get_headers())
+
+        self.assertEqual(r.status_code, 200)
+
+        res = r.json()
+        self.assertTrue(isinstance(res, dict))
+        value = res.get('value')
+        self.assertTrue(isinstance(value, bool))
+
 class Test_camera_alerts(TestCaseBase):
       
     def setUp(self):
