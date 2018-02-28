@@ -2,11 +2,12 @@
 """
 import threading
 import traceback
-import time
+import time, datetime
 import cv2
 from urllib.parse import quote
 from CameraContext import CameraContext
 from frame_worker import FrameWorker
+from alert_object import create_thumbnail
 
 import logging
 import reco_config
@@ -134,6 +135,10 @@ class CaptureWorker(threading.Thread):
                 logging.info('camera: [%d] \'%s\', EOF', self.camera_id, self.camera_name)
                 break
 
+            if not self.camera.get('thumbnail',False):
+                self._post_thumbnail(frame)
+                self.camera['thumbnail'] = True
+
             self.worker.new_frame(frame)
             pass
 
@@ -199,4 +204,11 @@ class CaptureWorker(threading.Thread):
         pass
 
     def _dummy_post_reco_alert(self, alert):
+        pass
+
+    def _post_thumbnail(self, frame):
+
+        image = create_thumbnail(frame)
+        ts = datetime.datetime.utcnow().isoformat()+'Z'
+        self.connection.post_thumbnail(self.camera_id, image, ts)
         pass

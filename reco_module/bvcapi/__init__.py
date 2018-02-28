@@ -31,7 +31,6 @@ def do_auth(func):
 
 class BVC_Client(object):
 
-
     def __init__(self, url, username, password):
 
         self.url = url
@@ -219,3 +218,20 @@ class BVC_Client(object):
         logging.info('post alert {2} / {0} \'{1}\''.format(alert.camera_id, alert.camera_name, alert.alert_type))
 
         return True
+
+    @do_auth
+    def post_thumbnail(self, data):
+        
+        camera_id = data.get('camera_id')
+        #print("post_thumbnail", data)
+        
+        r = self.session.put('{}/api/camera/{}/thumbnail'.format(self.url, camera_id),
+                        headers={'Authorization': 'JWT {0}'.format(self.jwt_token)},
+                        json=data)
+        
+        if r.status_code != 204:
+            logging.error('bvcapi: failed to post thumbnail, status: %d', r.status_code)
+
+        r.raise_for_status()
+
+        logging.info('post thumbnail [{}]'.format(camera_id))

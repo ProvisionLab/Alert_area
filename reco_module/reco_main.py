@@ -35,6 +35,7 @@ class RecoApp(object):
 
         self.threads = []
         self.alerts_queue = deque()
+        self.thumbnail_queue = deque()
 
         self.bvcapi = BVC_Client(reco_config.bvcapi_url, 'reco-' + self.reco_id, reco_config.bvcapi_key)
         self.bvcapi.session.verify = reco_config.bvcapi_verify_ssl
@@ -103,9 +104,10 @@ class RecoApp(object):
 
                         self.updatate_timer = now
 
-                    if self.alerts_queue:
+                    if self.alerts_queue or self.thumbnail_queue:
 
                         self.post_all_alerts()
+                        self.post_all_thumbnails()
 
                     else:
                         time.sleep(2.0)
@@ -291,6 +293,9 @@ class RecoApp(object):
 
         self.alerts_queue.append(alert)
 
+    def post_thumbnail(self, camera_id:int, image:str, timestamp:str):
+
+        self.thumbnail_queue.append({'camera_id':camera_id, 'image':image, 'timestamp':timestamp})
 
     def post_all_alerts(self):
         """
@@ -352,6 +357,30 @@ class RecoApp(object):
 
             if self.bStop:
                 break
+
+    def post_all_thumbnails(self):
+        """
+        posts all thumbnails from queue
+        """
+
+        if len(self.thumbnail_queue) > reco_config.max_alert_queue_size:
+            logging.warning('thumbnail_queue queue too long (%d), droping', len(self.thumbnail_queue))
+            self.thumbnail_queue = deque(self.thumbnail_queue, reco_config.max_alert_queue_size)
+
+        start_time = time.time()
+
+        while not self.bStop and self.thumbnail_queue:
+            
+            try:
+
+                self.bvcapi.post_thumbnail(self.thumbnail_queue.popleft())
+
+            except:
+                logging.exception("exception in bvcapi.post_thumbnail")
+                pass
+                    
+            if (time.time() - start_time) > 10.0:
+                break;
 
 def get_user_agent(name="BVC reco_module"):
     return name

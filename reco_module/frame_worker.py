@@ -85,6 +85,10 @@ class FrameWorker(threading.Thread):
         
             while self.bRunning:
                 
+                if len(self.context.alert_areas) == 0:
+                    self.context.lock.wait(5.0)
+                    continue
+                
                 try:
         
                     frame = self.context.preprocess_frame()
@@ -99,7 +103,7 @@ class FrameWorker(threading.Thread):
 
         self.people_detector = None
 
-        logging.info('FrameWorker: [%d] exited', self.camera_id)
+        logging.info('FrameWorker: [%d] exited', self.context.camera_id)
         pass
 
     def _process_frame(self, frame):

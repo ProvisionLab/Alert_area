@@ -61,7 +61,7 @@ def encode_cvimage(image):
     else:
         return None
 
-def convert_image(image, prefix: str, id: str):
+def create_thumbnail(image):
 
     if image is None:
         return None
@@ -70,7 +70,7 @@ def convert_image(image, prefix: str, id: str):
     data = encode_cvimage(image)
 
     if data is not None:
-        return str(base64.b64encode(data))
+        return str(base64.b64encode(data), 'utf-8')
     else:
         return None
     pass
@@ -127,7 +127,7 @@ class AlertObject(object):
         self.images = []
         
         for prefix, image in self.cvimages:
-            data = convert_image(image, prefix, self.alert_id)
+            data = create_thumbnail(image)
             if data:
                 if prefix=='T-2':
                     self.images.append(("image_1", data))

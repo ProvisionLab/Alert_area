@@ -1,6 +1,34 @@
 import requests
 import logging
 
+def do_auth(func):
+    """
+    decorator to auth on demand
+    """
+    
+    def reauth(self, *args, **kwargs):
+
+        if not self.jwt_token and not self.auth():
+            return None
+
+        try:
+
+            return func(self, *args, **kwargs)
+
+        except requests.exceptions.HTTPError as e:
+
+            if e.response.status_code != 401:
+                raise e
+
+        self.jwt_token = None
+
+        if not self.auth():
+            return None
+
+        return func(self, *args, **kwargs)
+    
+    return reauth        
+
 class ROG_Client(object):
 
     def __init__(self, url: str, username: str, password: str):
@@ -11,34 +39,6 @@ class ROG_Client(object):
         self.jwt_token = None
 
         self.session = requests.Session()
-
-    def do_auth(func):
-        """
-        decorator to auth on demand
-        """
-        
-        def reauth(self, *args, **kwargs):
-    
-            if not self.jwt_token and not self.auth():
-                return None
-
-            try:
-
-                return func(self, *args, **kwargs)
-
-            except requests.exceptions.HTTPError as e:
-
-                if e.response.status_code != 401:
-                    raise e
-
-            self.jwt_token = None
-
-            if not self.auth():
-                return None
-
-            return func(self, *args, **kwargs)
-        
-        return reauth        
 
     def auth(self):
         

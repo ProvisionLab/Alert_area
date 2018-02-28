@@ -2,8 +2,7 @@ import unittest
 
 from rogapi import ROG_Client
 
-import cv2
-import numpy as np
+import cv2, numpy as np
 import base64
 import uuid
 import datetime
@@ -319,7 +318,6 @@ class Test_post_alert_simple(unittest.TestCase):
         self.assertEqual(r.status_code, 201)
 
         pass
-        
 
 if __name__ == '__main__':
     
