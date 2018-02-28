@@ -242,7 +242,7 @@ class RecoApp(object):
                     c['id'], c['name'], str(c.get('users',[])))
 
         # remove cameras with no alert areas
-        cameras = [c for c in cameras if c['areas']]
+        #cameras = [c for c in cameras if c['areas']]
 
         #
         old_cameras = [t.camera for t in self.threads]
@@ -267,7 +267,8 @@ class RecoApp(object):
             camera_id = t.camera['id']
             for c in cameras:
                 if c['id'] == camera_id:
-                    c_areas = t.camera['areas']
+                    c_areas = c['areas']
+                    #c_areas = t.camera['areas']
                     t.set_alert_areas(c_areas)
 
         # add new camera threads
@@ -371,13 +372,24 @@ class RecoApp(object):
 
         while not self.bStop and self.thumbnail_queue:
             
+            thumbnail = self.thumbnail_queue.popleft()
+
             try:
 
-                self.bvcapi.post_thumbnail(self.thumbnail_queue.popleft())
+                self.bvcapi.post_thumbnail(thumbnail)
 
             except:
                 logging.exception("exception in bvcapi.post_thumbnail")
                 pass
+
+            try:
+
+                self.rogapi.remote_camera_image(thumbnail)
+
+            except:
+                logging.exception("exception in rogapi.remote_camera_image")
+                pass
+                
                     
             if (time.time() - start_time) > 10.0:
                 break;

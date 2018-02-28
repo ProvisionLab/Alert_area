@@ -203,3 +203,27 @@ class ROG_Client(object):
             return None
 
         return data.get("data", None)
+
+    @do_auth
+    def remote_camera_image(self, image_data):
+        """
+        @image_data: dict, {'camera_id':int, 'image':str, 'timestamp':str}
+        @return: bool
+        """
+        
+        data = {
+            'success':True,
+            'image': image_data,
+        }
+
+        r = self.session.post('{}/api/v2/remote_camera_image'.format(self.url),
+                            headers={'Authorization': '{0}'.format(self.jwt_token)},
+                            json=data
+                            )
+
+        if r.status_code // 100 != 2:
+            logging.error("rog remote_camera_image failed, status: %d, message: %s", r.status_code, r.text)
+
+        r.raise_for_status()
+
+        logging.info("rog remote_camera_image, status: %d, message: %s", r.status_code, r.text)

@@ -161,7 +161,7 @@ def delete_user_cameras(user_id: int, cids : list):
     if len(cids) == 0:
         return
 
-    cursor = db.cameras.find({'id': {'$in': cids }}, {'users':True})
+    cursor = db.cameras.find({'id': {'$in': cids }}, {'id':True,'users':True})
     cameras = [c for c in cursor]
 
     del_cids = []
@@ -473,7 +473,7 @@ def set_camera_thumbnail(camera_id:int, image:bytes, timestamp=None):
     #    logging.error("%d %d %d", result.matched_count, result.modified_count, result.upserted_id)
     #    raise Exception('set_camera_thumbnail: db.thumbnails.update_one')
 
-    result = db.cameras.update_one({'id': camera_id }, {'$set': {'thumbnail': True}})
+    result = db.cameras.update_one({'id': camera_id }, {'$set': {'thumbnail': True, 'connectedOnce': True}})
     if result.modified_count==0:
         raise ECameraNotFound(camera_id)
 

@@ -243,6 +243,7 @@ class CameraContext(object):
     
         with self.lock:
             if self.analyzer:
+                self.alert_areas = areas
                 self.analyzer.update_areas(areas)        
 
     def _process_ta_frames(self, frame):
