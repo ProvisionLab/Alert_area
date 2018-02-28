@@ -238,6 +238,12 @@ class Test_add_camera(unittest.TestCase):
 
         self.assertEqual(r.status_code, 204)
 
+        r = session.delete('{}/api/cameras/{}'.format(bvcapi_url, 9000),
+            headers = {'Authorization': 'JWT {0}'.format(self.access_token)})
+
+        #print(r.text)
+        self.assertEqual(r.status_code, 404)
+
     def test_add_2(self):
         
         r = session.post('{}/api/user/{}/cameras'.format(bvcapi_url, bvc_user_id),
@@ -341,8 +347,9 @@ class Test_get_camera(unittest.TestCase):
         
         # delete cameras
 
-        r = session.delete('{}/api/cameras/{}'.format(bvcapi_url, 9000),
-            headers = {'Authorization': 'JWT {0}'.format(self.access_token)})
+        #r = session.delete('{}/api/cameras/{}'.format(bvcapi_url, 9000),
+        #    headers = {'Authorization': 'JWT {0}'.format(self.access_token)})
+        pass
         
     def test_1(self):
 
@@ -366,7 +373,7 @@ class Test_get_camera(unittest.TestCase):
         r = session.get('{}/api/cameras/{}'.format(bvcapi_url, "012345678901234567890123"),
             headers = {'Authorization': 'JWT {0}'.format(self.access_token)})
 
-        self.assertEqual(r.status_code, 404)
+        self.assertNotEqual(r.status_code//100, 2)
 
     def test_get_enabled(self):
 
@@ -597,9 +604,11 @@ if __name__ == '__main__':
     #unittest.main(argv=["", "Test_auth"], failfast=True)
     #unittest.main(argv=["", "Test_auth.test_ssl"])
     #unittest.main(argv=["", "Test_get_cameras"])
-    #unittest.main(argv=["", "Test_get_camera"])
-    #unittest.main(argv=["", "Test_camera_alerts"])
-    #unittest.main(argv=["", "Test_camera_alerts.test_post_1"])
     #unittest.main(argv=["", "Test_add_camera"])
+    #unittest.main(argv=["", "Test_add_camera.test_add_1"])
     #unittest.main(argv=["", "Test_add_camera.test_put_2"])
     #unittest.main(argv=["", "Test_add_camera.test_add_with_alert"])
+    #unittest.main(argv=["", "Test_get_camera"])
+    #unittest.main(argv=["", "Test_get_camera.test_1"])
+    #unittest.main(argv=["", "Test_camera_alerts"])
+    #unittest.main(argv=["", "Test_camera_alerts.test_post_1"])

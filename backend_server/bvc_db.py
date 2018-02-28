@@ -4,6 +4,8 @@ from bson.objectid import ObjectId
 import logging
 import time
 
+from bvc_exceptions import ENotFound, ECameraNotFound
+
 import bvc_config
 
 # connect to database
@@ -127,19 +129,65 @@ def delete_camera(camera_id):
     camera = db.cameras.find_one({'id': camera_id}, {'users': True })
 
     if camera is None:
-        return False
+        raise ECameraNotFound(camera_id)
+
+    logging.warning('delete camera [%d]', camera_id)
 
     users = camera.get('users', [])
 
     for uid in users:
         user = db.users.find_one({'uid': uid}, {'cameras':True})
         if user:
+
             u_cameras = user.get('cameras', [])
             u_cameras = [cid for cid in u_cameras if cid != camera_id]
-            db.users.update_one({'uid': uid}, { '$set': { 'cameras' : u_cameras }})
+
+            if len(u_cameras) > 0:
+                db.users.update_one({'uid': uid}, { '$set': { 'cameras' : u_cameras }})
+            else:
+                db.users.delete_one({'uid': uid})
         
     db.cameras.remove({'id': camera_id})
-    return True
+
+def delete_user_cameras(user_id: int, cids : list):
+    """
+    removes user_id from cameras
+    removes camera if it has no users
+
+    """
+
+    if len(cids) == 0:
+        return
+
+    cursor = db.cameras.find({'id': {'$in': cids }}, {'users':True})
+    cameras = [c for c in cursor]
+
+    del_cids = []
+
+    # update cameras.users
+
+    for camera in cameras:
+
+        users = camera.get('users', [])
+        assert(isinstance(users,list))
+
+        new_users = [u for u in users if u != user_id]
+
+        if len(users) > len(new_users):
+            cid = camera['id']
+            if len(new_users) > 0:
+                db.cameras.update_one({'id': cid}, { '$set': { 'users' : new_users }})
+            else:
+                del_cids.append(cid)
+
+    # delete cameras with no users
+    for cid in del_cids:
+        try:
+            delete_camera(cid)
+        except:
+            pass
+
+    pass
 
 def append_cameras(user_id: int, cameras: list):
     
@@ -164,77 +212,33 @@ def append_cameras(user_id: int, cameras: list):
             set_camera(user_id, c)            
 
     except:
+
         logging.exception('bvc_db.append_cameras')
-        return False
+        raise
     
-    return True
-    
-def update_cameras(user_id: int, cameras: list):
+def update_user_cameras(user_id: int, cameras: list):
 
-    try:
+    new_ids = [c['id'] for c in cameras]
 
-        new_ids = [c['id'] for c in cameras]
+    logging.info('update cameras: %s, user: %d', str(new_ids), user_id)
 
-        logging.info('update cameras: %s, user: %d', str(new_ids), user_id)
-
-        user = db.users.find_one({'uid' : user_id})
-
-        del_ids = []
-
-        if user is None:
-            user = {'uid': user_id, 'cameras': new_ids}
-            db.users.insert_one(user)
-            logging.info('new user created, uid: %d', user_id)
-        else:
-            old_ids = user['cameras']
-            del_ids = [cid for cid in old_ids if cid not in new_ids]
-            db.users.update_one({'uid' : user_id}, { '$set': { 'cameras' : new_ids }})
-        
-        for c in cameras:
-            set_camera(user_id, c)
-
-        delete_cameras(user_id, del_ids)
-
-    except:
-        logging.exception('bvc_db.update_cameras')
-        return False
-    
-    return True
-
-def delete_cameras(user_id: int, cids : list):
-    """
-    removes user_id from cameras
-    removes camera if it has no users
-
-    """
-
-    if len(cids) == 0:
-        return
-
-    cursor = db.cameras.find({'id': {'$in': cids }}, {'alerts':False})
-    cameras = [c for c in cursor]
+    user = db.users.find_one({'uid' : user_id})
 
     del_ids = []
 
-    # update cameras.users
+    if user is None:
+        user = {'uid': user_id, 'cameras': new_ids}
+        db.users.insert_one(user)
+        logging.info('new user created, uid: %d', user_id)
+    else:
+        old_ids = user['cameras']
+        del_ids = [cid for cid in old_ids if cid not in new_ids]
+        db.users.update_one({'uid' : user_id}, { '$set': { 'cameras' : new_ids }})
+    
+    for c in cameras:
+        set_camera(user_id, c)
 
-    for camera in cameras:
-        users = camera.get('users', [])
-        assert(isinstance(users,list))
-        new_users = [u for u in users if u != user_id]
-        if len(users) > len(new_users):
-            cid = camera['id']
-            if len(new_users) > 0:
-                db.cameras.update_one({'id': cid}, { '$set': { 'users' : new_users }})
-            else:
-                del_ids.append(camera['id'])
-
-    # delete cameras with no users
-    if len(del_ids) > 0:
-        logging.warning('delete cameras: %s', str(cids))
-        db.cameras.remove({'id': {'$in': del_ids }})
-
-    pass
+    delete_user_cameras(user_id, del_ids)
 
 def delete_empty_cameras():
       
@@ -312,22 +316,16 @@ def set_camera_by_name(camera : dict):
 
 def get_camera( camera_id : int ):
 
-    try:  
+    camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts': False } )
 
-        camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts': False } )
+    if camera is None: 
+        raise ENotFound('camera %d' % camera_id)
 
-        if camera is None: 
-            return None, 'camera {0} not found'.format(camera_id)
+    camera.pop('_id')
 
-        camera.pop('_id')
+    camera['connectedOnce'] = camera.get('connectedOnce', False)
 
-        camera['connectedOnce'] = camera.get('connectedOnce', False)
-
-        return camera, None
-
-    except:
-        logging.exception('bvc_db.get_camera')
-        return None, 'camera {0} not found'.format(camera_id)
+    return camera
 
 def set_camera_enabled(camera_id: int, enabled: bool):
     
@@ -335,30 +333,20 @@ def set_camera_enabled(camera_id: int, enabled: bool):
 
 def get_camera_property(camera_id: int, name:str, def_value):
     
-    try:
+    camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts': False } )
 
-        camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts': False } )
+    if camera is None: 
+        raise ECameraNotFound(camera_id)
 
-        if camera is None:
-            return None, 'camera {0} not found'.format(camera_id)
-
-        result = camera.get(name, def_value)
-
-        return result, None
-
-    except:
-        return None, 'camera {0} not found'.format(camera_id)
+    result = camera.get(name, def_value)
+    return result
 
 def set_camera_property(camera_id: int, name:str, value):
     
-    try:
+    result = db.cameras.update_one({'id': camera_id }, { '$set': { name : value }} )
 
-        result = db.cameras.update_one({'id': camera_id }, { '$set': { name : value }} )
-
-        return {}, None
-
-    except:
-        return None, 'camera {0} not found'.format(camera_id)
+    if result.matched_count == 0:
+        raise ECameraNotFound(camera_id)
 
 def get_not_connectedOnce_cameras():
     
@@ -372,121 +360,93 @@ def get_not_connectedOnce_cameras():
 
 def get_camera_alerts( camera_id : int ):
 
-    try:  
+    #camera = db.cameras.find_one({ '_id' : ObjectId(camera_id) }, { 'alerts':True } )
+    camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts':True } )
 
-        #camera = db.cameras.find_one({ '_id' : ObjectId(camera_id) }, { 'alerts':True } )
-        camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts':True } )
+    if camera is None: 
+        raise ECameraNotFound(camera_id)
 
-        if camera is None: 
-            return None, 'camera {0} not found'.format(camera_id)
-
-        alerts = camera.get('alerts')
-        if alerts is None:
-            return [], None
-
-        return alerts, None
-
-    except:
-        return None, 'camera {0} not found'.format(camera_id)
+    alerts = camera.get('alerts', [])
+    return alerts 
 
 def append_camera_alert( camera_id : int, alert : dict ):
 
-    try:  
+    alert_id = str(ObjectId())
+    alert['id'] = alert_id
 
-        alert_id = str(ObjectId())
-        alert['id'] = alert_id
+    result = db.cameras.update_one({'id' : camera_id }, { '$push': { 'alerts' : alert }} )
+    if result.modified_count == 0: 
+        raise ECameraNotFound(camera_id)
 
-        result = db.cameras.update_one({'id' : camera_id }, { '$push': { 'alerts' : alert }} )
-        if result.modified_count == 0: 
-            return None, 'camera {0} not found'.format(camera_id)
-    
-        return alert_id, None
-
-    except:
-        return None, 'camera {0} not found'.format(camera_id)
+    return alert_id
 
 def get_camera_alert( camera_id: int, alert_id: int):
 
-    try:  
+    camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts':True } )
+    if camera is None:
+        raise ECameraNotFound(camera_id)
 
-        camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts':True } )
-        if camera is None:
-            return None, 'camera {0} not found'.format(camera_id)
+    alerts = camera.get('alerts')
 
-        alerts = camera.get('alerts')
+    if alerts is not None:
+        for i,a in enumerate(alerts):
+            if a['id'] == alert_id:
+                return a
 
-        if alerts is not None:
-            for i,a in enumerate(alerts):
-                if a['id'] == alert_id:
-                    return a, None
-
-        return None, 'camera {0} alert {1} not found'.format(camera_id, alert_id)
-
-    except:
-        return None, 'camera {0} not found'.format(camera_id)
+    raise ENotFound('camera {0} alert {1} not found'.format(camera_id, alert_id))
 
 def delete_camera_alerts( camera_id: int ):
     
-    try:
-    
-        camera = db.cameras.find_one({ 'id': camera_id }, { 'alerts':True } )
-        if camera is None:
-            return None, 'camera {0} not found'.format(camera_id)
+    camera = db.cameras.find_one({ 'id': camera_id }, { 'alerts':True } )
+    if camera is None:
+        raise ECameraNotFound(camera_id)
 
-        result = db.cameras.update_one({'id': camera_id }, { '$set': { 'alerts' : [] }} )
-        return {}, None
-
-    except:
-        return None, 'camera {0} not found'.format(camera_id)
+    result = db.cameras.update_one({'id': camera_id }, { '$set': { 'alerts' : [] }} )
+    if result.modified_count == 0: 
+        raise Exception('delete_camera_alerts')
 
 def delete_camera_alert( camera_id: int, alert_id: str ):
 
-    try:
-    
-        camera = db.cameras.find_one({ 'id': camera_id }, { 'alerts':True } )
-        if camera is None:
-            return None, 'camera {0} not found'.format(camera_id)
+    camera = db.cameras.find_one({ 'id': camera_id }, { 'alerts':True } )
+    if camera is None:
+        raise ECameraNotFound(camera_id)
 
-        alerts = camera.get('alerts')
+    alerts = camera.get('alerts')
 
-        if alerts is None:
-            return None, 'camera {0} alert {1} not found'.format(camera_id, alert_id)
+    if alerts is None:
+        raise ENotFound('camera {0} alert {1} not found'.format(camera_id, alert_id))
 
-        new_alerts = [a for a in alerts if a['id'] != alert_id]
+    new_alerts = [a for a in alerts if a['id'] != alert_id]
 
-        if len(alerts)==len(new_alerts):
-            return None, 'camera {0} alert {1} not found'.format(camera_id, alert_id)
+    if len(alerts)==len(new_alerts):
+        raise ENotFound('camera {0} alert {1} not found'.format(camera_id, alert_id))
 
-        result = db.cameras.update_one({'id': camera_id }, { '$set': { 'alerts' : new_alerts }} )
-        return {}, None
+    result = db.cameras.update_one({'id': camera_id }, { '$set': { 'alerts' : new_alerts }} )
+    if result.modified_count == 0: 
+        raise Exception('delete_camera_alert')
 
-    except:
-        return None, 'camera {0} not found'.format(camera_id)
 
 def update_camera_alert( camera_id: int, alert_id : str, alert : dict ):
 
 #  print('update alert: {0}: {1}'.format(alert_id, alert))
-    try:
+    alert['id'] = alert_id
 
-        alert['id'] = alert_id
+    camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts':True } )
+    if camera is None:
+        raise ECameraNotFound(camera_id)
 
-        camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts':True } )
-        if camera is None:
-            return None, 'camera {0} not found'.format(camera_id)
+    alerts = camera.get('alerts')
 
-        alerts = camera.get('alerts')
+    if alerts is not None:
+        for i,a in enumerate(alerts):
+            if a['id'] == alert_id:
+                alerts[i] = alert
+                result = db.cameras.update_one({'id': camera_id }, { '$set': { 'alerts' : alerts }} )
+                if result.modified_count == 0: 
+                    raise Exception('delete_camera_alert')
+                return
 
-        if alerts is not None:
-            for i,a in enumerate(alerts):
-                if a['id'] == alert_id:
-                    alerts[i] = alert
-                    result = db.cameras.update_one({'id': camera_id }, { '$set': { 'alerts' : alerts }} )
-                    return {}, None
-
-        return None, 'camera {0}, alert {1} not found'.format(camera_id, alert_id)
-
-    except:
-        return None, 'camera {0} not found'.format(camera_id)
+    raise ENotFound('camera {0} alert {1} not found'.format(camera_id, alert_id))
 
 def mutex_init(name:str):
     

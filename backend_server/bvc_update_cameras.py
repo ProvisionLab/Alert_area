@@ -15,7 +15,7 @@ def do_auth(username, password):
 
     auth = r.json()
     print('user: ', auth['user']['email'])
-    return auth['jwt']
+    return auth['jwt'], auth['user']['id']
 
 def get_cameras(jwt_token):
     
@@ -29,7 +29,8 @@ def get_cameras(jwt_token):
     return r.json()['data']
     
 def update_cameras():
-    jwt_token = do_auth(bvc_config.usapi_username, bvc_config.usapi_password)
+    
+    jwt_token, user_id = do_auth(bvc_config.usapi_username, bvc_config.usapi_password)
 
     if jwt_token is None:
         print('cameras updating failed')
@@ -50,7 +51,7 @@ def update_cameras():
             'password': c.get('password'),
         } for c in cameras]
 
-    bvc_db.update_cameras(cameras) 
+    bvc_db.update_user_cameras(user_id, cameras) 
   
 
 if __name__ == '__main__':

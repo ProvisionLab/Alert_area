@@ -17,6 +17,8 @@ from bvc_users import BVC_JWT
 from reco_dispatcher import RecoDispatcher
 from reco_dispatcher2 import RecoDispatcher2
 
+from bvc_exceptions import EBvcException, EInvalidArgs, ENotFound, ECameraNotFound
+
 class BVC_Flask(Flask):
     
     def __init__(self):
@@ -77,19 +79,20 @@ CORS(app)
 ## Flask api implementation
 
 def error_response(status:int, message:str):
-
     return flask.Response(
            status=status,
            mimetype="application/json",
            response=json.dumps({'error':{ 'status' : status, 'message' : message}})
            )
 
-@app.errorhandler(404)
-def page_not_found(e):
-    return error_response(404, "resource not found")
+@app.errorhandler(EBvcException)
+def resource_not_found(error):
+    logging.error('EBvcException: %d %s', error.status_code, error)
+    return error.to_response()
 
 @app.errorhandler(500)
 def internal_error(e):
+    logging.exception("500: ")
     return error_response(500, "server error")
 
 @app.route('/api/active_cameras', methods=["GET"])
@@ -108,16 +111,16 @@ def api_cameras_get_enabled():
     return flask.jsonify({'cameras': cameras})
 
 @app.route('/api/cameras/<int:camera_id>', methods=["DELETE"])
+@app.route('/api/camera/<int:camera_id>', methods=["DELETE"])
 @jwt_required()
 def api_cameras_delete(camera_id):
 
     logging.info('delete camera: %d', camera_id)
 
-    if not bvc_db.delete_camera(camera_id):
-        return error_response(404, "not found")
+    bvc_db.delete_camera(camera_id)
 
     app.dispatcher.on_cameras_update()
-        
+
     return flask.jsonify({}), 204
 
 
@@ -143,10 +146,10 @@ def api_user_new_camera(user_id: int):
     logging.debug('request payload: %s', str(camera))
 
     if camera is None:
-        return error_response(400, "failed")
+        raise EInvalidArgs()
 
     if not isinstance(camera,dict):
-        return error_response(400, "failed")
+        raise EInvalidArgs()
 
     cameras = [camera]
     camera_id = camera.get('camera_id')
@@ -157,8 +160,7 @@ def api_user_new_camera(user_id: int):
 
     #print("set cameras: ", cameras)
 
-    if not bvc_db.append_cameras(user_id, cameras):
-        return error_response(400, "failed")
+    bvc_db.append_cameras(user_id, cameras)
 
     app.dispatcher.on_cameras_update()
 
@@ -176,7 +178,7 @@ def api_user_new_cameras(user_id: int):
     logging.debug('request payload: %s', str(cameras))
 
     if cameras is None:
-        return error_response(400, "failed")
+        raise EInvalidArgs()
 
     if isinstance(cameras,dict):
         cameras = [cameras]
@@ -187,8 +189,7 @@ def api_user_new_cameras(user_id: int):
 
     #print("set cameras: ", cameras)
 
-    if not bvc_db.append_cameras(user_id, cameras):
-        return error_response(400, "failed")
+    bvc_db.append_cameras(user_id, cameras)
 
     app.dispatcher.on_cameras_update()
 
@@ -202,11 +203,11 @@ def api_user_put_cameras(user_id: int):
 
     cameras = request.get_json()
 
+    if cameras is None:
+        raise EInvalidArgs()
+
     logging.debug('request headers: %s', str(request.headers))
     logging.debug('request payload: %s', str(cameras))
-
-    if cameras is None:
-        return error_response(400, "failed")
 
     if isinstance(cameras,dict):
         cameras = [cameras]
@@ -217,8 +218,7 @@ def api_user_put_cameras(user_id: int):
 
     #print("set cameras: ", cameras)
 
-    if not bvc_db.update_cameras(user_id, cameras):
-        return error_response(400, "failed")
+    bvc_db.update_user_cameras(user_id, cameras)
 
     app.dispatcher.on_cameras_update()
 
@@ -229,11 +229,7 @@ def api_user_put_cameras(user_id: int):
 @jwt_required()
 def api_camera_get(camera_id: int):
 
-    camera, err = bvc_db.get_camera(camera_id)
-
-    if camera is None:
-        logging.error(err)
-        return error_response(404, err)#"camera {0} not found".format(camera_id))
+    camera = bvc_db.get_camera(camera_id)
 
     return flask.jsonify({'camera': camera })
 
@@ -244,12 +240,8 @@ def api_camera_enabled(camera_id: int):
 
     if request.method == 'GET':
     
-        value, err = bvc_db.get_camera_property(camera_id, 'enabled', True)
+        value = bvc_db.get_camera_property(camera_id, 'enabled', True)
     
-        if value is None:
-            logging.error(err)
-            return error_response(404, err)
-
         return flask.jsonify({'value' : value, 'enabled' : value })
 
     if request.method == 'PUT':
@@ -257,16 +249,12 @@ def api_camera_enabled(camera_id: int):
         value = request.get_json().get('value')
 
         if value is None:
-            value = request.get_json().get('value')
+            value = request.get_json().get('enabled')
 
         if not isinstance(value,bool):
-            return error_response(400, "invalid argument")
+            raise EInvalidArgs()
 
-        res, err = bvc_db.set_camera_property(camera_id, 'enabled', value)
-
-        if res is None:
-            logging.error(err)
-            return error_response(404, err)
+        bvc_db.set_camera_property(camera_id, 'enabled', value)
 
         logging.info("camera [%d] enabled = %s", camera_id, value)
 
@@ -280,11 +268,7 @@ def api_camera_connectedOnce(camera_id: int):
 
     if request.method == 'GET':
     
-        value, err = bvc_db.get_camera_property(camera_id, 'connectedOnce', False)
-
-        if value is None:
-            logging.error(err)
-            return error_response(404, err)
+        value = bvc_db.get_camera_property(camera_id, 'connectedOnce', False)
 
         return flask.jsonify({'value' : value })
 
@@ -294,21 +278,13 @@ def api_camera_alerts(camera_id:str):
 
     if request.method == 'GET':
         
-        alerts, err = bvc_db.get_camera_alerts(camera_id)
-
-        if alerts is None:
-            logging.error(err)
-            return error_response(404, err)
+        alerts = bvc_db.get_camera_alerts(camera_id)
 
         return flask.jsonify({ 'alerts' : alerts })
 
     if request.method == 'POST':
         
-        alert_id, err = bvc_db.append_camera_alert(camera_id, request.get_json())
-
-        if alert_id is None:
-            logging.error(err)
-            return error_response(404, err)
+        alert_id = bvc_db.append_camera_alert(camera_id, request.get_json())
 
         app.dispatcher.on_cameras_update()
 
@@ -316,15 +292,11 @@ def api_camera_alerts(camera_id:str):
 
     if request.method == 'DELETE':
         
-        res, err = bvc_db.delete_camera_alerts(camera_id)
-
-        if res is None:
-            logging.error(err)
-            return error_response(404, err)
+        bvc_db.delete_camera_alerts(camera_id)
 
         app.dispatcher.on_cameras_update()
 
-        return flask.jsonify(res), 204
+        return flask.jsonify({}), 204
     
 @app.route('/api/cameras/<int:camera_id>/alerts/<string:alert_id>', methods=["DELETE", "PUT", "GET"])
 @jwt_required()
@@ -332,37 +304,19 @@ def api_camera_alert_(camera_id:str, alert_id:str):
 
     if request.method == 'GET':
 
-        alert, err = bvc_db.get_camera_alert(camera_id, alert_id)
-
-        if alert is None:
-            logging.error(err)
-            return error_response(404, err)
+        alert = bvc_db.get_camera_alert(camera_id, alert_id)
 
         return flask.jsonify({'alert' : alert })
 
     if request.method == 'PUT':
         
-        try:
+        bvc_db.update_camera_alert(camera_id, alert_id, request.get_json())
 
-            res, err = bvc_db.update_camera_alert(camera_id, alert_id, request.get_json())
-
-            if res is None:
-                logging.error(err)
-                return error_response(404, err)
-
-            return flask.jsonify({}), 204
-
-        except Exception as e:
-            logging.exception("exce")
-            return "exception", 500
+        return flask.jsonify({}), 204
 
     if request.method == 'DELETE':
 
-        res, err = bvc_db.delete_camera_alert(camera_id, alert_id)
-
-        if res is None:
-            logging.error(err)
-            return error_response(404, err)
+        bvc_db.delete_camera_alert(camera_id, alert_id)
 
         app.dispatcher.on_cameras_update()
 
@@ -376,11 +330,11 @@ def api_alerts():
 
     camera_id = data.get('camera_id', None)
     if camera_id is None:
-        return error_response(400, "invalid arguments")
+        raise EInvalidArgs()
 
     alert_type = data.get('alert_type_id')
     if alert_type is None:
-        return error_response(400, "invalid arguments")
+        raise EInvalidArgs()
 
     logging.info("new alert: camera [%d], type: %s", camera_id, alert_type)
 
@@ -398,7 +352,7 @@ def api_reco_status():
 
     reco_id = current_identity.id[5:]
     if reco_id is None:
-        return error_response(400, "invalid arguments")
+        raise EInvalidArgs()
 
     logging.debug("reco_status: %s %s", reco_id, str(data))
 
@@ -422,7 +376,7 @@ def api_reco_end():
 
     reco_id = current_identity.id[5:]
     if reco_id is None:
-        return error_response(400, "invalid arguments")
+        raise EInvalidArgs()
     
     logging.info("reco end: %s %s", reco_id, str(data))
 
@@ -467,14 +421,12 @@ def get_camera_status(camera_id):
     
     try:
 
-        camera, err = bvc_db.get_camera(camera_id)
-        if err:
-            return err, 404
+        camera = bvc_db.get_camera(camera_id)
 
         status = app.dispatcher.get_camera_status(camera_id)
 
         if not status:
-            return "no capturing", 404
+            return 'no capturing', 404
 
         return render_template(
             'camera.html',
