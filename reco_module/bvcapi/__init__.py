@@ -235,3 +235,17 @@ class BVC_Client(object):
         r.raise_for_status()
 
         logging.info('post thumbnail [{}]'.format(camera_id))
+
+    @do_auth
+    def post_connectionFail(self, camera_id:int):
+        
+        r = self.session.put('{}/api/camera/{}/connectionFail'.format(self.url, camera_id),
+                        headers={'Authorization': 'JWT {0}'.format(self.jwt_token)},
+                        json={'value':True})
+        
+        if r.status_code != 204:
+            logging.error('bvcapi: failed to post connectionFail, status: %d', r.status_code)
+
+        r.raise_for_status()
+
+        logging.info('post connectionFail [{}]'.format(camera_id))

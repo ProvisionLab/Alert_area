@@ -299,6 +299,8 @@ def api_camera_connectionFail(camera_id: int):
 
         bvc_db.set_camera_property(camera_id, 'connectionFail', value)
 
+        app.dispatcher.on_cameras_update()
+
         return flask.jsonify({}), 204
         
 

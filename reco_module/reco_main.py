@@ -163,12 +163,6 @@ class RecoApp(object):
         if cameras is None:
             raise Exception("backend cameras request failed, no cameras returned")
 
-        #if reco_config.filter_cameras:
-        #    cameras = [c for c in cameras if c['name'] in reco_config.filter_cameras]
-
-        # remove disabled cameras
-        cameras = [c for c in cameras if c.get('enabled',True)]
-
         self.set_cameras(cameras)
 
     def remove_stoped_threads(self):
@@ -295,8 +289,12 @@ class RecoApp(object):
         self.alerts_queue.append(alert)
 
     def post_thumbnail(self, camera_id:int, image:str, timestamp:str):
-
+        logging.warning('post_thumbnail of camera [%d]', self.camera_id)
         self.thumbnail_queue.append({'camera_id':camera_id, 'image':image, 'timestamp':timestamp})
+
+    def post_connection_fail(self, camera_id:int):
+        logging.warning('post_connection_fail of camera [%d]', self.camera_id)
+        self.thumbnail_queue.append({'camera_id':camera_id})
 
     def post_all_alerts(self):
         """
@@ -373,10 +371,14 @@ class RecoApp(object):
         while not self.bStop and self.thumbnail_queue:
             
             thumbnail = self.thumbnail_queue.popleft()
+            camera_id = thumbnail.get('camera_id')
 
             try:
 
-                self.bvcapi.post_thumbnail(thumbnail)
+                if thumbnail.get('image'):
+                    self.bvcapi.post_thumbnail(thumbnail)
+                else:
+                    self.bvcapi.post_connectionFail(camera_id)
 
             except:
                 logging.exception("exception in bvcapi.post_thumbnail")
@@ -384,7 +386,10 @@ class RecoApp(object):
 
             try:
 
-                self.rogapi.remote_camera_image(thumbnail)
+                if thumbnail.get('image'):
+                    self.rogapi.remote_camera_image(thumbnail)
+                else:
+                    self.rogapi.post_connection_fail(camera_id)
 
             except:
                 logging.exception("exception in rogapi.remote_camera_image")

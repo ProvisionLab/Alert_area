@@ -36,7 +36,7 @@ def get_dummy_image():
     h = 480
     
     blank_image = np.zeros((h,w,3), np.uint8)
-    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 50]
     result, encimg = cv2.imencode('.jpg', blank_image, encode_param)
 
     image = str(base64.b64encode(encimg), "utf-8")
@@ -198,7 +198,7 @@ class Test_add_alert_image(unittest.TestCase):
         #self.assertEqual(ctx.exception.response.status_code, 404)
 
 
-class Test_post_alert_simple(unittest.TestCase):
+class Test_simple(unittest.TestCase):
 
     def setUp(self):
         
@@ -319,9 +319,64 @@ class Test_post_alert_simple(unittest.TestCase):
 
         pass
 
+    def test_remote_camera_image(self):
+        
+        image = get_dummy_image()
+        
+        data = {
+            'camera_id': self.camera_id, 
+            'image': image,
+            #'image': 'hello',
+        }
+
+        r = self.session.post('{}/api/v1/remote_camera_image'.format(self.url),
+                headers={'Authorization': '{}'.format(self.jwt_token)},
+                json=data
+                )
+
+        print(r.status_code, r.text)
+
+        self.assertEqual(r.status_code, 201)
+        pass
+
+class Test_post_thumbnail(unittest.TestCase):
+    
+    def setUp(self):
+        
+        self.rog = ROG_Client(rogapi_url, rogapi_username, rogapi_password)
+
+        cameras = self.rog.get_cameras()
+        self.assertTrue(isinstance(cameras,list) and len(cameras)>0)
+
+        self.assertTrue(isinstance(cameras[0],dict))
+
+        self.camera_id = cameras[0].get('id')
+        self.assertTrue(isinstance(self.camera_id,int))
+
+    def test_ok(self):
+        
+        #bvc_alert_id = str(uuid.uuid4())
+
+        image = get_dummy_image()
+        ts = datetime.datetime.utcnow().isoformat()+'Z'
+
+        data = {
+            'camera_id': self.camera_id, 
+            'image': image,
+            'timestamp': ts, 
+        }
+
+        self.rog.remote_camera_image(data)
+
+    def test_connection_fail(self):
+        
+        #bvc_alert_id = str(uuid.uuid4())
+
+        self.rog.post_connection_fail(self.camera_id)
+
 if __name__ == '__main__':
     
-    unittest.main()
+    #unittest.main()
     #unittest.main(verbosity=2)
 
     #rog = ROG_Client(rogapi_url, rogapi_username, rogapi_password)
@@ -331,5 +386,8 @@ if __name__ == '__main__':
     #unittest.main(argv=["", "Test_alert_types"],verbosity=2)
     #unittest.main(argv=["", "Test_post_alert.test_ok"],verbosity=2)
     #unittest.main(argv=["", "Test_add_alert_image.test_ok"],verbosity=2)
-    #unittest.main(argv=["", "Test_post_alert_simple.test_alert"],verbosity=2)
-    #unittest.main(argv=["", "Test_post_alert_simple.test_add_image"],verbosity=2)
+    unittest.main(argv=["", "Test_post_thumbnail"],verbosity=2)
+    #unittest.main(argv=["", "Test_simple"],verbosity=2)
+    #unittest.main(argv=["", "Test_simple.test_alert"],verbosity=2)
+    #unittest.main(argv=["", "Test_simple.test_add_image"],verbosity=2)
+    #unittest.main(argv=["", "Test_simple.test_remote_camera_image"],verbosity=2)

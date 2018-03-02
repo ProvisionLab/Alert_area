@@ -154,8 +154,14 @@ class CaptureWorker(threading.Thread):
 
         # open stream by url
 
+        try_count=0
+        try_start=time.time()
+        try_fail=False
+
         while True:
             
+            try_count += 1
+
             #self.camera_url = 'rtsp://70.233.119.2:554' # temp
             #self.camera_url = 'rtsp://173.163.208.170:554' # temp
             
@@ -168,8 +174,8 @@ class CaptureWorker(threading.Thread):
                 cap_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
                 cap_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-                logging.info('begin capture of camera: \'%s\', url: \'%s\', fps: %d, [%d x %d]', 
-                    self.camera_name, self.camera_url, cap_fps, cap_w, cap_h)
+                logging.info('begin capture of camera: [%d] \'%s\', url: \'%s\', fps: %d, [%d x %d], try: %d', 
+                    self.camera_id, self.camera_name, self.camera_url, cap_fps, cap_w, cap_h, try_count)
 
                 self.worker = FrameWorker(self.context)
                 self.worker.use_cpu = self.use_cpu
@@ -187,15 +193,24 @@ class CaptureWorker(threading.Thread):
 
                 cap.release()
 
+                # reset try count if any frame was received
+                if self.context.stat.capture_count > 0:
+                    try_count=0
+                    try_start=time.time()
+
             else:
 
                 self.context.stat.inc_cam_fail()
-                logging.warning("camera [%d] \'%s\' not opened", self.camera_id, self.camera_name)
-                break;
+                logging.warning("camera [%d] \'%s\' not opened, try: %d", self.camera_id, self.camera_name, try_count)
 
-            if self.bStop or not self.restart_on_fail:
+            if self.bStop:
                 break
 
+            # send 'connectionFail' message on timeout
+            if try_count > reco_config.try_capture_count or (time.time()-try_start) > reco_config.try_capture_timeout:
+                self.connection.post_connection_fail(self.camera_id)
+                break
+                
         CaptureWorker.thread_count -= 1
 
         logging.info('CaptureWorker: end capture of camera [%d] \'%s\', workers left: %d', self.camera_id, self.camera_name, CaptureWorker.thread_count)

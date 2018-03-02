@@ -160,8 +160,8 @@ class ROG_Client(object):
         """
         
         data = {
-                'alert_id': alert_id, 
-                'image': image,
+            'alert_id': alert_id, 
+            'image': image,
         }
 
         r = self.session.post('{}/api/v1/add_alert_image'.format(self.url),
@@ -205,18 +205,18 @@ class ROG_Client(object):
         return data.get("data", None)
 
     @do_auth
-    def remote_camera_image(self, image_data):
+    def remote_camera_image(self, thumbnail:dict):
         """
         @image_data: dict, {'camera_id':int, 'image':str, 'timestamp':str}
         @return: bool
         """
         
         data = {
-            'success':True,
-            'image': image_data,
+            'camera_id': thumbnail.get('camera_id'),
+            'image': thumbnail.get('image'),
         }
 
-        r = self.session.post('{}/api/v2/remote_camera_image'.format(self.url),
+        r = self.session.post('{}/api/v1/me/remote_camera_image'.format(self.url),
                             headers={'Authorization': '{0}'.format(self.jwt_token)},
                             json=data
                             )
@@ -227,3 +227,30 @@ class ROG_Client(object):
         r.raise_for_status()
 
         logging.info("rog remote_camera_image, status: %d, message: %s", r.status_code, r.text)
+
+        return True
+       
+    @do_auth
+    def post_connection_fail(self, camera_id:int):
+        """
+        @return: bool
+        """
+        
+        data = {
+            'camera_id': camera_id,
+            'timeout': True,
+        }
+
+        r = self.session.post('{}/api/v1/me/remote_camera_image'.format(self.url),
+                            headers={'Authorization': '{0}'.format(self.jwt_token)},
+                            json=data
+                            )
+
+        if r.status_code // 100 != 2:
+            logging.error("rog remote_camera_image failed, status: %d, message: %s", r.status_code, r.text)
+
+        r.raise_for_status()
+
+        logging.info("rog remote_camera_image, status: %d, message: %s", r.status_code, r.text)
+
+        return True

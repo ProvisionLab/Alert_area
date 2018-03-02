@@ -27,6 +27,9 @@ else:
     rogapi_username = 'bvc-prod@gorog.co'
     rogapi_password = 'q5y2nib,+g!P8zJ+'
 
+
+bvcapi_key = '0123456789'
+
 DEBUG = False
 show_dbg_window = False
 
@@ -36,14 +39,11 @@ enable_people_detector = True
 
 use_cpu = False
 
-# list of camera names
-# to capture all cameras use empty list
-filter_cameras = []
-
-bvcapi_key = '0123456789'
-
 update_interval = 30  # seconds
 max_alert_queue_size = 50
+
+try_capture_count=10
+try_capture_timeout=90.0    
 
 send_alerts_to_rog = True
 
