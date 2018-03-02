@@ -488,6 +488,23 @@ class Test_get_camera(TestCaseBase):
         value = res.get('value')
         self.assertTrue(isinstance(value, bool))
 
+    def test_connectionFail(self):
+        
+        r = session.put('{}/api/camera/{}/connectionFail'.format(bvcapi_url, self.camera_id),
+            headers=self.get_headers(),
+            json={'value': True})
+        
+        self.assertEqual(r.status_code, 204)
+        
+        r = session.get('{}/api/camera/{}/connectionFail'.format(bvcapi_url, self.camera_id),
+            headers=self.get_headers())
+
+        self.assertEqual(r.status_code, 200)
+
+        res = r.json()
+        self.assertTrue(isinstance(res, dict))
+        self.assertEqual(res.get('value'), True)
+
 class Test_camera_alerts(TestCaseBase):
       
     def setUp(self):

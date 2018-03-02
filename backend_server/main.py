@@ -86,7 +86,7 @@ def error_response(status:int, message:str):
 
 @app.errorhandler(EBvcException)
 def resource_not_found(error):
-    logging.error('EBvcException: %d %s', error.status_code, error)
+    logging.warning('EBvcException: %d %s', error.status_code, error)
     return error.to_response()
 
 @app.errorhandler(500)
@@ -280,6 +280,27 @@ def api_camera_connectedNow(camera_id: int):
         value = app.dispatcher.get_connectedNow(camera_id)
     
         return flask.jsonify({'value' : value })
+
+@app.route('/api/camera/<int:camera_id>/connectionFail', methods=["GET", "PUT"])
+@jwt_required()
+def api_camera_connectionFail(camera_id: int):
+
+    if request.method == 'GET':
+        
+        value = bvc_db.get_camera_property(camera_id, 'connectionFail', False)
+    
+        return flask.jsonify({'value' : value })
+
+    if request.method == 'PUT':
+        
+        data = request.get_json()
+
+        value = data['value']
+
+        bvc_db.set_camera_property(camera_id, 'connectionFail', value)
+
+        return flask.jsonify({}), 204
+        
 
 @app.route('/api/camera/<int:camera_id>/thumbnail', methods=["GET","PUT","DELETE"])
 @jwt_required()
@@ -483,7 +504,7 @@ def get_camera_status(camera_id):
     
     try:
 
-        camera = bvc_db.get_camera(camera_id)
+        camera = bvc_db.get_camera(camera_id,full=True)
 
         status = app.dispatcher.get_camera_status(camera_id)
 
@@ -514,6 +535,8 @@ def get_camera_status(camera_id):
             camera_url=camera.get('url'),
             enabled=camera.get('enabled', True),
             cononce=camera.get('connectedOnce', False),
+            confail=camera.get('connectionFail', False),
+            zones=len(camera.get('alerts',[])),            
             connow=app.dispatcher.get_connectedNow(camera_id),
             status=status
         )

@@ -33,7 +33,8 @@
                 <th>enabled</th>
                 <th>alerts</th>
                 <th>url</th>
-                <th>connectedOnce</th>
+                <th>connected Once</th>
+                <th>connection Fail</th>
             </tr>
 
             {% for cam in subs.cameras %}
@@ -44,6 +45,7 @@
                 <td>{{cam.alerts}}</td>
                 <td>{{cam.url}}</td>
                 <td>{{cam.connectedOnce}}</td>
+                <td>{{cam.connectionFail}}</td>
             </tr>
             {% endfor %}
         </table>

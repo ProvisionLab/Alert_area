@@ -33,6 +33,7 @@ def get_subs_cameras():
         'alerts': len(c.get('alerts',[])),
         'url': c.get('url'),
         'connectedOnce': c.get('connectedOnce', False),
+        'connectionFail': c.get('connectionFail', False),
         } for c in db.cameras.find({})]
 
     return sorted(cameras, key=lambda x: x['id'])
@@ -47,6 +48,9 @@ def get_subscribes():
 def is_camera_active(camera):
     
     if not camera.get('enabled', True):
+        return False
+
+    if camera.get('connectionFail', False):
         return False
 
     if not bool(camera.get('users')):
@@ -262,6 +266,7 @@ def set_camera(user_id: int, camera: dict):
     try:
 
         camera.pop('connectedOnce', None)
+        camera.pop('connectionFail', None)
 
         alerts = camera.get('alerts')
         
@@ -278,6 +283,7 @@ def set_camera(user_id: int, camera: dict):
             camera['users'] = [user_id]
 
             camera['connectedOnce'] = False
+            camera['connectionFail'] = False
 
             result = db.cameras.insert_one(camera)
 
@@ -290,6 +296,7 @@ def set_camera(user_id: int, camera: dict):
 
             if old_camera.get('url') != camera['url']:
                 camera['connectedOnce'] = False
+                camera['connectionFail'] = False
 
             result = db.cameras.update_one({'id': camera['id'] }, {'$set': camera})
     
@@ -316,9 +323,12 @@ def set_camera_by_name(camera : dict):
       
     return True
 
-def get_camera( camera_id : int ):
+def get_camera(camera_id:int, full=False):
 
-    camera = db.cameras.find_one({ 'id' : camera_id }, { 'alerts': False } )
+    if full:
+        camera = db.cameras.find_one({'id': camera_id })
+    else:
+        camera = db.cameras.find_one({'id': camera_id }, { 'alerts': False } )
 
     if camera is None: 
         raise ENotFound('camera %d' % camera_id)
