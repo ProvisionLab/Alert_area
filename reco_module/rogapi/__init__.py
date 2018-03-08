@@ -5,7 +5,7 @@ def do_auth(func):
     """
     decorator to auth on demand
     """
-    
+
     def reauth(self, *args, **kwargs):
 
         if not self.jwt_token and not self.auth():
@@ -26,8 +26,8 @@ def do_auth(func):
             return None
 
         return func(self, *args, **kwargs)
-    
-    return reauth        
+
+    return reauth
 
 class ROG_Client(object):
 
@@ -42,7 +42,7 @@ class ROG_Client(object):
         self.session = requests.Session()
 
     def auth(self):
-        
+
         r = self.session.post('{}/api/v1/sessions'.format(self.url),
                             json={'session': {
                                 'email': self.username,
@@ -51,18 +51,18 @@ class ROG_Client(object):
 
         if r.status_code != 200:
             logging.error("rog auth failed, status: %d, message: %s", r.status_code, r.text)
-            return False    
+            return False
 
         """
         {
             'user': {
-                'cameraLicenses': int, 
-                'firstName': str, 
-                'email': str, 
-                'lastName': str, 
-                'phone': str, 
+                'cameraLicenses': int,
+                'firstName': str,
+                'email': str,
+                'lastName': str,
+                'phone': str,
                 'id': int
-                }, 
+                },
             'jwt': str
         }
         """
@@ -73,16 +73,16 @@ class ROG_Client(object):
 
         user = res.get('user')
         self.user_id = user.get('id') if user else None
-    
+
         return self.jwt_token is not None
 
     @do_auth
     def get_cameras(self):
-        
+
         """
         @return {'data':[...]}, None if error
         """
-        
+
         r = self.session.get('{}/api/v1/me/cameras'.format(self.url),
                         headers={'Authorization': '{0}'.format(self.jwt_token)})
 
@@ -97,28 +97,28 @@ class ROG_Client(object):
         {
             'data': [
                 {
-                    'rtspUrl': 'rtsp://xxxx:xxxx@xx.xx.xx.xx:xxx', 
+                    'rtspUrl': 'rtsp://xxxx:xxxx@xx.xx.xx.xx:xxx',
                     'image': {
-                        'original': 'https://xxxxx.jpg?v=xxxxx', 
+                        'original': 'https://xxxxx.jpg?v=xxxxx',
                         'thumb': 'https://xxxxx.jpg?v=xxxxx'
-                        }, 
-                    'name': str, 
-                    'id': int, 
+                        },
+                    'name': str,
+                    'id': int,
                     'username': str
-                }, 
+                },
                 ...
             ]
         }
         """
 
         return res.get("data", None)
-    
+
     @do_auth
     def post_alert(self, alert):
         """
         @alert  {
-                'camera_id': int, 
-                'alert_id': str, 
+                'camera_id': int,
+                'alert_id': str,
                 'alert_type_id': int,
                 'timestamp': str, # ISO Extended Z timestamp
                 'image_1': str, # base64
@@ -139,7 +139,7 @@ class ROG_Client(object):
             alert['image_1'] = alert.get('image_1','')[:16]
             alert['image_2'] = alert.get('image_2','')[:16]
             logging.error("%s", str(alert))
-    
+
         r.raise_for_status()
 
         res = r.json()
@@ -149,7 +149,7 @@ class ROG_Client(object):
         """
         {'data': {'id': 53452, 'timestamp': '2017-12-25T19:58:11.912366Z'}}
         """
-        
+
         return res.get('data', {}).get('id')
         #return alert.get('alert_id')
 
@@ -160,9 +160,9 @@ class ROG_Client(object):
         @image: str, base64
         @return: bool
         """
-        
+
         data = {
-            'alert_id': alert_id, 
+            'alert_id': alert_id,
             'image': image,
         }
 
@@ -175,7 +175,7 @@ class ROG_Client(object):
 
             data['image'] = data.get('image','')[:16]
             logging.error("%s", str(data))
-            
+
         r.raise_for_status()
 
         logging.info("rog add_alert_image, status: %d, message: %s", r.status_code, r.text)
@@ -194,7 +194,7 @@ class ROG_Client(object):
         return alert_id is not None;
 
     def get_alert_ids(self):
-    
+
         r = self.session.get('{0}/api/v1/alert_types'.format(self.url))
 
         r.raise_for_status()
@@ -212,9 +212,8 @@ class ROG_Client(object):
         @image_data: dict, {'camera_id':int, 'image':str, 'timestamp':str}
         @return: bool
         """
-        
+
         data = {
-            'user_id': thumbnail.get('user_id'),
             'camera_id': thumbnail.get('camera_id'),
             'image': thumbnail.get('image'),
         }
@@ -232,13 +231,13 @@ class ROG_Client(object):
         logging.info("rog remote_camera_image, status: %d, message: %s", r.status_code, r.text)
 
         return True
-       
+
     @do_auth
     def post_connection_fail(self, camera_id:int, user_id:int=None):
         """
         @return: bool
         """
-        
+
         data = {
             'camera_id': camera_id,
             'timeout': True,
