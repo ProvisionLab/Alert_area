@@ -37,6 +37,7 @@ class ROG_Client(object):
         self.username = username
         self.password = password
         self.jwt_token = None
+        self.user_id = None
 
         self.session = requests.Session()
 
@@ -69,8 +70,9 @@ class ROG_Client(object):
         res = r.json()
 
         self.jwt_token = res.get('jwt')
-    
-        user_id = res['user']['id']
+
+        user = res.get('user')
+        self.user_id = user.get('id') if user else None
     
         return self.jwt_token is not None
 
@@ -212,6 +214,7 @@ class ROG_Client(object):
         """
         
         data = {
+            'user_id': thumbnail.get('user_id'),
             'camera_id': thumbnail.get('camera_id'),
             'image': thumbnail.get('image'),
         }
@@ -231,7 +234,7 @@ class ROG_Client(object):
         return True
        
     @do_auth
-    def post_connection_fail(self, camera_id:int):
+    def post_connection_fail(self, camera_id:int, user_id:int=None):
         """
         @return: bool
         """
@@ -239,6 +242,7 @@ class ROG_Client(object):
         data = {
             'camera_id': camera_id,
             'timeout': True,
+            'user_id': user_id,
         }
 
         r = self.session.post('{}/api/v1/me/remote_camera_image'.format(self.url),

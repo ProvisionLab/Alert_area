@@ -288,13 +288,19 @@ class RecoApp(object):
 
         self.alerts_queue.append(alert)
 
-    def post_thumbnail(self, camera_id:int, image:str, timestamp:str):
-        logging.warning('post_thumbnail of camera [%d]', self.camera_id)
-        self.thumbnail_queue.append({'camera_id':camera_id, 'image':image, 'timestamp':timestamp})
+    def post_thumbnail(self, camera_id:int, image:str, timestamp:str, user_id=None):
+        logging.warning('post_thumbnail of camera [%d], user: %d', camera_id, user_id)
+        self.thumbnail_queue.append(
+            {
+            'camera_id' :camera_id, 
+            'image'     :image, 
+            'timestamp' :timestamp, 
+            'user_id'   :user_id
+            })
 
-    def post_connection_fail(self, camera_id:int):
-        logging.warning('post_connection_fail of camera [%d]', self.camera_id)
-        self.thumbnail_queue.append({'camera_id':camera_id})
+    def post_connection_fail(self, camera_id:int, user_id=None):
+        logging.warning('post_connection_fail of camera [%d], user: %d', camera_id, user_id)
+        self.thumbnail_queue.append({'camera_id':camera_id, 'user_id':user_id})
 
     def post_all_alerts(self):
         """
@@ -372,6 +378,7 @@ class RecoApp(object):
             
             thumbnail = self.thumbnail_queue.popleft()
             camera_id = thumbnail.get('camera_id')
+            user_id = thumbnail.get('user_id')
 
             try:
 
@@ -389,7 +396,7 @@ class RecoApp(object):
                 if thumbnail.get('image'):
                     self.rogapi.remote_camera_image(thumbnail)
                 else:
-                    self.rogapi.post_connection_fail(camera_id)
+                    self.rogapi.post_connection_fail(camera_id, user_id=user_id)
 
             except:
                 logging.exception("exception in rogapi.remote_camera_image")

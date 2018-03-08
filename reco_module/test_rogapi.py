@@ -220,7 +220,8 @@ class Test_simple(unittest.TestCase):
 
         res = r.json()
         self.jwt_token = res.get('jwt')
-        
+        self.user_id = res['user']['id']        
+
         # get cameras
 
         r = self.session.get('{}/api/v1/me/cameras'.format(self.url),
@@ -324,15 +325,19 @@ class Test_simple(unittest.TestCase):
         image = get_dummy_image()
         
         data = {
+            'user_id': self.user_id, 
             'camera_id': self.camera_id, 
             'image': image,
             #'image': 'hello',
         }
 
-        r = self.session.post('{}/api/v1/remote_camera_image'.format(self.url),
+        r = self.session.post('{}/api/v1/me/remote_camera_image'.format(self.url),
                 headers={'Authorization': '{}'.format(self.jwt_token)},
                 json=data
                 )
+
+        data['image'] = 'image';
+        print(data)
 
         print(r.status_code, r.text)
 
@@ -361,9 +366,10 @@ class Test_post_thumbnail(unittest.TestCase):
         ts = datetime.datetime.utcnow().isoformat()+'Z'
 
         data = {
+            'user_id': self.rog.user_id,
             'camera_id': self.camera_id, 
             'image': image,
-            'timestamp': ts, 
+            #'timestamp': ts, 
         }
 
         self.rog.remote_camera_image(data)
@@ -386,7 +392,10 @@ if __name__ == '__main__':
     #unittest.main(argv=["", "Test_alert_types"],verbosity=2)
     #unittest.main(argv=["", "Test_post_alert.test_ok"],verbosity=2)
     #unittest.main(argv=["", "Test_add_alert_image.test_ok"],verbosity=2)
-    unittest.main(argv=["", "Test_post_thumbnail"],verbosity=2)
+    #unittest.main(argv=["", "Test_post_thumbnail"],verbosity=2)
+    #unittest.main(argv=["", "Test_post_thumbnail.test_ok"])
+    unittest.main(argv=["", "Test_post_thumbnail.test_connection_fail"])
+    
     #unittest.main(argv=["", "Test_simple"],verbosity=2)
     #unittest.main(argv=["", "Test_simple.test_alert"],verbosity=2)
     #unittest.main(argv=["", "Test_simple.test_add_image"],verbosity=2)

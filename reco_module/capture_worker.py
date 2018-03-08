@@ -225,5 +225,9 @@ class CaptureWorker(threading.Thread):
 
         image = create_thumbnail(frame)
         ts = datetime.datetime.utcnow().isoformat()+'Z'
-        self.connection.post_thumbnail(self.camera_id, image, ts)
+
+        users = self.camera.get('users',[])
+        user_id = users[0] if users else None
+            
+        self.connection.post_thumbnail(self.camera_id, image, ts, user_id=user_id )
         pass
