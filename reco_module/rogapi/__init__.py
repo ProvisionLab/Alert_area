@@ -214,7 +214,7 @@ class ROG_Client(object):
         """
         
         data = {
-            'user_id': thumbnail.get('user_id'),
+            #'user_id': thumbnail.get('user_id'),
             'camera_id': thumbnail.get('camera_id'),
             'image': thumbnail.get('image'),
         }
@@ -242,7 +242,7 @@ class ROG_Client(object):
         data = {
             'camera_id': camera_id,
             'timeout': True,
-            'user_id': user_id,
+            #'user_id': user_id,
         }
 
         r = self.session.post('{}/api/v1/me/remote_camera_image'.format(self.url),

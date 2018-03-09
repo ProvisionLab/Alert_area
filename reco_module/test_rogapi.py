@@ -393,8 +393,8 @@ if __name__ == '__main__':
     #unittest.main(argv=["", "Test_post_alert.test_ok"],verbosity=2)
     #unittest.main(argv=["", "Test_add_alert_image.test_ok"],verbosity=2)
     #unittest.main(argv=["", "Test_post_thumbnail"],verbosity=2)
-    #unittest.main(argv=["", "Test_post_thumbnail.test_ok"])
-    unittest.main(argv=["", "Test_post_thumbnail.test_connection_fail"])
+    unittest.main(argv=["", "Test_post_thumbnail.test_ok"])
+    #unittest.main(argv=["", "Test_post_thumbnail.test_connection_fail"])
     
     #unittest.main(argv=["", "Test_simple"],verbosity=2)
     #unittest.main(argv=["", "Test_simple.test_alert"],verbosity=2)
