@@ -238,6 +238,9 @@ class ROG_Client(object):
         """
         @return: bool
         """
+
+        # disable this request
+        return
         
         data = {
             'camera_id': camera_id,

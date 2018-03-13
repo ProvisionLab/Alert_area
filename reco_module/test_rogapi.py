@@ -28,7 +28,7 @@ else:
 #rogapi_password = 'Ginger@777'
 
 alert_type_id = 11 # 'Entering Restricted Area'
-
+camera_id = None
 
 def get_dummy_image():
     
@@ -350,13 +350,20 @@ class Test_post_thumbnail(unittest.TestCase):
         
         self.rog = ROG_Client(rogapi_url, rogapi_username, rogapi_password)
 
-        cameras = self.rog.get_cameras()
-        self.assertTrue(isinstance(cameras,list) and len(cameras)>0)
+        if camera_id is None:
 
-        self.assertTrue(isinstance(cameras[0],dict))
+            cameras = self.rog.get_cameras()
+            self.assertTrue(isinstance(cameras,list) and len(cameras)>0)
 
-        self.camera_id = cameras[0].get('id')
-        self.assertTrue(isinstance(self.camera_id,int))
+            self.assertTrue(isinstance(cameras[0],dict))
+
+            self.camera_id = cameras[0].get('id')
+            self.assertTrue(isinstance(self.camera_id,int))
+
+        else:
+            
+            self.camera_id = camera_id
+            
 
     def test_ok(self):
         
@@ -393,8 +400,10 @@ if __name__ == '__main__':
     #unittest.main(argv=["", "Test_post_alert.test_ok"],verbosity=2)
     #unittest.main(argv=["", "Test_add_alert_image.test_ok"],verbosity=2)
     #unittest.main(argv=["", "Test_post_thumbnail"],verbosity=2)
-    unittest.main(argv=["", "Test_post_thumbnail.test_ok"])
-    #unittest.main(argv=["", "Test_post_thumbnail.test_connection_fail"])
+
+    camera_id = 313    
+    #unittest.main(argv=["", "Test_post_thumbnail.test_ok"])
+    unittest.main(argv=["", "Test_post_thumbnail.test_connection_fail"])
     
     #unittest.main(argv=["", "Test_simple"],verbosity=2)
     #unittest.main(argv=["", "Test_simple.test_alert"],verbosity=2)
