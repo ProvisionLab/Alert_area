@@ -72,12 +72,14 @@ def get_active_cameras():
 
     return cids
 
-def get_cameras_by_cids(cids:list):
+def get_cameras_by_cids(cids:list, alerts=False):
     """
     returns cameras from its ids
     """
-    
-    cursor = db.cameras.find({'id': {'$in': cids }}, {'alerts':False})
+    if alerts:
+        cursor = db.cameras.find({'id': {'$in': cids }})
+    else:
+        cursor = db.cameras.find({'id': {'$in': cids }}, {'alerts':False})
     
     cameras = [camera for camera in cursor if camera.get('enabled', True)]
 

@@ -90,24 +90,21 @@ class CaptureWorker(threading.Thread):
         else:
             return 0,0
 
-    def set_alert_areas(self, areas):
+    def update_camera(self, camera):
+        
+        self.camera = camera
 
-        #print('############## update_areas #################')
+        areas = camera.get('alerts')
+        
+        logging.debug("update_camera: [%d] %s", self.camera['id'], areas)
 
         self.alert_areas = areas
-
-        logging.debug("update_areas: [%d] %s", self.camera['id'], areas)
-
         if areas is None:
             logging.warning("update areas of camera: [%d] \'%s\', None", self.camera['id'], self.camera['name'])
             return
 
-        #logging.debug("update areas of camera: [%d] \'%s\', %d areas", self.camera['id'], self.camera['name'], len(areas))
-
         if self.worker:
             self.worker.set_alert_areas(areas)
-
-        pass
 
     def get_camera_url(self, camera):
 

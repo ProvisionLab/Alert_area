@@ -519,7 +519,7 @@ class RecoDispatcher(object):
 
             cids = proc.cameras
 
-            cameras = bvc_db.get_cameras_by_cids(list(cids))
+            cameras = bvc_db.get_cameras_by_cids(list(cids), alerts=True)
 
             #logger.debug('on_reco_get_cameras: %s %s', str(cids), str(cameras))
 

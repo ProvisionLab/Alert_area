@@ -207,7 +207,7 @@ class RecoApp(object):
             logging.info("camera [%d] \'%s\' FPS: %.1f/%.1f, areas: %d, users: %s", 
                         t.camera['id'], t.camera['name'], 
                         fps1, fps2, 
-                        len(t.camera['areas']),
+                        len(t.camera.get('areas',[])),
                         str(t.camera.get('users',[])))
 
         logging.info("total FPS: %.1f/%.2f for %d cameras", total_fps1, total_fps2, len(cameras))
@@ -229,8 +229,10 @@ class RecoApp(object):
 
         # get new cameras alerts
         for c in cameras:
-            areas = self.bvcapi.get_camera_alerts(c['id'])
-            c['areas'] = areas;
+            #logging.info("camera [%d] %s", c['id'], str(c))
+            #areas = self.bvcapi.get_camera_alerts(c['id'])
+            #c['areas'] = areas;
+            areas = c.get('alerts')
             if not areas:
                 logging.warning("camera [%d] \'%s\' has no alerts configured, users: %s", 
                     c['id'], c['name'], str(c.get('users',[])))
@@ -261,9 +263,7 @@ class RecoApp(object):
             camera_id = t.camera['id']
             for c in cameras:
                 if c['id'] == camera_id:
-                    c_areas = c['areas']
-                    #c_areas = t.camera['areas']
-                    t.set_alert_areas(c_areas)
+                    t.update_camera(c)
 
         # add new camera threads
         add_cameras = [c for c in cameras if c['id'] not in del_ids and c['id'] not in old_ids]

@@ -538,6 +538,7 @@ def get_camera_status(camera_id):
             enabled=camera.get('enabled', True),
             cononce=camera.get('connectedOnce', False),
             confail=camera.get('connectionFail', False),
+            has_thumbnail=camera.get('thumbnail', False),
             zones=len(camera.get('alerts',[])),            
             connow=app.dispatcher.get_connectedNow(camera_id),
             status=status
