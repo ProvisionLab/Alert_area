@@ -208,7 +208,7 @@ class CaptureWorker(threading.Thread):
 
             # send 'connectionFail' message on timeout
             if try_count > reco_config.try_capture_count or (time.time()-try_start) > reco_config.try_capture_timeout:
-                self.connection.post_connection_fail(self.camera_id)
+                self._post_connection_fail()
                 break
                 
         CaptureWorker.thread_count -= 1
@@ -218,16 +218,24 @@ class CaptureWorker(threading.Thread):
         self.bExit = True
         pass
 
-    def _dummy_post_reco_alert(self, alert):
+    def _dummy_post_reco_alert(self, *args):
         pass
 
+    def _post_connection_fail(self):
+
+        if self.connection:
+            self.connection.post_connection_fail(self.camera_id)
+
     def _post_thumbnail(self, frame):
+        
+        if self.connection:
 
-        image = create_thumbnail(frame)
-        ts = datetime.datetime.utcnow().isoformat()+'Z'
+            image = create_thumbnail(frame)
+            ts = datetime.datetime.utcnow().isoformat()+'Z'
 
-        users = self.camera.get('users',[])
-        user_id = users[0] if users else None
-            
-        self.connection.post_thumbnail(self.camera_id, image, ts, user_id=user_id )
+            users = self.camera.get('users',[])
+            user_id = users[0] if users else None
+                
+            self.connection.post_thumbnail(self.camera_id, image, ts, user_id=user_id )
+
         pass

@@ -102,11 +102,12 @@ class App(object):
                 cameras_count = 0
                 
                 for t in self.capture_workers:
-                    fps1, fps2 = t.get_fps()
-                    total_fps1 += fps1
-                    total_fps2 += fps2
-                    if fps1 > 0:
-                        cameras_count +=1
+                    if t.context:
+                        fps1, fps2 = t.context.get_fps()
+                        total_fps1 += fps1
+                        total_fps2 += fps2
+                        if fps1 > 0:
+                            cameras_count +=1
 
                 avg_fps1 = total_fps1 / cameras_count if cameras_count > 0 else 0.0
                 avg_fps2 = total_fps2 / cameras_count if cameras_count > 0 else 0.0
